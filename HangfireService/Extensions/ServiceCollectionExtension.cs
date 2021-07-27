@@ -1,7 +1,10 @@
 ﻿using Hangfire;
+using Hangfire.Console;
 using Hangfire.Console.Extensions;
+using Hangfire.Dashboard.Management;
 using Hangfire.MemoryStorage;
 using HangfireService.Core.DataLayers;
+using HangfireService.Core.Jobs;
 using HangfireService.Core.Models.Enums;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -39,16 +42,22 @@ namespace HangfireService.Extensions
                 config
                 .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
                 .UseSimpleAssemblyNameTypeSerializer()
-                .UseDefaultTypeSerializer()
+                .UseRecommendedSerializerSettings()
+                .UseColouredConsoleLogProvider()
+                .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.RecurringJobCount)
+                .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.RetriesCount)
+                .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.ProcessingCount)
+                .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.SucceededCount)
+                .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.FailedCount)
+                .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.AwaitingCount)
+                 //.UseManagementPages(p => p.AddJobs(() => ScheduledJobManager.GetModuleTypes(services.BuildServiceProvider())))
                 .UseSerilogLogProvider()
-                .UseMemoryStorage(
-                   // new MemoryStorageOptions() { JobExpirationCheckInterval = TimeSpan.FromSeconds(5) }
-                    );
+                .UseMemoryStorage();
             });
             services.AddHangfireConsoleExtensions();
             services.AddHangfireServer(config =>
             {
-                //config.SchedulePollingInterval = TimeSpan.FromSeconds(5);
+                config.SchedulePollingInterval = TimeSpan.FromSeconds(5);
                 config.WorkerCount = 1;
             });
             return services;

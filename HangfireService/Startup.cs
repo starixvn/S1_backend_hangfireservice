@@ -3,6 +3,8 @@ using HangfireService.Core.DataLayers;
 using HangfireService.Core.Jobs;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
+using HangfireService.Core.ThirdParty;
+using HangfireService.Core.ThirdParty.Interfaces;
 using HangfireService.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -31,21 +33,28 @@ namespace HangfireService
                     services.AddTransient(provider => new MainDBDataLayer(provider));
                     services.AddTransient(provider => new WagerDBDataLayer(provider));
                     services.AddTransient(provider => new ReportDBDataLayer(provider));
+                    services.AddSingleton(provider => new ThirdPartyManager(provider));
+
+                    var tpTypes = typeof(ITpBetRecordService).Assembly.GetTypes().Where(item =>item.GetInterfaces().Contains(typeof(ITpBetRecordService)));
+                    foreach (var tp in tpTypes)
+                    {
+                        services.AddSingleton(provider => (ITpBetRecordService)Activator.CreateInstance(tp, new object[] { provider }));
+                    }               
                 })
                 .AddHangfireService(Configuration)
                 .RegisterScheduledJobs(services =>
                 {
-                    var jobs = new List<JobDetailOption>();
-                    Configuration.GetSection("Jobs").Bind(jobs);
-                    services.AddSingleton(provider => jobs);
+                    var jobOptions = new List<JobDetailOption>();
+                    Configuration.GetSection("Jobs").Bind(jobOptions);
+                    services.AddSingleton(provider => jobOptions);
 
-                    foreach (var job in jobs)
-                    {
-                        if (job.Enable && job.Type == typeof(IScheduledJob).Name)
-                        {
-                            var assembly = Assembly.Load($"HangfireService.Core");
-                            var assemblyType = assembly.GetType($"HangfireService.Core.Jobs.{job.Name}");
-                            services.AddSingleton(provider => (IScheduledJob)Activator.CreateInstance(assemblyType, new object[] { provider }));
+                    var jobTypes = typeof(IScheduledJob).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IScheduledJob)));
+                    foreach (var option in jobOptions)
+                    {                    
+                        if (option.Enable && option.Type == typeof(IScheduledJob).Name)
+                        {                           
+                            var jobType = jobTypes.First(jobType => jobType.Name.Equals(option.Name, StringComparison.OrdinalIgnoreCase));
+                            services.AddSingleton(provider => (IScheduledJob)Activator.CreateInstance(jobType, new object[] { provider }));
                         }
                     }
                 });

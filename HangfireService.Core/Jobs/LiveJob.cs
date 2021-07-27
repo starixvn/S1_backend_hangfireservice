@@ -25,7 +25,7 @@ namespace HangfireService.Core.Jobs
         }
         public JobDetailOption JobDetailOption { get; set; }
 
-        public void Execute()
+        public Task Execute()
         {
             var jobGuid = Guid.NewGuid();
             LogContext.PushProperty("JobGuid", jobGuid);
@@ -38,6 +38,8 @@ namespace HangfireService.Core.Jobs
             {
                 _logger.LogError(ex, ex.Message);
             }
+
+            return Task.CompletedTask;
         }
 
     }

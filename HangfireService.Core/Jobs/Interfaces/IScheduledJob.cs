@@ -1,4 +1,5 @@
 ﻿using HangfireService.Core.Models.Jobs;
+using System.Threading.Tasks;
 
 namespace HangfireService.Core.Jobs.Interfaces
 {
@@ -6,6 +7,6 @@ namespace HangfireService.Core.Jobs.Interfaces
     {
         JobDetailOption JobDetailOption { get; set; }
 
-        void Execute();
+        Task Execute();
     }
 }

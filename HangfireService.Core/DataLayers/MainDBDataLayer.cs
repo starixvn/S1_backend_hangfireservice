@@ -1,7 +1,10 @@
-﻿using HangfireService.Core.Models.Enums;
+﻿using HangfireService.Core.Models.DBs;
+using HangfireService.Core.Models.Enums;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace HangfireService.Core.DataLayers
 {
@@ -12,6 +15,11 @@ namespace HangfireService.Core.DataLayers
         public MainDBDataLayer(IServiceProvider provider)
         {
             _dbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Main);
+        }
+
+        public Task<IEnumerable<TpDetailTodo>> GetTpDetailTodoList()
+        {
+            return _dbClient.QueryAsync<TpDetailTodo>("Service_TpDetailTodo_Get");
         }
     }
 }
