@@ -1,7 +1,10 @@
-﻿using HangfireService.Core.Models.Enums;
+﻿using HangfireService.Core.Models.DBs;
+using HangfireService.Core.Models.Enums;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace HangfireService.Core.DataLayers
 {
@@ -13,5 +16,12 @@ namespace HangfireService.Core.DataLayers
         {
             _dbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Report);
         }
+
+        public IEnumerable<ThirdPartyModel> GetAllTpList()
+        {
+            return _dbClient.Query<ThirdPartyModel>("Service_TpList_GetAll");
+        }
+
+
     }
 }

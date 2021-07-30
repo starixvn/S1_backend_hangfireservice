@@ -1,15 +1,21 @@
 ﻿using Hangfire;
-using Hangfire.Console;
 using Hangfire.Console.Extensions;
-using Hangfire.Dashboard.Management;
 using Hangfire.MemoryStorage;
 using HangfireService.Core.DataLayers;
-using HangfireService.Core.Jobs;
+using HangfireService.Core.Helpers;
+using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Enums;
+using HangfireService.Core.Models.Jobs;
+using HangfireService.Core.ThirdParty;
+using HangfireService.Core.ThirdParty.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
 
 namespace HangfireService.Extensions
 {
@@ -57,22 +63,71 @@ namespace HangfireService.Extensions
             services.AddHangfireConsoleExtensions();
             services.AddHangfireServer(config =>
             {
-                config.SchedulePollingInterval = TimeSpan.FromSeconds(5);
+                config.SchedulePollingInterval = TimeSpan.FromSeconds(15);
                 config.WorkerCount = 1;
             });
             return services;
         }
 
-        public static IServiceCollection RegisterServices(this IServiceCollection serviceCollection, Action<IServiceCollection> configureDelegate)
+        public static IServiceCollection RegisterServices(this IServiceCollection services, IConfiguration configuration)
         {
-            configureDelegate(serviceCollection);
-            return serviceCollection;
+            if (configuration.GetValue<string>("ProxyHost") != null)
+            {
+                var proxy = new HttpClientHandler
+                {
+                    Proxy = new WebProxy(configuration.GetValue<string>("ProxyHost"), configuration.GetValue<int>("ProxyPort")),
+                    UseProxy = true
+                };
+
+                services.AddHttpClient("with_proxy")
+                .ConfigurePrimaryHttpMessageHandler(() => proxy);
+            }
+            else
+            {
+                services.AddHttpClient();
+            }
+
+            services.AddSingleton<HttpHelper>();
+            services.AddTransient<MainDBDataLayer>();
+            services.AddTransient<WagerDBDataLayer>();
+            services.AddTransient<ReportDBDataLayer>();
+            services.AddSingleton<ThirdPartyManager>();
+
+            return services;
         }
 
-        public static IServiceCollection RegisterScheduledJobs(this IServiceCollection serviceCollection, Action<IServiceCollection> configureDelegate)
+        public static IServiceCollection RegisterScheduledJobs(this IServiceCollection services, IConfiguration configuration)
         {
-            configureDelegate(serviceCollection);
-            return serviceCollection;
+            var jobOptions = new List<JobDetailOption>();
+            configuration.GetSection("Jobs").Bind(jobOptions);
+            services.AddSingleton(provider => jobOptions);
+
+            var jobTypes = typeof(IScheduledJob).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IScheduledJob)));
+            foreach (var option in jobOptions)
+            {
+                if (option.Enable && option.Type == typeof(IScheduledJob).Name)
+                {
+                    var jobType = jobTypes.First(jobType => jobType.Name.Equals(option.Name, StringComparison.OrdinalIgnoreCase));
+                    services.AddSingleton(provider => (IScheduledJob)Activator.CreateInstance(jobType, new object[] { provider }));
+                }
+            }
+
+            return services;
+        }
+
+        public static IServiceCollection RegisterTpHelper(this IServiceCollection services)
+        {
+            var provider = services.BuildServiceProvider();
+            var tpList = provider.GetRequiredService<ThirdPartyManager>().GetAllTpList();
+            services.AddSingleton(provider => tpList);
+
+            var tpTypes = typeof(ITpHelper).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(ITpHelper)));
+            foreach (var tp in tpTypes)
+            {
+                services.AddSingleton(provider => (ITpHelper)Activator.CreateInstance(tp, new object[] { provider }));
+            }
+
+            return services;
         }
     }
 }

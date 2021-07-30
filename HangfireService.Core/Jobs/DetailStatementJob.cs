@@ -44,19 +44,7 @@ namespace HangfireService.Core.Jobs
                 _logger.LogInformation($"{jobGuid} || {DateTime.Now:HH:mm:ss} || {Name} running......");
 
                 var todoList = await _mainDBDataLayer.GetTpDetailTodoList();
-                var result = new List<bool>();    
-                Parallel.ForEach(todoList, async item =>
-                {
-                    try
-                    {                 
-                        var detailresult = await _thirdPartyManager.GetTpBetRecordDetail(item);
-                        result.Add(detailresult);
-                    }
-                    catch (Exception e )
-                    {
-                        _logger.LogError(e, e.Message);
-                    }
-                });
+                var result = await _thirdPartyManager.GetTpBetRecordDetailAsync(todoList);
 
                 _logger.LogInformation($"Todo: {todoList.Count()} || Success: {result.Count(i => i)} || Fail: {result.Count(i => !i)}");
             }

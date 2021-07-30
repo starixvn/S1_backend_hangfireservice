@@ -11,5 +11,15 @@ namespace HangfireService.Core.Models.DBs
         public int GameType { get; set; }
 
         public string TransId { get; set; }
+
+        public int CustId { get; set; }
+
+        public string UserName { get; set; }
+
+        public int CurrencyId { get; set; }
+
+        public int SiteId { get; set; }
+
+        public string TpUserName { get; set; }
     }
 }

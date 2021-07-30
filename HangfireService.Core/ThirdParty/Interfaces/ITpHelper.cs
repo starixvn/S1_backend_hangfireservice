@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace HangfireService.Core.ThirdParty.Interfaces
 {
-    public interface ITpBetRecordService
+    public interface ITpHelper
     {
         int TpId { get;}
 
-        Task<TpBetRecordDetail> GetTpBetRecordDetail(TpDetailTodo tpDetailTodo);
+        Task<IEnumerable<bool>> GetTpBetRecordDetailAsync(IEnumerable<TpDetailTodo> todoList);
     }
 }

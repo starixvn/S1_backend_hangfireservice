@@ -15,6 +15,16 @@ namespace HangfireService.Core.Models.DBs
 
         public string TransId { get; set; }
 
+        public int CustId { get; set; }
+
+        public string UserName { get; set; }
+
+        public int CurrencyId { get; set; }
+
+        public int SiteId { get; set; }
+
+        public string TpUserName { get; set; }
+
         public object Detail 
         {
             get 
@@ -28,5 +38,17 @@ namespace HangfireService.Core.Models.DBs
         }
 
         private object _detail;
+
+        public TpBetRecordDetail(TpDetailTodo todo)
+        {
+            TpId = todo.TpId;
+            GameType = todo.GameType;
+            TransId = todo.TransId;
+            CustId = todo.CustId;
+            UserName = todo.UserName;
+            CurrencyId = todo.CurrencyId;
+            SiteId = todo.SiteId;
+            TpUserName = todo.TpUserName;
+        }
     }
 }

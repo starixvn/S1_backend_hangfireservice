@@ -1,4 +1,5 @@
-﻿using HangfireService.Core.Models.DBs;
+﻿using Dapper;
+using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -20,6 +21,12 @@ namespace HangfireService.Core.DataLayers
         public Task<IEnumerable<TpDetailTodo>> GetTpDetailTodoList()
         {
             return _dbClient.QueryAsync<TpDetailTodo>("Service_TpDetailTodo_Get");
+        }
+
+        public async Task<bool> UpdateTpDetailTodo(TpBetRecordDetail detail)
+        {
+            var result = await _dbClient.ExecuteAsync("Service_TpDetailTodo_Set", parameters: new DynamicParameters(detail));
+            return result > 0;
         }
     }
 }

@@ -26,6 +26,26 @@ namespace HangfireService.Core.DataLayers
             _logger = logger;
         }
 
+        public IEnumerable<T> Query<T>(string name, CommandType commandType = CommandType.StoredProcedure, DynamicParameters parameters = null, int? commandTimeout = null)
+        {
+            IEnumerable<T> result;
+            var sw = Stopwatch.StartNew();
+            try
+            {
+                using var connection = new MySqlConnection(_connectionString);
+                result = connection.Query<T>(name, parameters, commandType: commandType, commandTimeout: commandTimeout);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, name);
+                throw;
+            }
+
+            LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
+            _logger.LogInformation($"{name} {sw.Elapsed:c}");
+            return result;
+        }
+
         public async Task<IEnumerable<T>> QueryAsync<T>(string name, CommandType commandType = CommandType.StoredProcedure, DynamicParameters parameters = null, int? commandTimeout = null)
         {
             IEnumerable<T> result;

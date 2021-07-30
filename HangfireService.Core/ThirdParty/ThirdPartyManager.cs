@@ -2,8 +2,10 @@
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.ThirdParty.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -11,36 +13,70 @@ namespace HangfireService.Core.ThirdParty
 {
     public class ThirdPartyManager
     {
-        private readonly Dictionary<int, Func<TpDetailTodo, Task<TpBetRecordDetail>>> _tpHandler = new Dictionary<int, Func<TpDetailTodo, Task<TpBetRecordDetail>>>();
+        private readonly ILogger<ThirdPartyManager> _logger;
 
-        private readonly WagerDBDataLayer _wagerDBDataLayer;
+        private readonly Dictionary<int, Func<IEnumerable<TpDetailTodo>, Task<IEnumerable<bool>>>> _tpHandler;
 
+        private readonly ReportDBDataLayer _reportDBDataLayer;
+
+        private readonly MainDBDataLayer _mainDBDataLayer;
+    
         public ThirdPartyManager(IServiceProvider provider)
         {
-            _wagerDBDataLayer = provider.GetRequiredService<WagerDBDataLayer>();
+            _logger = provider.GetRequiredService<ILogger<ThirdPartyManager>>();
+            _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
+            _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
 
-            foreach (var tp in provider.GetServices<ITpBetRecordService>())
+            _tpHandler = new Dictionary<int, Func<IEnumerable<TpDetailTodo>, Task<IEnumerable<bool>>>>();
+            foreach (var tp in provider.GetServices<ITpHelper>())
             {
-                _tpHandler.Add(tp.TpId, tp.GetTpBetRecordDetail);
+                _tpHandler.Add(tp.TpId, tp.GetTpBetRecordDetailAsync);
             }
         }
-        public async Task<bool> GetTpBetRecordDetail(TpDetailTodo tpDetailTodo)
+
+        public async Task<IEnumerable<bool>> GetTpBetRecordDetailAsync(IEnumerable<TpDetailTodo> todoList)
         {
-            if (!_tpHandler.TryGetValue(tpDetailTodo.TpId, out var action))
+            var result = new List<bool>();
+            foreach (var group in todoList.GroupBy(tp => tp.TpId))
             {
-                return true;
-            }
+                if (!_tpHandler.TryGetValue(group.Key, out var action))
+                {
+                    var update = ThirdPartyNoAction(group);
+                    result.AddRange(update);
+                    continue;
+                }
 
-            var tpReuslt = await action.Invoke(tpDetailTodo);            
-            if (!tpReuslt.IsSuccess)
+                var tpReuslt = await action.Invoke(group);
+                result.AddRange(tpReuslt);      
+            }
+            return result;
+        }
+
+        public IEnumerable<ThirdPartyModel> GetAllTpList()
+        {
+            return _reportDBDataLayer.GetAllTpList();
+        }
+
+        private IEnumerable<bool> ThirdPartyNoAction(IEnumerable<TpDetailTodo> todoList)
+        {
+            var result = new List<bool>();
+            Parallel.ForEach(todoList, async todo =>
             {
-                return tpReuslt.IsSuccess;
-            }
+                try
+                {
+                    var update = await _mainDBDataLayer.UpdateTpDetailTodo(new TpBetRecordDetail(todo) { IsSuccess = true });
+                    result.Add(update);
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, e.Message);
+                }
+            });
+            return result;
+        }
 
-            var addResult = await _wagerDBDataLayer.AddTpBetRecordDetail(tpReuslt);
-            return addResult;
-        } 
     }
 }
+
 
 
