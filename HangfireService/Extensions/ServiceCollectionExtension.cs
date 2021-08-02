@@ -101,18 +101,14 @@ namespace HangfireService.Extensions
 
         public static IServiceCollection RegisterScheduledJobs(this IServiceCollection services, IConfiguration configuration)
         {
-            var jobOptions = new List<JobDetailOption>();
+            var jobOptions = new List<JobDetail>();
             configuration.GetSection("Jobs").Bind(jobOptions);
             services.AddSingleton(provider => jobOptions);
 
-            var scheduledJobs = typeof(IScheduledJob).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IScheduledJob)));
-            foreach (var option in jobOptions)
+            var scheduledJobs = typeof(IScheduledJob).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IScheduledJob)));       
+            foreach (var job in scheduledJobs)
             {
-                if (option.Enable && option.Type == typeof(IScheduledJob).Name)
-                {
-                    var jobType = scheduledJobs.First(jobType => jobType.Name.Equals(option.ClassName, StringComparison.OrdinalIgnoreCase));
-                    services.AddSingleton(provider => (IScheduledJob)Activator.CreateInstance(jobType, new object[] { provider}));
-                }
+               services.AddSingleton(provider => (IScheduledJob)Activator.CreateInstance(job, new object[] { provider}));      
             }
 
             return services;

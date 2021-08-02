@@ -4,7 +4,7 @@ using System.Text;
 
 namespace HangfireService.Core.Models.Jobs
 {
-    public class JobDetailOption
+    public class JobDetail
     {
         public string Type { get; set; }
 
@@ -20,6 +20,6 @@ namespace HangfireService.Core.Models.Jobs
 
         public bool Enable { get; set; }
 
-        public string[] StringParams { get; set; } = new string[] { };
+        public string[] Parameters { get; set; }
     }
 }

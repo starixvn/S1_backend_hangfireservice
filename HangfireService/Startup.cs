@@ -44,7 +44,7 @@ namespace HangfireService
                 Authorization = new[] { new AdminSiteAuthorizationFilter() }
             });
 
-            ScheduledJobManager.Setup(provider);
+            ScheduledJobManager.Setup(provider, Configuration);
 
             app.UseEndpoints(endpoints =>
             {

@@ -1,27 +1,35 @@
 ﻿using Hangfire;
-using Hangfire.Common;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 
 namespace HangfireService.Core.Jobs
 {
     public class ScheduledJobManager
     {
-        public static void Setup(IServiceProvider provider)
+        public static void Setup(IServiceProvider provider, IConfiguration configuration)
         {
-            var jobManager = new RecurringJobManager();          
-            foreach (var job in provider.GetServices<IScheduledJob>())
+            var jobOptions = new List<JobDetail>();
+            configuration.GetSection("Jobs").Bind(jobOptions);
+
+            var jobManager = new RecurringJobManager();
+            foreach (var options in jobOptions)
             {
-                jobManager.AddOrUpdate(
-                    recurringJobId: job.JobDetailOption.JobName,
-                    methodCall: () => job.Execute(),
-                    cronExpression: job.JobDetailOption.Cron);
-            }            
+                if (options.Enable && options.Type == typeof(IScheduledJob).Name)
+                {
+                    var job = provider.GetServices<IScheduledJob>()
+                        .First(job => job.ClassName.Equals(options.ClassName, StringComparison.OrdinalIgnoreCase));
+                    
+                    jobManager.AddOrUpdate(
+                      recurringJobId: options.JobName,
+                      methodCall: () => job.Execute(options, options.Parameters),
+                      cronExpression: options.Cron);
+                }
+            }
         }
 
     }

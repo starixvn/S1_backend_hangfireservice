@@ -20,8 +20,7 @@ namespace HangfireService.Core.Jobs
     [ManagementPage("DetailStatement")]
     public class DetailStatementJob : IScheduledJob
     {
-        public string JobName { get; set; }
-        public JobDetailOption JobDetailOption { get; set; }
+        public string ClassName { get; set; }
 
         private readonly ILogger<DetailStatementJob> _logger;
 
@@ -31,23 +30,23 @@ namespace HangfireService.Core.Jobs
 
         public DetailStatementJob(IServiceProvider provider)
         {
-            JobName = GetType().Name;
+            ClassName = GetType().Name;
             _logger = provider.GetRequiredService<ILogger<DetailStatementJob>>();
             _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
-            JobDetailOption = provider.GetRequiredService<List<JobDetailOption>>().First(item => item.JobName == JobName);
             _thirdPartyManager = provider.GetRequiredService<ThirdPartyManager>();
         }
 
-        public async Task Execute()
+        public async Task Execute(JobDetail jobDetail, string[] parameters)
         {
             var jobGuid = Guid.NewGuid();
             LogContext.PushProperty("JobGuid", jobGuid);
-            LogContext.PushProperty("Job", JobName);
+            LogContext.PushProperty("Job", jobDetail.JobName);
             try
             {
-                _logger.LogInformation($"{jobGuid} || {DateTime.Now:HH:mm:ss} || {JobName} running......");
+                _logger.LogInformation($"{jobGuid} || {DateTime.Now:HH:mm:ss} || {jobDetail.JobName} running......");
 
-                var todoList = await _mainDBDataLayer.GetTpDetailTodoList();
+                var status = int.Parse(parameters?[0] ?? "0");
+                var todoList = await _mainDBDataLayer.GetTpDetailTodoList(status);
                 var result = await _thirdPartyManager.GetTpBetRecordDetailAsync(todoList);
 
                 _logger.LogInformation($"Todo: {todoList.Count()} || Success: {result.Count(i => i)} || Fail: {result.Count(i => !i)}");
@@ -67,7 +66,7 @@ namespace HangfireService.Core.Jobs
                 return;
             }
 
-            _ = Execute();
+            _ = Execute(null, null);
         }
 
     }
