@@ -1,8 +1,10 @@
 ﻿using Hangfire;
 using Hangfire.Console.Extensions;
+using Hangfire.Dashboard.Management;
 using Hangfire.MemoryStorage;
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Helpers;
+using HangfireService.Core.Jobs;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Jobs;
@@ -56,7 +58,8 @@ namespace HangfireService.Extensions
                 .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.SucceededCount)
                 .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.FailedCount)
                 .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.AwaitingCount)
-                 //.UseManagementPages(p => p.AddJobs(() => ScheduledJobManager.GetModuleTypes(services.BuildServiceProvider())))
+                .UseManagementPages(p => p.AddJobs(() 
+                    => typeof(IScheduledJob).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IScheduledJob))).ToArray()))
                 .UseSerilogLogProvider()
                 .UseMemoryStorage();
             });
@@ -102,13 +105,13 @@ namespace HangfireService.Extensions
             configuration.GetSection("Jobs").Bind(jobOptions);
             services.AddSingleton(provider => jobOptions);
 
-            var jobTypes = typeof(IScheduledJob).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IScheduledJob)));
+            var scheduledJobs = typeof(IScheduledJob).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IScheduledJob)));
             foreach (var option in jobOptions)
             {
                 if (option.Enable && option.Type == typeof(IScheduledJob).Name)
                 {
-                    var jobType = jobTypes.First(jobType => jobType.Name.Equals(option.Name, StringComparison.OrdinalIgnoreCase));
-                    services.AddSingleton(provider => (IScheduledJob)Activator.CreateInstance(jobType, new object[] { provider }));
+                    var jobType = scheduledJobs.First(jobType => jobType.Name.Equals(option.ClassName, StringComparison.OrdinalIgnoreCase));
+                    services.AddSingleton(provider => (IScheduledJob)Activator.CreateInstance(jobType, new object[] { provider}));
                 }
             }
 

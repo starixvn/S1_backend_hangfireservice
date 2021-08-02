@@ -14,25 +14,27 @@ namespace HangfireService.Core.Jobs
 {
     public class LiveJob : IScheduledJob
     {
-        private const string Name = "LiveJob";
-
         private readonly ILogger<LiveJob> _logger;
-        
+
+        public string JobName { get; set; }       
+
+        public JobDetailOption JobDetailOption { get; set; }
+
         public LiveJob(IServiceProvider provider)
         {
+            JobName = GetType().Name; ;
             _logger = provider.GetRequiredService<ILogger<LiveJob>>();       
-            JobDetailOption = provider.GetRequiredService<List<JobDetailOption>>().First(item => item.Name == Name);
+            JobDetailOption = provider.GetRequiredService<List<JobDetailOption>>().First(item => item.JobName == JobName);
         }
-        public JobDetailOption JobDetailOption { get; set; }
 
         public Task Execute()
         {
             var jobGuid = Guid.NewGuid();
             LogContext.PushProperty("JobGuid", jobGuid);
-            LogContext.PushProperty("Job", Name);
+            LogContext.PushProperty("Job", JobName);
             try
             {
-                _logger.LogInformation($"{jobGuid} || {DateTime.Now:HH:mm:ss} || {Name} running......");
+                _logger.LogInformation($"{jobGuid} || {DateTime.Now:HH:mm:ss} || {JobName} running......");
             }
             catch (Exception ex)
             {

@@ -8,7 +8,9 @@ namespace HangfireService.Core.Models.Jobs
     {
         public string Type { get; set; }
 
-        public string Name { get; set; }
+        public string ClassName { get; set; }
+
+        public string JobName { get; set; }
 
         public string Group { get; set; }
 
@@ -17,5 +19,7 @@ namespace HangfireService.Core.Models.Jobs
         public string Cron { get; set; }
 
         public bool Enable { get; set; }
+
+        public string[] StringParams { get; set; } = new string[] { };
     }
 }

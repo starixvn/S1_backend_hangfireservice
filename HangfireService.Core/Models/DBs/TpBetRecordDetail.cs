@@ -1,7 +1,4 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace HangfireService.Core.Models.DBs
 {
@@ -14,16 +11,6 @@ namespace HangfireService.Core.Models.DBs
         public int GameType { get; set; }
 
         public string TransId { get; set; }
-
-        public int CustId { get; set; }
-
-        public string UserName { get; set; }
-
-        public int CurrencyId { get; set; }
-
-        public int SiteId { get; set; }
-
-        public string TpUserName { get; set; }
 
         public object Detail 
         {
@@ -44,11 +31,6 @@ namespace HangfireService.Core.Models.DBs
             TpId = todo.TpId;
             GameType = todo.GameType;
             TransId = todo.TransId;
-            CustId = todo.CustId;
-            UserName = todo.UserName;
-            CurrencyId = todo.CurrencyId;
-            SiteId = todo.SiteId;
-            TpUserName = todo.TpUserName;
         }
     }
 }

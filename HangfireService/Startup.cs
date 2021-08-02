@@ -4,6 +4,7 @@ using HangfireService.Core.Helpers;
 using HangfireService.Core.Jobs;
 using HangfireService.Core.ThirdParty;
 using HangfireService.Extensions;
+using HangfireService.Extensions.ActionFilters;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -36,7 +37,12 @@ namespace HangfireService
             }
 
             app.UseRouting();
-            app.UseHangfireDashboard(options: new DashboardOptions() { DashboardTitle = "AI.Lab" });
+            app.UseHangfireDashboard(options: new DashboardOptions()
+            {
+                DashboardTitle = "AI.Lab",
+                AppPath = Configuration.GetValue<string>("AdminSiteUrl"),
+                Authorization = new[] { new AdminSiteAuthorizationFilter() }
+            });
 
             ScheduledJobManager.Setup(provider);
 
