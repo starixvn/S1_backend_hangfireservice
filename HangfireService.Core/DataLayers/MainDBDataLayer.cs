@@ -18,7 +18,7 @@ namespace HangfireService.Core.DataLayers
             _dbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Main);
         }
 
-        public Task<IEnumerable<TpDetailTodo>> GetTpDetailTodoList(int Status)
+        public Task<IEnumerable<TpDetailTodo>> GetTpDetailTodoList(string Status)
         {   
             return _dbClient.QueryAsync<TpDetailTodo>("Service_TpDetailTodo_Get", parameters: new DynamicParameters(new { Status }));
         }

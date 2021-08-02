@@ -7,8 +7,6 @@ namespace HangfireService.Core.Jobs.Interfaces
 {
     public interface IScheduledJob
     {
-        string ClassName { get; set; }
-
-        Task Execute(JobDetail jobDetail, params string[] parameters);
+        Task Execute(JobDetail jobDetail);
     }
 }

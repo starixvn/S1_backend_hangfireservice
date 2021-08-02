@@ -22,11 +22,11 @@ namespace HangfireService.Core.Jobs
                 if (options.Enable && options.Type == typeof(IScheduledJob).Name)
                 {
                     var job = provider.GetServices<IScheduledJob>()
-                        .First(job => job.ClassName.Equals(options.ClassName, StringComparison.OrdinalIgnoreCase));
+                        .First(job => job.GetType().Name.Equals(options.ClassName, StringComparison.OrdinalIgnoreCase));
                     
                     jobManager.AddOrUpdate(
                       recurringJobId: options.JobName,
-                      methodCall: () => job.Execute(options, options.Parameters),
+                      methodCall: () => job.Execute(options),
                       cronExpression: options.Cron);
                 }
             }

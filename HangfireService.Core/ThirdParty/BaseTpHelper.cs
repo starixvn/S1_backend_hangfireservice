@@ -16,9 +16,9 @@ namespace HangfireService.Core.ThirdParty
 {
     public class BaseTpHelper
     {
-        public readonly ILogger<BaseTpHelper> _logger;
+        protected readonly ILogger<BaseTpHelper> _logger;
 
-        public readonly HttpHelper _httpHelper;
+        protected readonly HttpHelper _httpHelper;
 
         private readonly WagerDBDataLayer _wagerDBDataLayer;
 
