@@ -38,7 +38,7 @@ namespace HangfireService
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseHangfireDashboard(options: new DashboardOptions()
+            app.UseHangfireDashboard(pathMatch: "", options: new DashboardOptions()
             {
                 DashboardTitle = "AI.Lab",
                 AppPath = Configuration.GetValue<string>("AdminSiteUrl"),

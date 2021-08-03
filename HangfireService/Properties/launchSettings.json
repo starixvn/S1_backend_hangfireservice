@@ -19,7 +19,6 @@
         "HangfireService": {
             "commandName": "Project",
             "launchBrowser": true,
-            "launchUrl": "hangfire",
             "applicationUrl": "http://localhost:45678",
             "environmentVariables": {
                 "ASPNETCORE_ENVIRONMENT": "Local"
