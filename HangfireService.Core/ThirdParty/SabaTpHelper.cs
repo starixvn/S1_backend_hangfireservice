@@ -31,7 +31,7 @@ namespace HangfireService.Core.ThirdParty
             //要注意第三方api可否接受Parallel，不支援可改用foreach
             Parallel.ForEach(todoList, async todo =>
             {
-                var detail = await GetTpBetRecordDetailAsync(todo);
+                var detail = await GetBetDetailByTransID(todo);
                 if (detail.IsSuccess)
                 {
                     //成功新增Detail
@@ -49,7 +49,7 @@ namespace HangfireService.Core.ThirdParty
             return result;
         }
 
-        private async Task<TpBetRecordDetail> GetTpBetRecordDetailAsync(TpDetailTodo todo)
+        private async Task<TpBetRecordDetail> GetBetDetailByTransID(TpDetailTodo todo)
         {
             try
             {
