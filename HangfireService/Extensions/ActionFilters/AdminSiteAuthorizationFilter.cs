@@ -6,9 +6,8 @@ namespace HangfireService.Extensions.ActionFilters
     {
         public bool Authorize(DashboardContext context)
         {
-            return true;
-            //var httpContext = context.GetHttpContext();
-            //return httpContext.User.Identity.IsAuthenticated;
+            var httpContext = context.GetHttpContext();
+            return httpContext.User.Identity.IsAuthenticated;
         }
     }
 }

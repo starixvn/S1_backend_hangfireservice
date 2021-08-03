@@ -1,8 +1,5 @@
 using Hangfire;
-using HangfireService.Core.DataLayers;
-using HangfireService.Core.Helpers;
 using HangfireService.Core.Jobs;
-using HangfireService.Core.ThirdParty;
 using HangfireService.Extensions;
 using HangfireService.Extensions.ActionFilters;
 using Microsoft.AspNetCore.Builder;
@@ -23,6 +20,7 @@ namespace HangfireService
         {
             services
                 .AddDatabaseConnection(Configuration)
+                .AddAdminSiteAuth()
                 .RegisterServices(Configuration)
                 .AddHangfireService(Configuration)
                 .RegisterScheduledJobs(Configuration)
@@ -37,13 +35,15 @@ namespace HangfireService
             }
 
             app.UseRouting();
+            app.UseAuthentication();
+            app.UseAuthorization();
+
             app.UseHangfireDashboard(options: new DashboardOptions()
             {
                 DashboardTitle = "AI.Lab",
                 AppPath = Configuration.GetValue<string>("AdminSiteUrl"),
                 Authorization = new[] { new AdminSiteAuthorizationFilter() }
             });
-
             ScheduledJobManager.Setup(provider, Configuration);
 
             app.UseEndpoints(endpoints =>

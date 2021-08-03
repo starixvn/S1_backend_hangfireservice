@@ -4,17 +4,19 @@ using Hangfire.Dashboard.Management;
 using Hangfire.MemoryStorage;
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Helpers;
-using HangfireService.Core.Jobs;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.ThirdParty;
 using HangfireService.Core.ThirdParty.Interfaces;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -58,7 +60,7 @@ namespace HangfireService.Extensions
                 .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.SucceededCount)
                 .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.FailedCount)
                 .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.AwaitingCount)
-                .UseManagementPages(p => p.AddJobs(() 
+                .UseManagementPages(p => p.AddJobs(()
                     => typeof(IScheduledJob).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IScheduledJob))).ToArray()))
                 .UseSerilogLogProvider()
                 .UseMemoryStorage();
@@ -105,10 +107,10 @@ namespace HangfireService.Extensions
             configuration.GetSection("Jobs").Bind(jobOptions);
             services.AddSingleton(provider => jobOptions);
 
-            var scheduledJobs = typeof(IScheduledJob).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IScheduledJob)));       
+            var scheduledJobs = typeof(IScheduledJob).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IScheduledJob)));
             foreach (var job in scheduledJobs)
             {
-               services.AddSingleton(provider => (IScheduledJob)Activator.CreateInstance(job, new object[] { provider}));      
+                services.AddSingleton(provider => (IScheduledJob)Activator.CreateInstance(job, new object[] { provider }));
             }
 
             return services;
@@ -125,6 +127,25 @@ namespace HangfireService.Extensions
             {
                 services.AddSingleton(provider => (ITpHelper)Activator.CreateInstance(tp, new object[] { provider }));
             }
+
+            return services;
+        }
+
+        public static IServiceCollection AddAdminSiteAuth(this IServiceCollection services)
+        {
+            services
+                .AddDataProtection()
+                .DisableAutomaticKeyGeneration()
+                .PersistKeysToFileSystem(new DirectoryInfo("CookieKeys"))
+                .SetApplicationName("SharedCookieApp");
+
+            services
+                .AddAuthorization()
+                .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(option =>
+                {
+                    option.Cookie.Name = ".backend";
+                });
 
             return services;
         }
