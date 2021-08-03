@@ -17,17 +17,17 @@ namespace HangfireService.Core.Jobs
             configuration.GetSection("Jobs").Bind(jobOptions);
 
             var jobManager = new RecurringJobManager();
-            foreach (var options in jobOptions)
+            foreach (var option in jobOptions)
             {
-                if (options.Enable && options.Type == typeof(IScheduledJob).Name)
+                if (option.Enable && option.Type == typeof(IScheduledJob).Name)
                 {
                     var job = provider.GetServices<IScheduledJob>()
-                        .First(job => job.GetType().Name.Equals(options.ClassName, StringComparison.OrdinalIgnoreCase));
+                        .First(job => job.GetType().Name.Equals(option.ClassName, StringComparison.OrdinalIgnoreCase));
                     
                     jobManager.AddOrUpdate(
-                      recurringJobId: options.JobName,
-                      methodCall: () => job.Execute(options),
-                      cronExpression: options.Cron);
+                      recurringJobId: option.JobName,
+                      methodCall: () => job.Execute(option),
+                      cronExpression: option.Cron);
                 }
             }
         }
