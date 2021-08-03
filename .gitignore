@@ -3,3 +3,6 @@ HangfireService.Core/bin
 HangfireService.Core/obj
 HangfireService/bin
 HangfireService/obj
+HangfireService/.config
+HangfireService/Properties/PublishProfiles
+*.user
