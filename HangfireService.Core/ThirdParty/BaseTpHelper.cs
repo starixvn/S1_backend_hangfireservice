@@ -34,7 +34,7 @@ namespace HangfireService.Core.ThirdParty
 
         protected async Task<bool> AddTpBetRecordDetail(TpBetRecordDetail detail)
         {
-            return await _wagerDBDataLayer.AddTpBetRecordDetail(detail);
+            return await _mainDBDataLayer.AddTpBetRecordDetail(detail);
         }
 
         protected async Task<bool> UpdateTpDetailTodo(TpBetRecordDetail detail)

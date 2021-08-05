@@ -17,10 +17,5 @@ namespace HangfireService.Core.DataLayers
             _dbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Wager);
         }
 
-        public async Task<bool> AddTpBetRecordDetail(TpBetRecordDetail detail)
-        {
-            var result = await _dbClient.QueryFirstAsync<int>("Service_TpBetRecordDetail_Ins", parameters: new DynamicParameters(detail));
-            return result > 0;
-        }
     }
 }
