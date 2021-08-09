@@ -2,12 +2,14 @@
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.ThirdParty;
+using HangfireService.Core.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+
 
 namespace HangfireService.Core.Jobs
 {
@@ -36,7 +38,9 @@ namespace HangfireService.Core.Jobs
                 var todoList = await _mainDBDataLayer.GetTpDetailTodoList(Status: jobDetail.Parameters?[0] ?? "0");
                 var result = await _thirdPartyManager.GetTpBetRecordDetailAsync(todoList);
 
-                _logger.LogInformation($"Todo: {todoList.Count()} || Success: {result.Count(i => i)} || Fail: {result.Count(i => !i)}");
+                _logger.LogInformation($"Todo: {todoList.Distinct(p => new { p.TpId, p.GameType, p.TransId }).Count()} " +
+                    $"|| Success: {result.Count(i => i)} " +
+                    $"|| Fail: {result.Count(i => !i)}");
             }
             catch (Exception ex)
             {
