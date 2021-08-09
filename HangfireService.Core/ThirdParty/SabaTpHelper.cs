@@ -31,19 +31,27 @@ namespace HangfireService.Core.ThirdParty
             //要注意第三方api可否接受Parallel，不支援可改用foreach
             Parallel.ForEach(todoList, async todo =>
             {
-                var detail = await GetBetDetailByTransID(todo);
-                if (detail.IsSuccess)
-                {
-                    //成功新增Detail
-                    var insert = await AddTpBetRecordDetail(detail);
-                    result.Add(insert);
+                try
+                {              
+                    var detail = await GetBetDetailByTransID(todo);
+                    if (detail.IsSuccess)
+                    {
+                        //成功新增Detail
+                        var insert = await AddTpBetRecordDetail(detail);
+                        result.Add(insert);
+                    }
+                    else
+                    {
+                        //失敗更新todo status
+                        var update = await UpdateTpDetailTodo(detail);
+                        result.Add(update);
+                    }
                 }
-                else
+                catch (Exception e)
                 {
-                    //失敗更新todo status
-                    var update = await UpdateTpDetailTodo(detail);
-                    result.Add(update);
-                }     
+                    _logger.LogError(e, e.Message);
+                    result.Add(false);
+                }
             });
 
             return result;
