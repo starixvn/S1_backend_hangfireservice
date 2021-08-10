@@ -26,7 +26,7 @@ namespace HangfireService.Core.Jobs
                     
                     jobManager.AddOrUpdate(
                       recurringJobId: option.JobName,
-                      methodCall: () => job.Execute(option),
+                      methodCall: () => job.ExecuteAsync(option),
                       cronExpression: option.Cron);
                 }
             }

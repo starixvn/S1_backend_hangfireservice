@@ -34,20 +34,28 @@ namespace HangfireService.Core.ThirdParty
             }
         }
 
-        public async Task<IEnumerable<bool>> GetTpBetRecordDetailAsync(IEnumerable<TpDetailTodo> todoList)
+        public IEnumerable<bool> GetTpBetRecordDetailAsync(IEnumerable<TpDetailTodo> todoList)
         {
-            var result = new List<bool>();
+           
+            var tasks = new List<Task<IEnumerable<bool>>>();
             foreach (var group in todoList.GroupBy(tp => tp.TpId))
             {
-                if (!_tpHandler.TryGetValue(group.Key, out var action))
+                if (_tpHandler.TryGetValue(group.Key, out var action))
+                {
+                    var detail = action.Invoke(group);
+                    tasks.Add(detail);
+                }
+                else
                 {
                     var update = ThirdPartyNoAction(group);
-                    result.AddRange(update);
-                    continue;
-                }
-
-                var tpReuslt = await action.Invoke(group);
-                result.AddRange(tpReuslt);      
+                    tasks.Add(update);
+                }              
+            }
+            Task.WhenAll(tasks);
+            var result = new List<bool>();
+            foreach (var task in tasks)
+            {
+                result.AddRange(task.Result);
             }
             return result;
         }
@@ -57,7 +65,7 @@ namespace HangfireService.Core.ThirdParty
             return _reportDBDataLayer.GetAllTpList();
         }
 
-        private IEnumerable<bool> ThirdPartyNoAction(IEnumerable<TpDetailTodo> todoList)
+        private async Task<IEnumerable<bool>> ThirdPartyNoAction(IEnumerable<TpDetailTodo> todoList)
         {
             var result = new List<bool>();
             Parallel.ForEach(todoList, async todo =>

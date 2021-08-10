@@ -20,28 +20,18 @@ namespace HangfireService.Core.Jobs
             LogContext.PushProperty("ClassName", GetType().Name);
         }
 
-        public Task Execute(JobDetail jobDetail)
+        public async Task<object> ExecuteAsync(JobDetail jobDetail)
         {
-            var jobGuid = Guid.NewGuid();
-            LogContext.PushProperty("JobGuid", jobGuid);
-            LogContext.PushProperty("JobName", jobDetail.JobName);
-            try
-            {
-                _logger.LogInformation($"{jobGuid} || {DateTime.Now:HH:mm:ss} || {jobDetail.JobName} running......");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-            }
-
-            return Task.CompletedTask;
+            var result = $"{DateTime.Now:HH:mm:ss} || {jobDetail.JobName} running......";
+            _logger.LogInformation(result);
+            return result;
         }
 
         [Job]
         [DisplayName("Call LiveJob")]
         public void Action(PerformContext context = null, IJobCancellationToken cancellationToken = null)
         {
-            _ = Execute(new JobDetail() { JobName = "LiveJob" });
+            _ = ExecuteAsync(new JobDetail() { JobName = "LiveJob" });
         }
     }
 }

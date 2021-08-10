@@ -9,7 +9,7 @@ using Serilog.Context;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-
+using Newtonsoft.Json;
 
 namespace HangfireService.Core.Jobs
 {
@@ -26,26 +26,28 @@ namespace HangfireService.Core.Jobs
             _thirdPartyManager = provider.GetRequiredService<ThirdPartyManager>();
         }
 
-        public async Task Execute(JobDetail jobDetail)
+        public async Task<object> ExecuteAsync(JobDetail jobDetail)
         {
-            var jobGuid = Guid.NewGuid();
-            LogContext.PushProperty("JobGuid", jobGuid);
-            LogContext.PushProperty("JobName", jobDetail.JobName);
             try
             {
-                _logger.LogInformation($"{jobGuid} || {DateTime.Now:HH:mm:ss} || {jobDetail.JobName} running......");
+                _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobDetail.JobName} running......");
 
                 var todoList = await _mainDBDataLayer.GetTpDetailTodoList(Status: jobDetail.Parameters?[0] ?? "0");
-                var result = await _thirdPartyManager.GetTpBetRecordDetailAsync(todoList);
+                var result = _thirdPartyManager.GetTpBetRecordDetailAsync(todoList);
 
-                _logger.LogInformation($"Todo: {todoList.Distinct(p => new { p.TpId, p.GameType, p.TransId }).Count()} " +
-                    $"|| Success: {result.Count(i => i)} " +
-                    $"|| Fail: {result.Count(i => !i)}");
+                return JsonConvert.SerializeObject(new
+                {
+                    Todo = todoList.Distinct(p => new { p.TpId, p.GameType, p.TransId }).Count(),
+                    Success = result.Count(i => i),
+                    Fail = result.Count(i => !i),
+                });
             }
             catch (Exception ex)
-            {
+            {            
                 _logger.LogError(ex, ex.Message);
+                return JsonConvert.SerializeObject(ex);
             }
-        }      
+          
+        }
     }
 }

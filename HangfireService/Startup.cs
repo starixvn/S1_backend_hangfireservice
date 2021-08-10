@@ -42,7 +42,7 @@ namespace HangfireService
             {
                 DashboardTitle = "AI.Lab",
                 AppPath = Configuration.GetValue<string>("AdminSiteUrl"),
-                Authorization = new[] { new AdminSiteAuthorizationFilter() }
+                Authorization = new[] { new LocalAuthorizationFilter() }
             });
             ScheduledJobManager.Setup(provider, Configuration);
 
