@@ -6,3 +6,5 @@ HangfireService/obj
 HangfireService/.config
 HangfireService/Properties/PublishProfiles
 *.user
+HangfireService.IntegrationTest/bin
+HangfireService.IntegrationTest/obj

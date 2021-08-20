@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Net.Mime;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -55,7 +56,21 @@ namespace HangfireService.Core.ThirdParty
                 _logger.LogError(e, e.Message);
                 throw;
             }
+        }
 
+        protected async Task<HttpResponseMessage> HttpPostAsync(string url, string parameters, string mediaType)
+        {
+            try
+            {
+                var response = await _httpHelper.GetClient().PostAsync(url, new StringContent(parameters, Encoding.UTF8, mediaType));
+                response.EnsureSuccessStatusCode();
+                return response;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, e.Message);
+                throw;
+            }
         }
 
         protected T FromJson<T>(string jsonString)
