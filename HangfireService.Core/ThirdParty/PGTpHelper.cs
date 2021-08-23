@@ -30,14 +30,14 @@ namespace HangfireService.Core.ThirdParty
         {
             var result = new List<bool>();
             var detailResult = await GetBetDetailByList(todoList);
-            foreach (var todo in todoList)
+            Parallel.ForEach(todoList, async todo => 
             {
                 try
                 {
-                    var data = detailResult.data.FirstOrDefault(item => item.betId.ToString() == todo.TransId);
+                    var data = detailResult?.data?.FirstOrDefault(item => item.betId.ToString() == todo.TransId);
                     var detail = new TpBetRecordDetail(todo)
                     {
-                        IsSuccess = detailResult.error == null && data != null,
+                        IsSuccess = detailResult?.error == null && data != null,
                         Detail = data,
                     };
 
@@ -59,7 +59,8 @@ namespace HangfireService.Core.ThirdParty
                     _logger.LogError(e, e.Message);
                     result.Add(false);
                 }
-            }
+
+            });
             return result;
         }
 
@@ -77,9 +78,7 @@ namespace HangfireService.Core.ThirdParty
                 using StreamReader sr = new StreamReader(s);
                 using JsonReader reader = new JsonTextReader(sr);
                 JsonSerializer serializer = new JsonSerializer();
-                var response = serializer.Deserialize<GetBetDetailsResponse>(reader);
-
-                return response;
+                return serializer.Deserialize<GetBetDetailsResponse>(reader);
             }
             catch (Exception e)
             {

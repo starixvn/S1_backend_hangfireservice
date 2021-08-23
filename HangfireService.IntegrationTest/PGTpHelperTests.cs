@@ -1,6 +1,8 @@
+using Dapper;
 using FluentAssertions;
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Models.DBs;
+using HangfireService.Core.Models.Enums;
 using HangfireService.Core.ThirdParty;
 using HangfireService.IntegrationTest.Stubs;
 using Microsoft.Extensions.Configuration;
@@ -21,6 +23,8 @@ namespace HangfireService.IntegrationTest
         private PGTpHelper _tpHelper;
 
         private IConfiguration _configuration;
+
+        private MySqlClient _dbClient;
 
         [SetUp]
         public void Setup()
@@ -45,54 +49,40 @@ namespace HangfireService.IntegrationTest
             var provider = services.BuildServiceProvider();
 
             _tpHelper = new PGTpHelper(provider);
+            _dbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Main);
         }
 
         [Test]
         public void GetTpBetRecordDetailTest()
         {
-            var todoList = new List<TpDetailTodo>
+            var todoList = new List<TpDetailTodo>();
+            var TransIdList = new List<string>
             {
-                {
-                    new TpDetailTodo
-                    {
-                        TpId=14,
-                        GameType =17,
-                        TransId ="1428627374543126528",
-                    }
-                },
-                {
-                    new TpDetailTodo
-                    {
-                        TpId=14,
-                        GameType =17,
-                        TransId ="1428627363730214912",
-                    }
-                },
-                {
-                    new TpDetailTodo
-                    {
-                        TpId=14,
-                        GameType =17,
-                        TransId ="1428627360982941696",
-                    }
-                },
-                {
-                    new TpDetailTodo
-                    {
-                        TpId=14,
-                        GameType =17,
-                        TransId ="1428627299976794112",
-                    }
-                },
-                {
-                    new TpDetailTodo
-                    {
-                        TpId=14,
-                        GameType =17,
-                        TransId ="1428627294218010624",
-                    }
-                },
+                "1428627374543126528",
+                "1428627363730214912",
+                "1428627360982941696",
+                "1428627299976794112",
+                "1428627294218010624",
             };
+            
+            foreach (var transId in TransIdList)
+            {
+                var todo = new TpDetailTodo
+                {
+                    TpId = 14,
+                    GameType = 17,
+                    TransId = transId,
+                    SiteId = 1,
+                    CurrencyId = 2,
+                    TpUserName = "test",
+                    CustId = 1,
+                    UserName = "test",
+                };
+                
+                _dbClient.Query<int>("Service_TpDetailTodo_Ins", parameters: new DynamicParameters(todo));
+                todoList.Add(todo);
+            }
+
             var result = _tpHelper.GetTpBetRecordDetailAsync(todoList).ConfigureAwait(false).GetAwaiter().GetResult();
             var actual = result.Where(item => item);
             actual.Count().Should().Be(todoList.Count);
