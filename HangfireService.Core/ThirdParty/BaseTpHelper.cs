@@ -1,15 +1,12 @@
 ﻿using HangfireService.Core.DataLayers;
 using HangfireService.Core.Helpers;
 using HangfireService.Core.Models.DBs;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Net.Http;
-using System.Net.Mime;
 using System.Text;
 using System.Threading.Tasks;
 
