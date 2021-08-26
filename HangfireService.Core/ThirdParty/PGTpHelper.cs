@@ -67,7 +67,7 @@ namespace HangfireService.Core.ThirdParty
             try
             {
                 var tpSetting = _thirdPartyModel.TpSetting;
-                var url = $"{tpSetting["ApiUrl"]}/external-datagrabber/Bet/v4/GetBetDetails?trace_id={Guid.NewGuid()}";
+                var url = $"{tpSetting["ApiUrl"]}-datagrabber/Bet/v4/GetBetDetails?trace_id={Guid.NewGuid()}";
                 var parameters = new StringBuilder($"operator_token={tpSetting["operator_token"]}&secret_key={tpSetting["secret_key"]}&bet_ids=");
                 parameters.AppendJoin("&bet_ids=", todoList.Select(item => item.TransId));
 
