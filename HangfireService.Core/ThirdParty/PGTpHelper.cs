@@ -26,12 +26,12 @@ namespace HangfireService.Core.ThirdParty
 
         public async Task<IEnumerable<bool>> GetTpBetRecordDetailAsync(IEnumerable<TpDetailTodo> todoList)
         {
-            var result = new List<bool>();
-            var detailResult = await GetBetDetailByList(todoList);
-            Parallel.ForEach(todoList, async todo => 
+            var result = new List<bool>();          
+            Parallel.ForEach(todoList, todo => 
             {
                 try
                 {
+                    var detailResult = GetBetDetailByList(todo).Result;
                     var data = detailResult?.data?.FirstOrDefault(item => item.betId.ToString() == todo.TransId);
                     var detail = new TpBetRecordDetail(todo)
                     {
@@ -42,13 +42,13 @@ namespace HangfireService.Core.ThirdParty
                     if (detail.IsSuccess)
                     {
                         //成功新增Detail
-                        var insert = await AddTpBetRecordDetail(detail);
+                        var insert = AddTpBetRecordDetail(detail).Result;
                         result.Add(insert);
                     }
                     else
                     {
                         //失敗更新todo status
-                        var update = await UpdateTpDetailTodo(detail);
+                        var update = UpdateTpDetailTodo(detail).Result;
                         result.Add(update);
                     }
                 }
@@ -62,16 +62,15 @@ namespace HangfireService.Core.ThirdParty
             return result;
         }
 
-        private async Task<GetBetDetailsResponse> GetBetDetailByList(IEnumerable<TpDetailTodo> todoList)
+        private async Task<GetBetDetailsResponse> GetBetDetailByList(TpDetailTodo todo)
         {
             try
             {
                 var tpSetting = _thirdPartyModel.TpSetting;
                 var url = $"{tpSetting["ApiUrl"]}-datagrabber/Bet/v4/GetBetDetails?trace_id={Guid.NewGuid()}";
-                var parameters = new StringBuilder($"operator_token={tpSetting["operator_token"]}&secret_key={tpSetting["secret_key"]}&bet_ids=");
-                parameters.AppendJoin("&bet_ids=", todoList.Select(item => item.TransId));
+                var parameters = $"operator_token={tpSetting["operator_token"]}&secret_key={tpSetting["secret_key"]}&bet_ids={todo.TransId}"; 
+                var result = await HttpPostAsync(url, parameters, "application/x-www-form-urlencoded");
 
-                var result = await HttpPostAsync(url, parameters.ToString(), "application/x-www-form-urlencoded");
                 using Stream s = await result.Content.ReadAsStreamAsync();
                 using StreamReader sr = new StreamReader(s);
                 using JsonReader reader = new JsonTextReader(sr);
