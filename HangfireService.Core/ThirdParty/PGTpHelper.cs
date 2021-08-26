@@ -31,8 +31,15 @@ namespace HangfireService.Core.ThirdParty
             {
                 try
                 {
-                    var detailResult = GetBetDetailByList(todo).Result;
-                    var data = detailResult?.data?.FirstOrDefault(item => item.betId.ToString() == todo.TransId);
+                    var detailResult = GetBetDetailByTransID(todo).Result;
+                    var data = detailResult?.data?.FirstOrDefault();
+                    //資料會延遲3-5分鐘，先回傳成功等待下次處理
+                    if (detailResult?.error == null && data == null)
+                    {
+                        result.Add(true);
+                        return;
+                    }
+
                     var detail = new TpBetRecordDetail(todo)
                     {
                         IsSuccess = detailResult?.error == null && data != null,
@@ -48,6 +55,7 @@ namespace HangfireService.Core.ThirdParty
                     else
                     {
                         //失敗更新todo status
+                        _logger.LogWarning($"PG Error: {JsonConvert.SerializeObject(detailResult)}");
                         var update = UpdateTpDetailTodo(detail).Result;
                         result.Add(update);
                     }
@@ -62,7 +70,7 @@ namespace HangfireService.Core.ThirdParty
             return result;
         }
 
-        private async Task<GetBetDetailsResponse> GetBetDetailByList(TpDetailTodo todo)
+        private async Task<GetBetDetailsResponse> GetBetDetailByTransID(TpDetailTodo todo)
         {
             try
             {
