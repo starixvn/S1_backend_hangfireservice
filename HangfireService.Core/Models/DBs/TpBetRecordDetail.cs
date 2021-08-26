@@ -10,6 +10,8 @@ namespace HangfireService.Core.Models.DBs
 
         public int GameType { get; set; }
 
+        public int CurrencyId { get; set; }
+
         public string TransId { get; set; }
 
         public object Detail 
@@ -31,6 +33,7 @@ namespace HangfireService.Core.Models.DBs
             TpId = todo.TpId;
             GameType = todo.GameType;
             TransId = todo.TransId;
+            CurrencyId = todo.CurrencyId;
         }
     }
 }
