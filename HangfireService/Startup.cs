@@ -20,7 +20,7 @@ namespace HangfireService
         {
             services
                 .AddDatabaseConnection(Configuration)
-                .AddAdminSiteAuth()
+                //.AddAdminSiteAuth()
                 .RegisterServices(Configuration)
                 .AddHangfireService(Configuration)
                 .RegisterScheduledJobs(Configuration)
@@ -35,13 +35,14 @@ namespace HangfireService
             }
 
             app.UseRouting();
-            app.UseAuthentication();
-            app.UseAuthorization();
+            //app.UseAuthentication();
+            //app.UseAuthorization();
 
             app.UseHangfireDashboard(pathMatch: "", options: new DashboardOptions()
             {
                 DashboardTitle = "AI.Lab",
-                AppPath = Configuration.GetValue<string>("AdminSiteUrl"),
+                AppPath = null,
+                //AppPath = Configuration.GetValue<string>("AdminSiteUrl"),
                 Authorization = new[] { new LocalAuthorizationFilter() }
             });
             ScheduledJobManager.Setup(provider, Configuration);

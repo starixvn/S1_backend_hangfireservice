@@ -15,8 +15,6 @@ namespace HangfireService.Core.ThirdParty
     {
         private readonly ILogger<ThirdPartyManager> _logger;
 
-        private readonly Dictionary<int, Func<IEnumerable<TpDetailTodo>, Task<IEnumerable<bool>>>> _tpHandler;
-
         private readonly ReportDBDataLayer _reportDBDataLayer;
 
         private readonly MainDBDataLayer _mainDBDataLayer;
@@ -26,33 +24,25 @@ namespace HangfireService.Core.ThirdParty
             _logger = provider.GetRequiredService<ILogger<ThirdPartyManager>>();
             _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
             _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
-
-            _tpHandler = new Dictionary<int, Func<IEnumerable<TpDetailTodo>, Task<IEnumerable<bool>>>>();
-            foreach (var tp in provider.GetServices<ITpHelper>())
-            {
-                _tpHandler.Add(tp.TpId, tp.GetTpBetRecordDetailAsync);
-            }
         }
 
-        public IEnumerable<bool> GetTpBetRecordDetailAsync(IEnumerable<TpDetailTodo> todoList)
+        public IEnumerable<bool> TpNotImplemented(IEnumerable<TpDetailTodo> todoList, IEnumerable<int> excludesTpList)
         {
-           
+            var result = new List<bool>();
             var tasks = new List<Task<IEnumerable<bool>>>();
             foreach (var group in todoList.GroupBy(tp => tp.TpId))
             {
-                if (_tpHandler.TryGetValue(group.Key, out var action))
+                if (excludesTpList.Contains(group.Key))
                 {
-                    var detail = action.Invoke(group);
-                    tasks.Add(detail);
+                    result.AddRange(group.Select(item => true));
                 }
                 else
                 {
-                    var update = ThirdPartyNoAction(group);
+                    var update = UpdateTpDetailTodoToSuccess(group);
                     tasks.Add(update);
                 }              
             }
             Task.WhenAll(tasks);
-            var result = new List<bool>();
             foreach (var task in tasks)
             {
                 result.AddRange(task.Result);
@@ -65,7 +55,7 @@ namespace HangfireService.Core.ThirdParty
             return _reportDBDataLayer.GetAllTpList();
         }
 
-        private async Task<IEnumerable<bool>> ThirdPartyNoAction(IEnumerable<TpDetailTodo> todoList)
+        private async Task<IEnumerable<bool>> UpdateTpDetailTodoToSuccess(IEnumerable<TpDetailTodo> todoList)
         {
             var result = new List<bool>();
             Parallel.ForEach(todoList, async todo =>
@@ -83,6 +73,12 @@ namespace HangfireService.Core.ThirdParty
             return result;
         }
 
+        public async Task<IEnumerable<bool>> ResetTpDetailTodo(IEnumerable<TpDetailTodo> todoList)
+        {
+            var count = todoList.Count();
+            var result = await _mainDBDataLayer.ResetTpDetailTodo();
+            return todoList.Select(item => count == result);
+        }
     }
 }
 

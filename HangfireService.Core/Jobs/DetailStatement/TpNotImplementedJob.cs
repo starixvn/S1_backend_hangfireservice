@@ -13,13 +13,13 @@ using Newtonsoft.Json;
 
 namespace HangfireService.Core.Jobs
 {
-    public class DetailStatementJob : BaseJob, IScheduledJob
+    public class TpNotImplementedJob : BaseJob, IScheduledJob
     {
         private readonly MainDBDataLayer _mainDBDataLayer;
 
         private readonly ThirdPartyManager _thirdPartyManager;
 
-        public DetailStatementJob(IServiceProvider provider) : base(provider)
+        public TpNotImplementedJob(IServiceProvider provider) : base(provider)
         {
             LogContext.PushProperty("ClassName", GetType().Name);
             _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
@@ -32,12 +32,13 @@ namespace HangfireService.Core.Jobs
             {
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobDetail.JobName} running......");
 
-                var todoList = await _mainDBDataLayer.GetTpDetailTodoList(Status: jobDetail.Parameters?[0] ?? "0");
-                var result = _thirdPartyManager.GetTpBetRecordDetailAsync(todoList);
+                var todoList = await _mainDBDataLayer.GetTpDetailTodoListByStatus(0);
+                var excludesTpList = jobDetail.Parameters.Select(item => int.Parse(item));
+                var result =  _thirdPartyManager.TpNotImplemented(todoList , excludesTpList);
 
                 return JsonConvert.SerializeObject(new
                 {
-                    Todo = todoList.Distinct(p => new { p.TpId, p.GameType, p.TransId }).Count(),
+                    Todo = todoList.Count(),
                     Success = result.Count(i => i),
                     Fail = result.Count(i => !i),
                 });

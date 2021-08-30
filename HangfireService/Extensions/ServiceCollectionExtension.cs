@@ -68,8 +68,11 @@ namespace HangfireService.Extensions
             services.AddHangfireConsoleExtensions();
             services.AddHangfireServer(config =>
             {
+                var jobOptions = new List<JobDetail>();
+                configuration.GetSection("Jobs").Bind(jobOptions);      
                 config.SchedulePollingInterval = TimeSpan.FromSeconds(15);
-                config.WorkerCount = 1;
+                //config.WorkerCount = Environment.ProcessorCount * 5;
+                config.Queues = jobOptions.Select(item => item.Group.ToLower()).ToArray();
             });
             return services;
         }

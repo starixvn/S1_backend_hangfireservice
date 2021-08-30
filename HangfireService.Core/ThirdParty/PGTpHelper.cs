@@ -26,8 +26,8 @@ namespace HangfireService.Core.ThirdParty
 
         public async Task<IEnumerable<bool>> GetTpBetRecordDetailAsync(IEnumerable<TpDetailTodo> todoList)
         {
-            var result = new List<bool>();          
-            Parallel.ForEach(todoList, todo => 
+            var result = new List<bool>();
+            Parallel.ForEach(todoList, todo =>
             {
                 try
                 {
@@ -76,7 +76,7 @@ namespace HangfireService.Core.ThirdParty
             {
                 var tpSetting = _thirdPartyModel.TpSetting;
                 var url = $"{tpSetting["ApiUrl"]}-datagrabber/Bet/v4/GetBetDetails?trace_id={Guid.NewGuid()}";
-                var parameters = $"operator_token={tpSetting["operator_token"]}&secret_key={tpSetting["secret_key"]}&bet_ids={todo.TransId}"; 
+                var parameters = $"operator_token={tpSetting["operator_token"]}&secret_key={tpSetting["secret_key"]}&bet_ids={todo.TransId}";
                 var result = await HttpPostAsync(url, parameters, "application/x-www-form-urlencoded");
 
                 using Stream s = await result.Content.ReadAsStreamAsync();
