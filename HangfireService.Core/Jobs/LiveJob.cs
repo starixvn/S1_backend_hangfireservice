@@ -20,9 +20,10 @@ namespace HangfireService.Core.Jobs
             LogContext.PushProperty("ClassName", GetType().Name);
         }
 
-        public async Task<object> ExecuteAsync(JobDetail jobDetail)
+        [DisplayName("{0}")]
+        public async Task<object> ExecuteAsync(string jobName, JobDetail jobDetail)
         {
-            var result = $"{DateTime.Now:HH:mm:ss} || {jobDetail.JobName} running......";
+            var result = $"{DateTime.Now:HH:mm:ss} || {jobName} running......";
             _logger.LogInformation(result);
             return result;
         }
@@ -31,7 +32,7 @@ namespace HangfireService.Core.Jobs
         [DisplayName("Call LiveJob")]
         public void Action(PerformContext context = null, IJobCancellationToken cancellationToken = null)
         {
-            _ = ExecuteAsync(new JobDetail() { JobName = "LiveJob" });
+            _ = ExecuteAsync("Call LiveJob", new JobDetail() { JobName = "LiveJob" });
         }
     }
 }

@@ -10,6 +10,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using System.ComponentModel;
 
 namespace HangfireService.Core.Jobs
 {
@@ -26,11 +27,12 @@ namespace HangfireService.Core.Jobs
             _thirdPartyManager = provider.GetRequiredService<ThirdPartyManager>();
         }
 
-        public async Task<object> ExecuteAsync(JobDetail jobDetail)
+        [DisplayName("{0}")]
+        public async Task<object> ExecuteAsync(string jobName, JobDetail jobDetail)
         {
             try
             {
-                _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobDetail.JobName} running......");
+                _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
 
                 var todoList = await _mainDBDataLayer.GetTpDetailTodoListByStatus(0);
                 var excludesTpList = jobDetail.Parameters.Select(item => int.Parse(item));

@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using HangfireService.Core.ThirdParty.Interfaces;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace HangfireService.Core.Jobs
 {
@@ -31,7 +32,8 @@ namespace HangfireService.Core.Jobs
             }
         }
 
-        public async Task<object> ExecuteAsync(JobDetail jobDetail)
+        [DisplayName("{0}")]
+        public async Task<object> ExecuteAsync(string jobName, JobDetail jobDetail)
         {
             try
             {              
@@ -42,7 +44,7 @@ namespace HangfireService.Core.Jobs
                 }
 
                 LogContext.PushProperty("tpId", tpId);
-                _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobDetail.JobName} running......");
+                _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
 
                 var todoList = await _mainDBDataLayer.GetTpDetailTodoListByTpId(tpId);
                 var result =  await tpHelper.GetTpBetRecordDetailAsync(todoList);
