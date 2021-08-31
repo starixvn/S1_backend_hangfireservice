@@ -34,14 +34,16 @@ namespace HangfireService.Core.Jobs
         public async Task<object> ExecuteAsync(JobDetail jobDetail)
         {
             try
-            {
-                _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobDetail.JobName} running......");
+            {              
                 var tpId = int.Parse(jobDetail.Parameters[0]);
                 if (!_tpHandler.TryGetValue(tpId, out ITpHelper tpHelper))
                 {
                     throw new NotImplementedException($"{tpId} NotImplemented");
                 }
-                
+
+                LogContext.PushProperty("tpId", tpId);
+                _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobDetail.JobName} running......");
+
                 var todoList = await _mainDBDataLayer.GetTpDetailTodoListByTpId(tpId);
                 var result =  await tpHelper.GetTpBetRecordDetailAsync(todoList);
 
@@ -56,8 +58,7 @@ namespace HangfireService.Core.Jobs
             {            
                 _logger.LogError(ex, ex.Message);
                 return JsonConvert.SerializeObject(ex);
-            }
-          
+            }         
         }
     }
 }
