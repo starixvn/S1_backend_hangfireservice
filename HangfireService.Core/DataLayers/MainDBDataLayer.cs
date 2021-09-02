@@ -4,6 +4,7 @@ using HangfireService.Core.Models.Enums;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -19,7 +20,7 @@ namespace HangfireService.Core.DataLayers
         }
 
         public Task<IEnumerable<TpDetailTodo>> GetTpDetailTodoListByStatus(int Status)
-        {   
+        {
             return _dbClient.QueryAsync<TpDetailTodo>("Service_TpDetailTodo_Get", parameters: new DynamicParameters(new { Status }));
         }
 
@@ -43,6 +44,14 @@ namespace HangfireService.Core.DataLayers
         public async Task<int> ResetTpDetailTodo()
         {
             return await _dbClient.ExecuteAsync("Service_TpDetailTodo_Reset");
+        }
+
+        public async Task<int> DeleteTpNotImplemented(IEnumerable<string> tpIds)
+        {
+            var sql = "DELETE FROM TpDetailTodo WHERE TpId NOT IN @tpIds;";
+            var parameters = new DynamicParameters();
+            parameters.Add("tpIds", tpIds);
+            return await _dbClient.ExecuteAsync(sql, CommandType.Text, parameters);
         }
     }
 }

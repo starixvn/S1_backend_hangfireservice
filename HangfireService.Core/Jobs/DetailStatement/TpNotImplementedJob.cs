@@ -16,14 +16,11 @@ namespace HangfireService.Core.Jobs
 {
     public class TpNotImplementedJob : BaseJob, IScheduledJob
     {
-        private readonly MainDBDataLayer _mainDBDataLayer;
-
         private readonly ThirdPartyManager _thirdPartyManager;
 
         public TpNotImplementedJob(IServiceProvider provider) : base(provider)
         {
             LogContext.PushProperty("ClassName", GetType().Name);
-            _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
             _thirdPartyManager = provider.GetRequiredService<ThirdPartyManager>();
         }
 
@@ -34,15 +31,12 @@ namespace HangfireService.Core.Jobs
             {
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
 
-                var todoList = await _mainDBDataLayer.GetTpDetailTodoListByStatus(0);
-                var excludesTpList = jobDetail.Parameters.Select(item => int.Parse(item));
-                var result =  _thirdPartyManager.TpNotImplemented(todoList , excludesTpList);
+                var excludesTpList = jobDetail.Parameters.Select(item => item);
+                var result = await _thirdPartyManager.TpNotImplemented(excludesTpList);
 
                 return JsonConvert.SerializeObject(new
                 {
-                    Todo = todoList.Count(),
-                    Success = result.Count(i => i),
-                    Fail = result.Count(i => !i),
+                    Success = result,
                 });
             }
             catch (Exception ex)
