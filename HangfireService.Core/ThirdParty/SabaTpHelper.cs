@@ -17,11 +17,20 @@ namespace HangfireService.Core.ThirdParty
         public int TpId { get; } = 1;
 
         private readonly Dictionary<int, ThirdPartyModel> _thirdPartyModel;
+        private readonly List<int> _kenoGameTypeList;
 
         public SabaTpHelper(IServiceProvider provider) : base(provider)
         {
             _thirdPartyModel = provider.GetRequiredService<IEnumerable<ThirdPartyModel>>()
                 .Where(item => item.TpId == TpId).ToDictionary(item => item.SiteId, item => item);
+
+            _kenoGameTypeList = new List<int>
+            {
+                5,  // 202 OW Keno
+                19, // 220 OW Lottery
+                20, // 223 OW Togel 4D
+                23  // 222 OW Table Game
+            };
         }
 
         public async Task<IEnumerable<bool>> GetTpBetRecordDetailAsync(IEnumerable<TpDetailTodo> todoList)
@@ -31,38 +40,38 @@ namespace HangfireService.Core.ThirdParty
             //要注意第三方api可否接受Parallel，不支援可改用foreach
             Parallel.ForEach(todoList, todo =>
             {
-               try
-               {
-                   var detail = GetBetDetailByTransID(todo).Result;
-                   if (detail.IsSuccess)
-                   {
-                       //成功新增Detail
-                       var insert = AddTpBetRecordDetail(detail).Result;
-                       result.Add(insert);
-                   }
-                   else
-                   {
-                       //失敗更新todo status
-                       var update = UpdateTpDetailTodo(detail).Result;
-                       result.Add(update);
-                   }
-               }
-               catch (Exception e)
-               {
-                   _logger.LogError(e, e.Message);
-                   result.Add(false);
-               }
+                try
+                {
+                    var detail = GetBetDetail(todo).Result;
+                    if (detail.IsSuccess)
+                    {
+                        //成功新增Detail
+                        var insert = AddTpBetRecordDetail(detail).Result;
+                        result.Add(insert);
+                    }
+                    else
+                    {
+                        //失敗更新todo status
+                        var update = UpdateTpDetailTodo(detail).Result;
+                        result.Add(update);
+                    }
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, e.Message);
+                    result.Add(false);
+                }
             });
 
             return result;
         }
-
-        private async Task<TpBetRecordDetail> GetBetDetailByTransID(TpDetailTodo todo)
+        private async Task<TpBetRecordDetail> GetBetDetail(TpDetailTodo todo)
         {
             try
             {
                 var tpSetting = GetThirdPartyModel(todo.SiteId).TpSetting;
-                var url = $"{tpSetting["ApiUrl"]}/GetBetDetailByTransID/";
+                var url = _kenoGameTypeList.Contains(todo.GameType) ?
+                    $"{tpSetting["ApiUrl"]}/GetKenoDetailByTransID/" : $"{tpSetting["ApiUrl"]}/GetBetDetailByTransID/";
                 var parameters = new Dictionary<string, string>
                 {
                     { "vendor_id", tpSetting["VendorId"] },

@@ -4,6 +4,7 @@ using HangfireService.Core.DataLayers;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.ThirdParty;
+using HangfireService.Core.ThirdParty.Interfaces;
 using HangfireService.IntegrationTest.Stubs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,16 +19,15 @@ using System.Linq;
 
 namespace HangfireService.IntegrationTest
 {
-    public class Tests
+    public class PGTpHelperTests
     {
-        private PGTpHelper _tpHelper;
+        private readonly ITpHelper _tpHelper;
 
-        private IConfiguration _configuration;
+        private readonly IConfiguration _configuration;
 
-        private MySqlClient _dbClient;
+        private readonly MySqlClient _dbClient;
 
-        [SetUp]
-        public void Setup()
+        public PGTpHelperTests()
         {
             var services = new ServiceCollection();
             services.AddSingleton<IHostEnvironment>(new HostingEnvironment()
@@ -48,7 +48,7 @@ namespace HangfireService.IntegrationTest
             new StubStartUp(_configuration).ConfigureServices(services);
             var provider = services.BuildServiceProvider();
 
-            _tpHelper = new PGTpHelper(provider);
+            _tpHelper = provider.GetServices<ITpHelper>().First(p => p.TpId == 14);
             _dbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Main);
         }
 
@@ -83,9 +83,9 @@ namespace HangfireService.IntegrationTest
                 todoList.Add(todo);
             }
 
-            var result = _tpHelper.GetTpBetRecordDetailAsync(todoList).ConfigureAwait(false).GetAwaiter().GetResult();
-            var actual = result.Where(item => item);
-            actual.Count().Should().Be(todoList.Count);
+            var resultList = _tpHelper.GetTpBetRecordDetailAsync(todoList).ConfigureAwait(false).GetAwaiter().GetResult();
+            var alltrue = resultList.ToList().TrueForAll(b => b);
+            Assert.IsTrue(alltrue);
         }
 
     }
