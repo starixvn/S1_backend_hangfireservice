@@ -21,12 +21,12 @@ namespace HangfireService.Core.DataLayers
 
         public Task<IEnumerable<TpDetailTodo>> GetTpDetailTodoListByStatus(int Status)
         {
-            return _dbClient.QueryAsync<TpDetailTodo>("Service_TpDetailTodo_Get", parameters: new DynamicParameters(new { Status }));
+            return _dbClient.QueryAsync<TpDetailTodo>("Service_TpDetailTodo_Get_V1", parameters: new DynamicParameters(new { Status }));
         }
 
         public Task<IEnumerable<TpDetailTodo>> GetTpDetailTodoListByTpId(int TpId)
         {
-            return _dbClient.QueryAsync<TpDetailTodo>("Service_TpDetailTodo_ByTpId_Get", parameters: new DynamicParameters(new { TpId }));
+            return _dbClient.QueryAsync<TpDetailTodo>("Service_TpDetailTodo_ByTpId_Get_V1", parameters: new DynamicParameters(new { TpId }));
         }
 
         public async Task<bool> UpdateTpDetailTodo(TpBetRecordDetail detail)
@@ -37,7 +37,7 @@ namespace HangfireService.Core.DataLayers
 
         public async Task<bool> AddTpBetRecordDetail(TpBetRecordDetail detail)
         {
-            var result = await _dbClient.QueryFirstAsync<int>("Service_TpBetRecordDetail_Ins", parameters: new DynamicParameters(detail));
+            var result = await _dbClient.QueryFirstAsync<int>("Service_TpBetRecordDetail_Ins_V1", parameters: new DynamicParameters(detail));
             return result > 0;
         }
 

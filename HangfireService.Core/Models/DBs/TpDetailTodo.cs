@@ -21,5 +21,7 @@ namespace HangfireService.Core.Models.DBs
         public int SiteId { get; set; }
 
         public string TpUserName { get; set; }
+
+        public DateTime SettledTime { get; set; }
     }
 }
