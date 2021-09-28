@@ -71,7 +71,7 @@ namespace HangfireService.Core.ThirdParty
             {
                 var tpSetting = GetThirdPartyModel(todo.SiteId).TpSetting;
                 var url = _kenoGameTypeList.Contains(todo.GameType) ?
-                    $"{tpSetting["NewApiUrl"]}/GetKenoDetailByTransID/" : $"{tpSetting["NewApiUrl"]}/GetBetDetailByTransID/";
+                    $"{tpSetting["ApiUrl"]}/GetKenoDetailByTransID/" : $"{tpSetting["ApiUrl"]}/GetBetDetailByTransID/";
                 var parameters = new Dictionary<string, string>
                 {
                     { "vendor_id", tpSetting["VendorId"] },
