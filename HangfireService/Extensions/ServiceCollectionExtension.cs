@@ -96,6 +96,7 @@ namespace HangfireService.Extensions
             }
 
             services.AddSingleton<HttpHelper>();
+            services.AddSingleton<SecureHelper>();
             services.AddTransient<MainDBDataLayer>();
             services.AddTransient<WagerDBDataLayer>();
             services.AddTransient<ReportDBDataLayer>();
