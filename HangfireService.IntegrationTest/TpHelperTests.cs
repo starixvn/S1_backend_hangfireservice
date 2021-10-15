@@ -47,8 +47,6 @@ namespace HangfireService.IntegrationTest
 
             new StubStartUp(_configuration).ConfigureServices(services);
             _provider = services.BuildServiceProvider();
-
-            _tpHelper = _provider.GetServices<ITpHelper>().First(p => p.TpId == 14);
         }
 
         [SetUp]
