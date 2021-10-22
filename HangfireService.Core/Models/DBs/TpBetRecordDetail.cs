@@ -37,7 +37,7 @@ namespace HangfireService.Core.Models.DBs
             GameType = todo.GameType;
             TransId = todo.TransId;
             CurrencyId = todo.CurrencyId;
-            SettledTime = todo.SettledTime;
+            SettledTime = todo.SettledTime > DateTime.UtcNow.AddMonths(1) ? DateTime.UtcNow : todo.SettledTime; //體育結算日期會超過下個月改用現在日期
         }
     }
 }
