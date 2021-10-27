@@ -1,4 +1,7 @@
 ﻿using System;
+using System.IO;
+using System.IO.Compression;
+using System.Text;
 using Newtonsoft.Json;
 
 namespace HangfireService.Core.Models.DBs
@@ -21,7 +24,7 @@ namespace HangfireService.Core.Models.DBs
         {
             get 
             {
-                return JsonConvert.SerializeObject(_detail);
+                return GZipCompress();
             }
             set
             {
@@ -30,6 +33,19 @@ namespace HangfireService.Core.Models.DBs
         }
 
         private object _detail;
+
+        private string GZipCompress()
+        {
+            var data = JsonConvert.SerializeObject(_detail);
+            using var msi = new MemoryStream(Encoding.UTF8.GetBytes(data));
+            using var mso = new MemoryStream();
+            using (var gs = new GZipStream(mso, CompressionMode.Compress))
+            {
+                msi.CopyTo(gs);
+            }     
+            var gzip64 = Convert.ToBase64String(mso.ToArray());
+            return JsonConvert.SerializeObject(new { gzip64 });
+        }
 
         public TpBetRecordDetail(TpDetailTodo todo)
         {

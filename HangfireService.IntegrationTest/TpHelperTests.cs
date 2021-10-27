@@ -13,6 +13,7 @@ using Microsoft.Extensions.Hosting.Internal;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -26,6 +27,8 @@ namespace HangfireService.IntegrationTest
         private readonly ServiceProvider _provider;
 
         private ITpHelper _tpHelper;
+
+        private readonly MySqlClient _dbClient;
 
         public TpHelperTests()
         {
@@ -47,6 +50,8 @@ namespace HangfireService.IntegrationTest
 
             new StubStartUp(_configuration).ConfigureServices(services);
             _provider = services.BuildServiceProvider();
+
+            _dbClient = _provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Main);
         }
 
         [SetUp]
@@ -55,7 +60,7 @@ namespace HangfireService.IntegrationTest
             _tpHelper = null;
         }
 
-        [TestCase(7, 12, "202109281317528230506732100012", 1, 4, "dnova88x1360", 1360, "alicethb")]
+        [TestCase(1, 1, "113608583470", 1, 2, "DNova88_1170", 1170, "tottitest3")]
         public void GetTpBetRecordDetailTest(int tpId, int gameType, string transId, int siteId, int currencyId, string tpUserName, int custId, string userName)
         {
             _tpHelper = _provider.GetServices<ITpHelper>().First(p => p.TpId == tpId);
@@ -71,8 +76,15 @@ namespace HangfireService.IntegrationTest
                     TpUserName = tpUserName,
                     CustId = custId,
                     UserName = userName,
+                    SettledTime = DateTime.UtcNow
                 }
             };
+
+            foreach (var todo in todoList)
+            {
+                _dbClient.Query<int>("Service_TpDetailTodo_Ins", parameters: new DynamicParameters(todo));
+            }
+            
             var resultList = _tpHelper.GetTpBetRecordDetailAsync(todoList).ConfigureAwait(false).GetAwaiter().GetResult();
             var alltrue = resultList.ToList().TrueForAll(b => b);
             Assert.IsTrue(alltrue);
