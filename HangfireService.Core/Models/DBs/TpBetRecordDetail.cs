@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 
@@ -20,11 +21,19 @@ namespace HangfireService.Core.Models.DBs
 
         public DateTime SettledTime { get; set; }
 
-        public object Detail 
+        public byte[] BinaryDetail
         {
-            get 
+            get
             {
                 return GZipCompress();
+            }
+        }
+
+        public object Detail
+        {
+            get
+            {
+                return JsonConvert.SerializeObject(_detail);
             }
             set
             {
@@ -34,7 +43,7 @@ namespace HangfireService.Core.Models.DBs
 
         private object _detail;
 
-        private string GZipCompress()
+        private byte[] GZipCompress()
         {
             var data = JsonConvert.SerializeObject(_detail);
             using var msi = new MemoryStream(Encoding.UTF8.GetBytes(data));
@@ -42,9 +51,8 @@ namespace HangfireService.Core.Models.DBs
             using (var gs = new GZipStream(mso, CompressionMode.Compress))
             {
                 msi.CopyTo(gs);
-            }     
-            var gzip64 = Convert.ToBase64String(mso.ToArray());
-            return JsonConvert.SerializeObject(new { gzip64 });
+            }
+            return mso.ToArray();
         }
 
         public TpBetRecordDetail(TpDetailTodo todo)

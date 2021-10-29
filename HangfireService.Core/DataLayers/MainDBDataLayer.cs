@@ -37,7 +37,7 @@ namespace HangfireService.Core.DataLayers
 
         public async Task<bool> AddTpBetRecordDetail(TpBetRecordDetail detail)
         {
-            var result = await _dbClient.QueryFirstAsync<int>("Service_TpBetRecordDetail_Ins_V1", parameters: new DynamicParameters(detail));
+            var result = await _dbClient.QueryFirstAsync<int>("Service_TpBetRecordDetail_Ins_V2", parameters: new DynamicParameters(detail));
             return result > 0;
         }
 
