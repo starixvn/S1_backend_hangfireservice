@@ -106,5 +106,45 @@ namespace HangfireService.Core.DataLayers
             _logger.LogInformation($"{name} {sw.Elapsed:c}");
             return result;
         }
+
+        public IEnumerable<dynamic> Query(string name, object parameters = null)
+        {
+            var sw = Stopwatch.StartNew();
+            IEnumerable<dynamic> result;
+            try
+            {
+                using var connection = new MySqlConnection(_connectionString);
+                result = connection.Query(name, param: parameters, commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, name);
+                throw;
+            }
+
+            LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
+            _logger.LogInformation($"{name} {sw.Elapsed:c}");
+            return result;
+        }
+
+        public int Execute(string name, object parameters = null)
+        {
+            var sw = Stopwatch.StartNew();
+            int result;
+            try
+            {
+                using var connection = new MySqlConnection(_connectionString);
+                result = connection.Execute(name, param: parameters, commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, name);
+                throw;
+            }
+
+            LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
+            _logger.LogInformation($"{name} {sw.Elapsed:c}");
+            return result;
+        }
     }
 }

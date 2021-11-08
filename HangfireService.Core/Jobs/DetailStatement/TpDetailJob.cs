@@ -33,11 +33,11 @@ namespace HangfireService.Core.Jobs
         }
 
         [DisplayName("{0}")]
-        public async Task<object> ExecuteAsync(string jobName, JobDetail jobDetail)
+        public async Task<object> ExecuteAsync(string jobName, JobOption jobOption)
         {
             try
             {              
-                var tpId = int.Parse(jobDetail.Parameters[0]);
+                int tpId = Convert.ToInt32(jobOption.Parameters.First().Value);
                 if (!_tpHandler.TryGetValue(tpId, out ITpHelper tpHelper))
                 {
                     throw new NotImplementedException($"{tpId} NotImplemented");

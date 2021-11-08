@@ -42,6 +42,10 @@ namespace HangfireService.Extensions
             {
                 DataBase = DataBase.Wager
             });
+            services.AddSingleton(param => new MySqlClient(configuration.GetConnectionString("ConnectionStringArchive"), logger)
+            {
+                DataBase = DataBase.Archive
+            });
             return services;
         }
 
@@ -68,11 +72,10 @@ namespace HangfireService.Extensions
             services.AddHangfireConsoleExtensions();
             services.AddHangfireServer(config =>
             {
-                var jobOptions = new List<JobDetail>();
-                configuration.GetSection("Jobs").Bind(jobOptions);      
+                var jobGroups = new Dictionary<string, List<JobOption>>();
+                configuration.GetSection("ScheduledJob").Bind(jobGroups);      
                 config.SchedulePollingInterval = TimeSpan.FromSeconds(15);
-                //config.WorkerCount = Environment.ProcessorCount * 5;
-                config.Queues = jobOptions.Select(item => item.Group.ToLower()).ToArray();
+                config.Queues = jobGroups.Select(item => item.Key.ToLower()).ToArray();
             });
             return services;
         }
@@ -100,6 +103,7 @@ namespace HangfireService.Extensions
             services.AddTransient<MainDBDataLayer>();
             services.AddTransient<WagerDBDataLayer>();
             services.AddTransient<ReportDBDataLayer>();
+            services.AddTransient<ArchiveDBDataLayer>();
             services.AddSingleton<ThirdPartyManager>();
 
             return services;
@@ -107,9 +111,9 @@ namespace HangfireService.Extensions
 
         public static IServiceCollection RegisterScheduledJobs(this IServiceCollection services, IConfiguration configuration)
         {
-            var jobOptions = new List<JobDetail>();
-            configuration.GetSection("Jobs").Bind(jobOptions);
-            services.AddSingleton(provider => jobOptions);
+            var jobGroups = new Dictionary<string, List<JobOption>>();
+            configuration.GetSection("ScheduledJob").Bind(jobGroups);
+            services.AddSingleton(provider => jobGroups);
 
             var scheduledJobs = typeof(IScheduledJob).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IScheduledJob)));
             foreach (var job in scheduledJobs)
@@ -131,25 +135,6 @@ namespace HangfireService.Extensions
             {
                 services.AddSingleton(provider => (ITpHelper)Activator.CreateInstance(tp, new object[] { provider }));
             }
-
-            return services;
-        }
-
-        public static IServiceCollection AddAdminSiteAuth(this IServiceCollection services)
-        {
-            services
-                .AddDataProtection()
-                .DisableAutomaticKeyGeneration()
-                .PersistKeysToFileSystem(new DirectoryInfo("CookieKeys"))
-                .SetApplicationName("SharedCookieApp");
-
-            services
-                .AddAuthorization()
-                .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie(option =>
-                {
-                    option.Cookie.Name = ".backend";
-                });
 
             return services;
         }

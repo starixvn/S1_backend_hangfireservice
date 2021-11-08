@@ -46,12 +46,17 @@ namespace HangfireService.Core.DataLayers
             return await _dbClient.ExecuteAsync("Service_TpDetailTodo_Reset");
         }
 
-        public async Task<int> DeleteTpNotImplemented(IEnumerable<string> tpIds)
+        public async Task<int> DeleteTpNotImplemented(IEnumerable<int> tpIds)
         {
             var sql = "DELETE FROM TpDetailTodo WHERE TpId NOT IN @tpIds;";
             var parameters = new DynamicParameters();
             parameters.Add("tpIds", tpIds);
             return await _dbClient.ExecuteAsync(sql, CommandType.Text, parameters);
+        }
+
+        public int DeleteArchiveData(string sp, dynamic parameters)
+        {
+            return _dbClient.Execute(sp, parameters);
         }
     }
 }

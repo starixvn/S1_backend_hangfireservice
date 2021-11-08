@@ -28,7 +28,7 @@ namespace HangfireService.Core.Jobs
         }
 
         [DisplayName("{0}")]
-        public async Task<object> ExecuteAsync(string jobName, JobDetail jobDetail)
+        public async Task<object> ExecuteAsync(string jobName, JobOption jobOption)
         {
             try
             {

@@ -11,6 +11,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.ComponentModel;
+using System.Collections.Generic;
 
 namespace HangfireService.Core.Jobs
 {
@@ -25,13 +26,12 @@ namespace HangfireService.Core.Jobs
         }
 
         [DisplayName("{0}")]
-        public async Task<object> ExecuteAsync(string jobName, JobDetail jobDetail)
+        public async Task<object> ExecuteAsync(string jobName, JobOption jobOption)
         {
             try
             {
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
-
-                var excludesTpList = jobDetail.Parameters.Select(item => item);
+                var excludesTpList = jobOption.Parameters.Select(item => Convert.ToInt32(item.Value));
                 var result = await _thirdPartyManager.TpNotImplemented(excludesTpList);
 
                 return JsonConvert.SerializeObject(new

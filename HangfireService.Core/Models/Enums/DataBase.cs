@@ -9,5 +9,6 @@ namespace HangfireService.Core.Models.Enums
         Main, //ConnectionString
         Report,//ConnectionStringReport
         Wager,//ConnectionStringWager
+        Archive,//ConnectionStringArchive
     }
 }

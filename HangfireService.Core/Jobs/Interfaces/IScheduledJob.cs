@@ -7,6 +7,6 @@ namespace HangfireService.Core.Jobs.Interfaces
 {
     public interface IScheduledJob
     {
-        Task<object> ExecuteAsync(string jobName, JobDetail jobDetail);
+        Task<object> ExecuteAsync(string jobName, JobOption jobOption);
     }
 }

@@ -13,22 +13,25 @@ namespace HangfireService.Core.Jobs
     {
         public static void Setup(IServiceProvider provider, IConfiguration configuration)
         {
-            var jobOptions = new List<JobDetail>();
-            configuration.GetSection("Jobs").Bind(jobOptions);
+            var jobGroups = new Dictionary<string, List<JobOption>>();
+            configuration.GetSection("ScheduledJob").Bind(jobGroups);
 
             var jobManager = new RecurringJobManager();
-            foreach (var option in jobOptions)
-            {
-                if (option.Enable && option.Type == typeof(IScheduledJob).Name)
-                {
-                    var job = provider.GetServices<IScheduledJob>()
-                        .First(job => job.GetType().Name.Equals(option.ClassName, StringComparison.OrdinalIgnoreCase));
+            foreach (var jobGroup in jobGroups)
+            {          
+                foreach (var option in jobGroup.Value)
+                { 
+                    if (option.Enable && option.Type == typeof(IScheduledJob).Name)
+                    {
+                        var job = provider.GetServices<IScheduledJob>()
+                            .First(job => job.GetType().Name.Equals(option.ClassName, StringComparison.OrdinalIgnoreCase));
                     
-                    jobManager.AddOrUpdate(
-                      recurringJobId: option.JobName,
-                      methodCall: () => job.ExecuteAsync(option.JobName, option),
-                      cronExpression: option.Cron,
-                      queue:option.Group.ToLower());
+                        jobManager.AddOrUpdate(
+                          recurringJobId: option.JobName,
+                          methodCall: () => job.ExecuteAsync(option.JobName, option),
+                          cronExpression: option.Cron,
+                          queue: jobGroup.Key.ToLower());
+                    }
                 }
             }
         }
