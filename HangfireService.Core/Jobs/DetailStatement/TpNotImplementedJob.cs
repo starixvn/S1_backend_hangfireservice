@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.ComponentModel;
 using System.Collections.Generic;
+using Hangfire.Server;
+using Hangfire;
 
 namespace HangfireService.Core.Jobs
 {
@@ -21,16 +23,19 @@ namespace HangfireService.Core.Jobs
 
         public TpNotImplementedJob(IServiceProvider provider) : base(provider)
         {
-            LogContext.PushProperty("ClassName", GetType().Name);
+            LogContext.PushProperty("ClassName", GetType().Name); 
             _thirdPartyManager = provider.GetRequiredService<ThirdPartyManager>();
         }
 
         [DisplayName("{0}")]
-        public async Task<object> ExecuteAsync(string jobName, JobOption jobOption)
+        public async Task<object> ExecuteAsync(string jobName, JobOption jobOption , PerformContext context, IJobCancellationToken cancellationToken)
         {
+            var jobId = context.BackgroundJob.Id;
+            LogContext.PushProperty("jobId", jobId);
+
             try
             {
-                _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
+                _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} {jobId} running......");
                 var excludesTpList = jobOption.Parameters.Select(item => Convert.ToInt32(item.Value));
                 var result = await _thirdPartyManager.TpNotImplemented(excludesTpList);
 

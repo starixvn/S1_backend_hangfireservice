@@ -28,9 +28,10 @@ namespace HangfireService.Core.Jobs
                     
                         jobManager.AddOrUpdate(
                           recurringJobId: option.JobName,
-                          methodCall: () => job.ExecuteAsync(option.JobName, option),
+                          methodCall: () => job.ExecuteAsync(option.JobName, option, null,null),
                           cronExpression: option.Cron,
-                          queue: jobGroup.Key.ToLower());
+                          queue: jobGroup.Key.ToLower(),
+                          timeZone:TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time"));
                     }
                 }
             }

@@ -11,6 +11,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.ComponentModel;
+using Hangfire.Server;
+using Hangfire;
 
 namespace HangfireService.Core.Jobs
 {
@@ -28,12 +30,15 @@ namespace HangfireService.Core.Jobs
         }
 
         [DisplayName("{0}")]
-        public async Task<object> ExecuteAsync(string jobName, JobOption jobOption)
+        public async Task<object> ExecuteAsync(string jobName, JobOption jobOption , PerformContext context, IJobCancellationToken cancellationToken)
         {
+            var jobId = context.BackgroundJob.Id;
+            LogContext.PushProperty("jobId", jobId);
+
             try
             {
-                _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
-  
+                _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} {jobId} running......");
+
                 var todoList = await _mainDBDataLayer.GetTpDetailTodoListByStatus(-1);
                 var result =  await _thirdPartyManager.ResetTpDetailTodo(todoList);
 
