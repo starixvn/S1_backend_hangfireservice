@@ -13,7 +13,6 @@ using Hangfire.Server;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using Hangfire;
-using Microsoft.Extensions.Configuration;
 
 namespace HangfireService.Core.Jobs
 {
@@ -24,25 +23,16 @@ namespace HangfireService.Core.Jobs
 
         private readonly ReportDBDataLayer _reportDBDataLayer;
 
-        private readonly  IConfiguration _configuration;
-
-        private static List<JobOption> _archiveJobList;
-
+        private static List<JobOption> _archiveJobList = new();
 
         public ArchiveJob(IServiceProvider provider) : base(provider)
         {
-            LogContext.PushProperty("ClassName", GetType().Name);
-            _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
+            LogContext.PushProperty("ClassName", GetType().Name);         
+            _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();         
             _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
-            _configuration = provider.GetRequiredService<IConfiguration>();
-
-            var jobGroups = new Dictionary<string, List<JobOption>>();
-            _configuration.GetSection("ScheduledJob").Bind(jobGroups);
-
-            if (jobGroups.TryGetValue("Archive", out var jobGroupSetting))
-            {
-                _archiveJobList = JsonConvert.DeserializeObject<List<JobOption>>(JsonConvert.SerializeObject(jobGroupSetting));
-            }
+      
+            var jobGroups = provider.GetRequiredService<Dictionary<string,List<JobOption>>>();
+            jobGroups.TryGetValue("Archive", out _archiveJobList);      
         }
 
         [DisplayName("{0}")]
@@ -105,7 +95,7 @@ namespace HangfireService.Core.Jobs
                 {
                     Success = true,
                     Count = totalResult,
-                    Message = $"{jobName} {jobId} || archive {totalResult} data complete."
+                    Message = $"{jobName} {jobId} || archive {totalResult} data complete. || {beginAt:yyyy/MM/dd} {startTime:HH:mm}～{endTime:HH:mm}"
                 });
             }
             catch (OperationCanceledException ex)
@@ -159,12 +149,12 @@ namespace HangfireService.Core.Jobs
 
         private class ArchiveJobList : IInputDataList
         {      
-            public Dictionary<string, string> GetData()
+            public Dictionary<string, string>? GetData()
             {
-                return _archiveJobList.ToDictionary(f => f.JobName, f => f.JobName);
+                return _archiveJobList?.ToDictionary(f => f.JobName, f => f.JobName);
             }
 
-            public string GetDefaultValue()
+            public string? GetDefaultValue()
             {
                 return null;
             }
