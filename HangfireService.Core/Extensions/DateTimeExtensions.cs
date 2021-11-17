@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace HangfireService.Core.Extensions
+﻿namespace HangfireService.Core.Extensions
 {
     public static class DateTimeExtensions
     {

@@ -1,11 +1,10 @@
 using Dapper;
-using FluentAssertions;
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
-using HangfireService.Core.ThirdParty;
 using HangfireService.Core.ThirdParty.Interfaces;
-using HangfireService.IntegrationTest.Stubs;
+using HangfireService.Extensions;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -13,10 +12,6 @@ using Microsoft.Extensions.Hosting.Internal;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 
 namespace HangfireService.IntegrationTest
 {
@@ -26,14 +21,15 @@ namespace HangfireService.IntegrationTest
 
         private readonly ServiceProvider _provider;
 
-        private ITpHelper _tpHelper;
+        private ITpHelper? _tpHelper;
 
         private readonly MySqlClient _dbClient;
 
         public TpHelperTests()
         {
-            var services = new ServiceCollection();
-            services.AddSingleton<IHostEnvironment>(new HostingEnvironment()
+            var builder = WebApplication.CreateBuilder();
+
+            builder.Services.AddSingleton<IHostEnvironment>(new HostingEnvironment()
             {
                 EnvironmentName = Environments.Development,
             });
@@ -43,15 +39,21 @@ namespace HangfireService.IntegrationTest
                 .AddJsonFile("appsettings.json", false, false)
                 .AddJsonFile("appsettings.Local.json", false, false);
             _configuration = configBuilder.Build();
-            services.AddSingleton(_configuration);
+            builder.Services.AddSingleton(_configuration);
 
             var logger = Substitute.For<ILogger<MySqlClient>>();
-            services.AddTransient(p => logger);
+            builder.Services.AddTransient(p => logger);
+            builder.Services
+                .AddDatabaseConnection(builder.Configuration)
+                .RegisterServices(builder.Configuration)
+                .AddHangfireService(builder.Configuration)
+                .RegisterScheduledJobs(builder.Configuration)
+                .RegisterTpHelper();
 
-            new StubStartUp(_configuration).ConfigureServices(services);
-            _provider = services.BuildServiceProvider();
-
-            _dbClient = _provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Main);
+            var app = builder.Build();
+       
+            _dbClient = app.Services.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Main);
+            _provider = (ServiceProvider)app.Services;
         }
 
         [SetUp]

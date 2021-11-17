@@ -3,9 +3,6 @@ using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace HangfireService.Core.Jobs
 {

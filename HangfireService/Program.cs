@@ -1,47 +1,55 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
+using Hangfire;
+using HangfireService.Core.Jobs;
+using HangfireService.Extensions;
+using HangfireService.Extensions.ActionFilters;
 using Serilog;
 using Serilog.Exceptions;
-using System;
-using System.Linq;
 
-namespace HangfireService
+var builder = WebApplication.CreateBuilder(args);
+
+var excludesMessage = builder.Configuration.GetSection("ExcludesMessage").Get<string[]>();
+var excludesApiEndpoints = builder.Configuration.GetSection("ExcludesApiEndpoint").Get<string[]>();
+builder.Host.UseSerilog((context, Configuration) =>
 {
-    public class Program
-    {
-        private static IConfigurationRoot Configuration
-            => new ConfigurationBuilder()
-            .SetBasePath(AppContext.BaseDirectory)
-            .AddEnvironmentVariables()
-            .AddJsonFile($"appsettings.json", false, true)
-            .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", false, true)
-            .Build();
+    Configuration
+        .ReadFrom.Configuration(builder.Configuration)
+        .Enrich.FromLogContext()
+        .Filter.ByExcluding(c =>
+            c.Properties.Any(p =>
+                excludesApiEndpoints.Any(item => p.Value.ToString().Contains(item))
+                || excludesMessage.Any(item => c.MessageTemplate.ToString().Contains(item))))
+        .Enrich.WithExceptionDetails();
+});
 
-        public static void Main(string[] args)
-        {
-            CreateHostBuilder(args).Build().Run();
-        }
+// Add services to the container.
+builder.Services
+    .AddDatabaseConnection(builder.Configuration)
+    .RegisterServices(builder.Configuration)
+    .AddHangfireService(builder.Configuration)
+    .RegisterScheduledJobs(builder.Configuration)
+    .RegisterTpHelper();
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    var excludesMessage = Configuration.GetSection("ExcludesMessage").Get<string[]>();
-                    var excludesApiEndpoints = Configuration.GetSection("ExcludesApiEndpoint").Get<string[]>();
+var app = builder.Build();
 
-                    webBuilder.UseSerilog((hostContext, loggerConfiguration) =>
-                    {
-                        loggerConfiguration
-                            .ReadFrom.Configuration(Configuration)
-                            .Enrich.FromLogContext()
-                            .Filter.ByExcluding(c =>
-                                c.Properties.Any(p =>
-                                    excludesApiEndpoints.Any(item => p.Value.ToString().Contains(item))
-                                    || excludesMessage.Any(item => c.MessageTemplate.ToString().Contains(item))))
-                            .Enrich.WithExceptionDetails();
-                    })
-                    .UseStartup<Startup>();
-                });
-    }
+// Configure the HTTP request pipeline.
+if (app.Environment.EnvironmentName.Equals("Local"))
+{
+    app.UseDeveloperExceptionPage();
 }
+app.UseRouting();
+app.UseHangfireDashboard(pathMatch: "", options: new DashboardOptions()
+{
+    DashboardTitle = "AI.Lab",
+    AppPath = null,
+    Authorization = new[] { new LocalAuthorizationFilter() }
+});
+ScheduledJobManager.Setup(app.Services, builder.Configuration);
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapGet("/", async context =>
+    {
+        await context.Response.WriteAsync("OK.");
+    });
+});
+
+app.Run();

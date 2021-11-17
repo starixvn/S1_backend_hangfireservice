@@ -1,7 +1,4 @@
 ﻿using Microsoft.Extensions.Configuration;
-using System;
-using System.Net.Http;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace HangfireService.Core.Helpers
 {

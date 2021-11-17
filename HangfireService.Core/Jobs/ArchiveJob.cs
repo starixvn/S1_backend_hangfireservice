@@ -4,17 +4,12 @@ using HangfireService.Core.Models.Jobs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
-using System.Collections.Generic;
 using System.ComponentModel;
 using HangfireService.Core.Models.Options;
 using System.Diagnostics;
 using HangfireService.Core.Extensions;
 using Hangfire.Server;
-using System.Threading;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using Hangfire;
@@ -29,8 +24,6 @@ namespace HangfireService.Core.Jobs
 
         private readonly ReportDBDataLayer _reportDBDataLayer;
 
-        private readonly ArchiveDBDataLayer _archiveDBDataLayer;
-
         private readonly  IConfiguration _configuration;
 
         private static List<JobOption> _archiveJobList;
@@ -41,7 +34,6 @@ namespace HangfireService.Core.Jobs
             LogContext.PushProperty("ClassName", GetType().Name);
             _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
             _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
-            _archiveDBDataLayer = provider.GetRequiredService<ArchiveDBDataLayer>();
             _configuration = provider.GetRequiredService<IConfiguration>();
 
             var jobGroups = new Dictionary<string, List<JobOption>>();
@@ -94,10 +86,10 @@ namespace HangfireService.Core.Jobs
 
                     Parallel.ForEach(data, item =>
                     {
-                        var insertResult = _archiveDBDataLayer.InsertArchiveData(option.InsertSP, item);
+                        var insertResult = _mainDBDataLayer.ExecuteSP(option.InsertSP, item);
                         if (insertResult > 0)
                         {
-                            var deleteResult = _mainDBDataLayer.DeleteArchiveData(option.DeleteSP, item);
+                            var deleteResult = _mainDBDataLayer.ExecuteSP(option.DeleteSP, item);
                             Interlocked.Add(ref batchResult, deleteResult);
                         }
                     });

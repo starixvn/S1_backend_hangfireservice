@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
+﻿using System.Data;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using Dapper;
 using HangfireService.Core.DataLayers.Interfaces;
 using HangfireService.Core.Models.Enums;

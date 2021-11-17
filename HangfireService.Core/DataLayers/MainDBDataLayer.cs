@@ -2,11 +2,7 @@
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace HangfireService.Core.DataLayers
 {
@@ -54,7 +50,7 @@ namespace HangfireService.Core.DataLayers
             return await _dbClient.ExecuteAsync(sql, CommandType.Text, parameters);
         }
 
-        public int DeleteArchiveData(string sp, dynamic parameters)
+        public int ExecuteSP(string sp, dynamic parameters)
         {
             return _dbClient.Execute(sp, parameters);
         }

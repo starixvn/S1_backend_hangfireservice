@@ -1,6 +1,5 @@
 ﻿namespace HangfireService.Core.Models.Options
 {
-
     public class ArchiveOption
     { 
         public int LiminNum { get; set; }

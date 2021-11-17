@@ -1,13 +1,7 @@
 ﻿using HangfireService.Core.DataLayers;
 using HangfireService.Core.Models.DBs;
-using HangfireService.Core.ThirdParty.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HangfireService.Core.ThirdParty
 {

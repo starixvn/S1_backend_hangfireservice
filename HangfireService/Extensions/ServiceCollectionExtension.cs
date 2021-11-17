@@ -9,14 +9,7 @@ using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.ThirdParty;
 using HangfireService.Core.ThirdParty.Interfaces;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Net.Http;
 
 namespace HangfireService.Extensions
 {
@@ -100,7 +93,6 @@ namespace HangfireService.Extensions
             services.AddTransient<MainDBDataLayer>();
             services.AddTransient<WagerDBDataLayer>();
             services.AddTransient<ReportDBDataLayer>();
-            services.AddTransient<ArchiveDBDataLayer>();
             services.AddSingleton<ThirdPartyManager>();
 
             return services;

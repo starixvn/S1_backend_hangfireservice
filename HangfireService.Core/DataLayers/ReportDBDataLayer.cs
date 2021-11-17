@@ -1,10 +1,6 @@
 ﻿using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace HangfireService.Core.DataLayers
 {

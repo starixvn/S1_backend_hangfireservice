@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace HangfireService.Core.Models.ThirdParty.PG
+﻿namespace HangfireService.Core.Models.ThirdParty.PG
 {
     public class GetBetDetailsResponse
     {

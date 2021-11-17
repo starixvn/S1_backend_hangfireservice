@@ -1,17 +1,11 @@
-﻿using HangfireService.Core.DataLayers;
-using HangfireService.Core.Jobs.Interfaces;
+﻿using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.ThirdParty;
-using HangfireService.Core.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.ComponentModel;
-using System.Collections.Generic;
 using Hangfire.Server;
 using Hangfire;
 
