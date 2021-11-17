@@ -7,8 +7,6 @@ using HangfireService.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Hosting.Internal;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NUnit.Framework;
@@ -17,9 +15,7 @@ namespace HangfireService.IntegrationTest
 {
     public class TpHelperTests
     {
-        private readonly IConfiguration _configuration;
-
-        private readonly ServiceProvider _provider;
+        private readonly IServiceProvider _provider;
 
         private ITpHelper? _tpHelper;
 
@@ -46,7 +42,7 @@ namespace HangfireService.IntegrationTest
             var app = builder.Build();
        
             _dbClient = app.Services.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Main);
-            _provider = (ServiceProvider)app.Services;
+            _provider = app.Services;
         }
 
         [SetUp]
