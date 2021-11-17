@@ -20,21 +20,17 @@ namespace HangfireService.Extensions
             var provider = services.BuildServiceProvider();
             var logger = provider.GetRequiredService<ILogger<MySqlClient>>();
 
-            services.AddSingleton(param => new MySqlClient(configuration.GetConnectionString("ConnectionString"), logger)
+            services.AddSingleton(param => new MySqlClient(configuration.GetConnectionString("MainDB"), logger)
             {
                 DataBase = DataBase.Main
             });
-            services.AddSingleton(param => new MySqlClient(configuration.GetConnectionString("ConnectionStringReport"), logger)
+            services.AddSingleton(param => new MySqlClient(configuration.GetConnectionString("ReportDB"), logger)
             {
                 DataBase = DataBase.Report
             });
-            services.AddSingleton(param => new MySqlClient(configuration.GetConnectionString("ConnectionStringWager"), logger)
+            services.AddSingleton(param => new MySqlClient(configuration.GetConnectionString("WagerDB"), logger)
             {
                 DataBase = DataBase.Wager
-            });
-            services.AddSingleton(param => new MySqlClient(configuration.GetConnectionString("ConnectionStringArchive"), logger)
-            {
-                DataBase = DataBase.Archive
             });
             return services;
         }
@@ -72,7 +68,8 @@ namespace HangfireService.Extensions
 
         public static IServiceCollection RegisterServices(this IServiceCollection services, IConfiguration configuration)
         {
-            if (configuration.GetValue<string>("ProxyHost") != null)
+            var proxyHost = configuration.GetValue<string?>("ProxyHost");
+            if (!string.IsNullOrEmpty(proxyHost))
             {
                 var proxy = new HttpClientHandler
                 {

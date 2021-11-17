@@ -27,19 +27,12 @@ namespace HangfireService.IntegrationTest
 
         public TpHelperTests()
         {
-            var builder = WebApplication.CreateBuilder();
-
-            builder.Services.AddSingleton<IHostEnvironment>(new HostingEnvironment()
-            {
-                EnvironmentName = Environments.Development,
+            var builder = WebApplication.CreateBuilder( new WebApplicationOptions() 
+            { 
+                EnvironmentName = "Local",
             });
-
-            var configBuilder = new ConfigurationBuilder();
-            configBuilder.SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", false, false)
-                .AddJsonFile("appsettings.Local.json", false, false);
-            _configuration = configBuilder.Build();
-            builder.Services.AddSingleton(_configuration);
+            var remoteUrl = builder.Configuration.GetValue<string>("ConfigService");
+            builder.Configuration.AddRemoteJsonConfig(remoteUrl);
 
             var logger = Substitute.For<ILogger<MySqlClient>>();
             builder.Services.AddTransient(p => logger);
