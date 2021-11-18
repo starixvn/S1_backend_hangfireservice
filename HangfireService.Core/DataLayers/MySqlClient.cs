@@ -23,7 +23,7 @@ namespace HangfireService.Core.DataLayers
             _logger = logger;
         }
 
-        public IEnumerable<T> Query<T>(string name, CommandType commandType = CommandType.StoredProcedure, DynamicParameters parameters = null, int? commandTimeout = null)
+        public IEnumerable<T> Query<T>(string name, CommandType commandType = CommandType.StoredProcedure, DynamicParameters? parameters = null, int? commandTimeout = null)
         {
             IEnumerable<T> result;
             var sw = Stopwatch.StartNew();
@@ -39,11 +39,11 @@ namespace HangfireService.Core.DataLayers
             }
 
             LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
-            _logger.LogInformation($"{name} {sw.Elapsed:c}");
+            _logger.LogDebug($"{name} {sw.Elapsed:c}");
             return result;
         }
 
-        public async Task<IEnumerable<T>> QueryAsync<T>(string name, CommandType commandType = CommandType.StoredProcedure, DynamicParameters parameters = null, int? commandTimeout = null)
+        public async Task<IEnumerable<T>> QueryAsync<T>(string name, CommandType commandType = CommandType.StoredProcedure, DynamicParameters? parameters = null, int? commandTimeout = null)
         {
             IEnumerable<T> result;
             var sw = Stopwatch.StartNew();
@@ -59,11 +59,11 @@ namespace HangfireService.Core.DataLayers
             }
 
             LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
-            _logger.LogInformation($"{name} {sw.Elapsed:c}");
+            _logger.LogDebug($"{name} {sw.Elapsed:c}");
             return result;
         }
 
-        public async Task<T> QueryFirstAsync<T>(string name, CommandType commandType = CommandType.StoredProcedure, DynamicParameters parameters = null, int? commandTimeout = null)
+        public async Task<T> QueryFirstAsync<T>(string name, CommandType commandType = CommandType.StoredProcedure, DynamicParameters? parameters = null, int? commandTimeout = null)
         {
             T result;
             var resultCode = string.Empty;
@@ -80,11 +80,11 @@ namespace HangfireService.Core.DataLayers
             }
 
             LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
-            _logger.LogInformation($"{name} {resultCode} {sw.Elapsed:c}");
+            _logger.LogDebug($"{name} {resultCode} {sw.Elapsed:c}");
             return result;
         }
 
-        public async Task<int> ExecuteAsync(string name, CommandType commandType = CommandType.StoredProcedure, DynamicParameters parameters = null)
+        public async Task<int> ExecuteAsync(string name, CommandType commandType = CommandType.StoredProcedure, DynamicParameters? parameters = null)
         {
             var sw = Stopwatch.StartNew();
             int result;
@@ -100,11 +100,11 @@ namespace HangfireService.Core.DataLayers
             }
 
             LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
-            _logger.LogInformation($"{name} {sw.Elapsed:c}");
+            _logger.LogDebug($"{name} {sw.Elapsed:c}");
             return result;
         }
 
-        public IEnumerable<dynamic> Query(string name, object parameters = null)
+        public IEnumerable<dynamic> Query(string name, object? parameters = null)
         {
             var sw = Stopwatch.StartNew();
             IEnumerable<dynamic> result;
@@ -120,18 +120,18 @@ namespace HangfireService.Core.DataLayers
             }
 
             LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
-            _logger.LogInformation($"{name} {sw.Elapsed:c}");
+            _logger.LogDebug($"{name} {sw.Elapsed:c}");
             return result;
         }
 
-        public int Execute(string name, object parameters = null)
+        public int Execute(string name, object? parameters = null, IDbTransaction? trans = null)
         {
             var sw = Stopwatch.StartNew();
             int result;
             try
             {
                 using var connection = new MySqlConnection(_connectionString);
-                result = connection.Execute(name, param: parameters, commandType: CommandType.StoredProcedure);
+                result = connection.Execute(name, param: parameters, transaction: trans, commandType: CommandType.StoredProcedure);
             }
             catch (Exception e)
             {
@@ -140,8 +140,15 @@ namespace HangfireService.Core.DataLayers
             }
 
             LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
-            _logger.LogInformation($"{name} {sw.Elapsed:c}");
+            _logger.LogDebug($"{name} {sw.Elapsed:c}");
             return result;
+        }
+
+        public IDbTransaction BeginTransaction()
+        {
+            var connection = new MySqlConnection(_connectionString);
+            connection.Open();
+            return connection.BeginTransaction();
         }
     }
 }

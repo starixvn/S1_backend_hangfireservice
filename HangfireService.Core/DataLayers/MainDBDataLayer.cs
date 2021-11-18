@@ -50,9 +50,14 @@ namespace HangfireService.Core.DataLayers
             return await _dbClient.ExecuteAsync(sql, CommandType.Text, parameters);
         }
 
-        public int ExecuteSP(string sp, dynamic parameters)
+        public int ExecuteSP(string sp, dynamic parameters, IDbTransaction? trans = null)
         {
-            return _dbClient.Execute(sp, parameters);
+            return _dbClient.Execute(sp, parameters, trans);
+        }
+
+        public IDbTransaction BeginTransaction()
+        {
+            return _dbClient.BeginTransaction();
         }
     }
 }

@@ -27,9 +27,7 @@ namespace HangfireService.IntegrationTest
             { 
                 EnvironmentName = "Local",
             });
-            var remoteUrl = builder.Configuration.GetValue<string>("ConfigService");
-            builder.Configuration.AddRemoteJsonConfig(remoteUrl);
-
+            builder.Configuration.AddRemoteJsonConfig(builder.Configuration.GetValue<string>("ConfigService"));
             var logger = Substitute.For<ILogger<MySqlClient>>();
             builder.Services.AddTransient(p => logger);
             builder.Services

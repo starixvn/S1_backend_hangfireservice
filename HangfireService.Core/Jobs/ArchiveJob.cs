@@ -76,12 +76,18 @@ namespace HangfireService.Core.Jobs
 
                     Parallel.ForEach(data, item =>
                     {
-                        var insertResult = _mainDBDataLayer.ExecuteSP(option.InsertSP, item);
+                        var trans = _mainDBDataLayer.BeginTransaction();
+                        var insertResult = _mainDBDataLayer.ExecuteSP(option.InsertSP, item, trans);
                         if (insertResult > 0)
                         {
-                            var deleteResult = _mainDBDataLayer.ExecuteSP(option.DeleteSP, item);
-                            Interlocked.Add(ref batchResult, deleteResult);
+                            var deleteResult = _mainDBDataLayer.ExecuteSP(option.DeleteSP, item, trans);
+                            if (deleteResult > 0)
+                            {
+                                Interlocked.Add(ref batchResult, deleteResult);
+                                trans.Commit();                                           
+                            }                      
                         }
+                        trans.Connection?.Close();
                     });
 
                     _logger.LogInformation($"{jobName} {jobId} || archive {batchResult} data || {sw.Elapsed:c}");

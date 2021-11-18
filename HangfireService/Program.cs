@@ -48,6 +48,7 @@ app.UseHangfireDashboard(pathMatch: "", options: new DashboardOptions()
     Authorization = new[] { new LocalAuthorizationFilter() }
 });
 ScheduledJobManager.Setup(app.Services, app.Configuration);
+
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapGet("/", async context =>
