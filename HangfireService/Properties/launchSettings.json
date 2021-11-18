@@ -17,6 +17,7 @@
       }
     },
     "HangfireService": {
+      "externalUrlConfiguration": true,
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {

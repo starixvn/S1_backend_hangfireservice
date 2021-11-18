@@ -20,50 +20,49 @@ namespace HangfireService.Extensions
             var provider = services.BuildServiceProvider();
             var logger = provider.GetRequiredService<ILogger<MySqlClient>>();
 
-            services.AddSingleton(param => new MySqlClient(configuration.GetConnectionString("MainDB"), logger)
+            return services
+            .AddSingleton(param => new MySqlClient(configuration.GetConnectionString("MainDB"), logger)
             {
                 DataBase = DataBase.Main
-            });
-            services.AddSingleton(param => new MySqlClient(configuration.GetConnectionString("ReportDB"), logger)
+            })
+            .AddSingleton(param => new MySqlClient(configuration.GetConnectionString("ReportDB"), logger)
             {
                 DataBase = DataBase.Report
-            });
-            services.AddSingleton(param => new MySqlClient(configuration.GetConnectionString("WagerDB"), logger)
+            })
+            .AddSingleton(param => new MySqlClient(configuration.GetConnectionString("WagerDB"), logger)
             {
                 DataBase = DataBase.Wager
             });
-            return services;
         }
 
         public static IServiceCollection AddHangfireService(this IServiceCollection services, IConfiguration configuration)
-        {
-            services.AddHangfire(config =>
-            {
-                config
-                .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
-                .UseSimpleAssemblyNameTypeSerializer()
-                .UseRecommendedSerializerSettings()
-                .UseColouredConsoleLogProvider()
-                .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.RecurringJobCount)
-                .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.RetriesCount)
-                .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.ProcessingCount)
-                .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.SucceededCount)
-                .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.FailedCount)
-                .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.AwaitingCount)
-                .UseManagementPages(p => p.AddJobs(()
-                    => typeof(IScheduledJob).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IScheduledJob))).ToArray()))
-                .UseSerilogLogProvider()
-                .UseMemoryStorage();
-            });
-            services.AddHangfireConsoleExtensions();
-            services.AddHangfireServer(config =>
-            {
-                var jobGroups = new Dictionary<string, List<JobOption>>();
-                configuration.GetSection("ScheduledJob").Bind(jobGroups);      
+        {       
+            return services
+            .AddHangfire(config =>
+                {
+                    config
+                    .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
+                    .UseSimpleAssemblyNameTypeSerializer()
+                    .UseRecommendedSerializerSettings()
+                    .UseColouredConsoleLogProvider()
+                    .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.RecurringJobCount)
+                    .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.RetriesCount)
+                    .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.ProcessingCount)
+                    .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.SucceededCount)
+                    .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.FailedCount)
+                    .UseDashboardMetric(Hangfire.Dashboard.DashboardMetrics.AwaitingCount)
+                    .UseManagementPages(p => p.AddJobs(()
+                        => typeof(IScheduledJob).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IScheduledJob))).ToArray()))
+                    .UseSerilogLogProvider()
+                    .UseMemoryStorage();
+                })
+            .AddHangfireConsoleExtensions()
+            .AddHangfireServer(config =>
+            {               
                 config.SchedulePollingInterval = TimeSpan.FromSeconds(15);
+                var jobGroups = configuration.GetSection("ScheduledJob").Get<Dictionary<string, List<JobOption>>>();
                 config.Queues = jobGroups.Select(item => item.Key.ToLower()).ToArray();
             });
-            return services;
         }
 
         public static IServiceCollection RegisterServices(this IServiceCollection services, IConfiguration configuration)
@@ -85,20 +84,18 @@ namespace HangfireService.Extensions
                 services.AddHttpClient();
             }
 
-            services.AddSingleton<HttpHelper>();
-            services.AddSingleton<SecureHelper>();
-            services.AddTransient<MainDBDataLayer>();
-            services.AddTransient<WagerDBDataLayer>();
-            services.AddTransient<ReportDBDataLayer>();
-            services.AddSingleton<ThirdPartyManager>();
-
-            return services;
+            return services
+            .AddSingleton<HttpHelper>()
+            .AddSingleton<SecureHelper>()
+            .AddTransient<MainDBDataLayer>()
+            .AddTransient<WagerDBDataLayer>()
+            .AddTransient<ReportDBDataLayer>()
+            .AddSingleton<ThirdPartyManager>();
         }
 
         public static IServiceCollection RegisterScheduledJobs(this IServiceCollection services, IConfiguration configuration)
         {
-            var jobGroups = new Dictionary<string, List<JobOption>>();
-            configuration.GetSection("ScheduledJob").Bind(jobGroups);
+            var jobGroups = configuration.GetSection("ScheduledJob").Get<Dictionary<string, List<JobOption>>>();
             services.AddSingleton(provider => jobGroups);
 
             var scheduledJobs = typeof(IScheduledJob).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IScheduledJob)));

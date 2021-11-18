@@ -6,13 +6,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace HangfireService.Core.Jobs
 {
-    public class ScheduledJobManager
+    public static class ScheduledJobManager
     {
-        public static void Setup(IServiceProvider provider, IConfiguration configuration)
+        public static void Setup(IServiceProvider provider)
         {
-            var jobGroups = new Dictionary<string, List<JobOption>>();
-            configuration.GetSection("ScheduledJob").Bind(jobGroups);
-
+            var jobGroups = provider.GetRequiredService<Dictionary<string, List<JobOption>>>();
             var jobManager = new RecurringJobManager();
             foreach (var jobGroup in jobGroups)
             {          
