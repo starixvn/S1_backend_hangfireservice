@@ -16,7 +16,7 @@ using Hangfire;
 
 namespace HangfireService.Core.Jobs
 {
-    [ManagementPage("Archive", queue:"archive")]
+    [ManagementPage("ArchiveJob", queue:"archive")]
     public class ArchiveJob : BaseJob, IScheduledJob
     {
         private readonly MainDBDataLayer _mainDBDataLayer;
@@ -38,39 +38,45 @@ namespace HangfireService.Core.Jobs
         [DisplayName("{0}")]
         public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
         {
-            var jobId = context.BackgroundJob.Id;
-            LogContext.PushProperty("jobId", jobId);
-
             try
             {
                 var totalResult = 0;
                 var option = JsonConvert.DeserializeObject<ArchiveOption>(JsonConvert.SerializeObject(jobOption.Parameters));
 
                 // 設定執行日期與時間
-                var beginAt = GetUTC8Time();
-                if (!DateTime.TryParse($"{beginAt:yyyy/MM/dd} {option.StartTime}", out var startTime)
-                    || !DateTime.TryParse($"{beginAt:yyyy/MM/dd} {option.EndTime}", out var endTime))
+                var date = GetUTC8Time().ToString("yyyy/MM/dd");
+                if (!DateTime.TryParse($"{date} {option.StartTime}", out var startTime)
+                    || !DateTime.TryParse($"{date} {option.EndTime}", out var endTime))
                 {
                     return JsonConvert.SerializeObject(new
                     {
                         Success = false,
-                        Message = $"{jobName} {jobId} || time format error. || beginAt:{beginAt:yyyy/MM/dd} StartTime:{option.StartTime} EndTime:{option.EndTime}"
+                        Message = $"{jobName} || time format error. || Date:{date} StartTime:{option.StartTime} EndTime:{option.EndTime}"
                     });
                 }
 
-                _logger.LogInformation($"{jobName} {jobId} || {beginAt:yyyy/MM/dd} {startTime:HH:mm}～{endTime:HH:mm} ");
+                _logger.LogInformation($"{jobName} || {date} {startTime:HH:mm}～{endTime:HH:mm} ");
                 if (endTime < startTime)
                 {
                     endTime = endTime.AddDays(1);
                 }
 
-                while (GetUTC8Time().IsBetween(startTime, endTime, true))
+                var meassage = string.Empty;
+                while (true)
                 {
                     var sw = Stopwatch.StartNew();
                     var batchResult = 0;
+                    var beginAt = GetUTC8Time();
+                    if (!beginAt.IsBetween(startTime, endTime, true))
+                    {
+                        meassage = $"{beginAt:yyyy/MM/dd HH:mm} is not in the StartTime and EndTime.";
+                        break;
+                    }
+                    
                     var data = _reportDBDataLayer.GetArchiveData(option.GetSP, option.LiminNum).ToList();
                     if (data.Count < option.LiminNum)
                     {
+                        meassage = $"archive data({data.Count}) is less than LiminNum({option.LiminNum})";
                         break;
                     }
 
@@ -90,39 +96,44 @@ namespace HangfireService.Core.Jobs
                         trans.Connection?.Close();
                     });
 
-                    _logger.LogInformation($"{jobName} {jobId} || archive {batchResult} data || {sw.Elapsed:c}");
+                    _logger.LogInformation($"{jobName} || archive {batchResult} data || {sw.Elapsed:c}");
                     totalResult += batchResult;
 
                     cancellationToken.ThrowIfCancellationRequested();
                     Thread.Sleep(option.ColdDownTime * 1000);
                 }
 
+                if (totalResult > 0)
+                {
+                    meassage = $"archive {totalResult} data complete.";
+                }
+
                 return JsonConvert.SerializeObject(new
                 {
                     Success = true,
                     Count = totalResult,
-                    Message = $"{jobName} {jobId} || archive {totalResult} data complete. || {beginAt:yyyy/MM/dd} {startTime:HH:mm}～{endTime:HH:mm}"
+                    Message = $"{jobName} || {meassage} || {date} {startTime:HH:mm}～{endTime:HH:mm}"
                 });
             }
             catch (OperationCanceledException ex)
             {
-                _logger.LogInformation(ex, $"{jobName} {jobId} || {ex.Message}");
+                _logger.LogInformation(ex, $"{jobName} || {ex.Message}");
                 return JsonConvert.SerializeObject(new
                 {
                     Success = false,
-                    Message = $"{jobName} {jobId} ||{ex.Message}"
+                    Message = $"{jobName} ||{ex.Message}"
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"{jobName} {jobId} || {ex.Message}");
+                _logger.LogError(ex, $"{jobName} || {ex.Message}");
                 return JsonConvert.SerializeObject(ex);
             }
         }
 
         [Job]
-        [DisplayName("Execute Archive.{2} by ManagementPage")]
-        public void Action(
+        [DisplayName("Run {2} by ManagementPage")]
+        public object Run(
             PerformContext context = null,
             IJobCancellationToken cancellationToken = null,
             [DisplayData("JobName", ConvertType = typeof(ArchiveJobList))]
@@ -136,21 +147,23 @@ namespace HangfireService.Core.Jobs
             [DisplayData("ColdDownTime", defaultValue:"1")]
             string coldDownTime = "1")
         {
-            if (_archiveJobList.Any())
+            if (!_archiveJobList.Any())
             {
-                var jobOption = _archiveJobList.First(i => i.JobName == jobName);
-                jobOption.Parameters.Update("StartTime", startTime);
-                jobOption.Parameters.Update("EndTime", endTime);
-                jobOption.Parameters.Update("LiminNum", liminNum);
-                jobOption.Parameters.Update("ColdDownTime", coldDownTime);
-
-                _ = ExecuteAsync($"Execute {jobName}", jobOption, context, cancellationToken);
+                return null; 
             }
+
+            var jobOption = _archiveJobList.First(i => i.JobName == jobName);
+            jobOption.Parameters.Update("StartTime", startTime);
+            jobOption.Parameters.Update("EndTime", endTime);
+            jobOption.Parameters.Update("LiminNum", liminNum);
+            jobOption.Parameters.Update("ColdDownTime", coldDownTime);
+
+            return ExecuteAsync($"Execute {jobName}", jobOption, context, cancellationToken).Result;
         }
 
         private DateTime GetUTC8Time()
         {
-            return new DateTimeOffset(DateTime.Now).ToOffset(new TimeSpan(8, 0, 0)).DateTime;
+            return new DateTimeOffset(DateTime.UtcNow).ToOffset(new TimeSpan(8, 0, 0)).DateTime;
         }
 
         private class ArchiveJobList : IInputDataList

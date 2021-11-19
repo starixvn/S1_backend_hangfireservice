@@ -33,9 +33,6 @@ namespace HangfireService.Core.Jobs
         [DisplayName("{0}")]
         public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
         {
-            var jobId = context.BackgroundJob.Id;
-            LogContext.PushProperty("jobId", jobId);
-
             try
             {              
                 int tpId = Convert.ToInt32(jobOption.Parameters.First().Value);
@@ -45,7 +42,7 @@ namespace HangfireService.Core.Jobs
                 }
 
                 LogContext.PushProperty("tpId", tpId);
-                _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} {jobId} running......");
+                _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
 
                 var todoList = await _mainDBDataLayer.GetTpDetailTodoListByTpId(tpId);
                 var result =  await tpHelper.GetTpBetRecordDetailAsync(todoList);

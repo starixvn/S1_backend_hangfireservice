@@ -4,17 +4,8 @@
     <TargetFramework>net6.0</TargetFramework>
 	<Nullable>enable</Nullable>
 	<ImplicitUsings>enable</ImplicitUsings>
+	<PublishSingleFile>true</PublishSingleFile>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="CookieKeys\key-65b62d1a-3dd2-4487-bb78-3482ab6c080c.xml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="CookieKeys\key-65b62d1a-3dd2-4487-bb78-3482ab6c080c.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Hangfire.AspNetCore" Version="1.7.27" />
