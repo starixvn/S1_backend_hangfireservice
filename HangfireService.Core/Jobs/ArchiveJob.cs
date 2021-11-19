@@ -39,8 +39,7 @@ namespace HangfireService.Core.Jobs
         public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
         {
             try
-            {
-                var totalResult = 0;
+            {         
                 var option = JsonConvert.DeserializeObject<ArchiveOption>(JsonConvert.SerializeObject(jobOption.Parameters));
 
                 // 設定執行日期與時間
@@ -55,64 +54,74 @@ namespace HangfireService.Core.Jobs
                     });
                 }
 
-                _logger.LogInformation($"{jobName} || {date} {startTime:HH:mm}～{endTime:HH:mm} ");
                 if (endTime < startTime)
                 {
                     endTime = endTime.AddDays(1);
                 }
+                _logger.LogInformation($"{jobName} || {date} {startTime:HH:mm}～{endTime:HH:mm} ");
 
-                var meassage = string.Empty;
+                var totalCount = 0;
+                var result = string.Empty;
                 while (true)
                 {
                     var sw = Stopwatch.StartNew();
-                    var batchResult = 0;
+                    var batchCount = 0;
                     var beginAt = GetUTC8Time();
                     if (!beginAt.IsBetween(startTime, endTime, true))
                     {
-                        meassage = $"{beginAt:yyyy/MM/dd HH:mm} is not in the StartTime and EndTime.";
+                        result = $"{beginAt:yyyy/MM/dd HH:mm} is not in the StartTime and EndTime.";
                         break;
                     }
                     
                     var data = _reportDBDataLayer.GetArchiveData(option.GetSP, option.LiminNum).ToList();
                     if (data.Count < option.LiminNum)
                     {
-                        meassage = $"archive data({data.Count}) is less than LiminNum({option.LiminNum})";
+                        result = $"archive data({data.Count}) is less than LiminNum({option.LiminNum})";
                         break;
                     }
 
                     Parallel.ForEach(data, item =>
                     {
                         var trans = _mainDBDataLayer.BeginTransaction();
-                        var insertResult = _mainDBDataLayer.ExecuteSP(option.InsertSP, item, trans);
-                        if (insertResult > 0)
+
+                        var doDelete = string.IsNullOrEmpty(option.InsertSP); //InsertSP空白為不需要搬資料，僅刪除舊資料
+
+                        if (!string.IsNullOrEmpty(option.InsertSP))
+                        {
+                            var insertResult = _mainDBDataLayer.ExecuteSP(option.InsertSP, item, trans);
+                            doDelete = insertResult > 0;
+                        }
+
+                        if (doDelete)
                         {
                             var deleteResult = _mainDBDataLayer.ExecuteSP(option.DeleteSP, item, trans);
                             if (deleteResult > 0)
                             {
-                                Interlocked.Add(ref batchResult, deleteResult);
+                                Interlocked.Add(ref batchCount, deleteResult);
                                 trans.Commit();                                           
                             }                      
                         }
+
                         trans.Connection?.Close();
                     });
 
-                    _logger.LogInformation($"{jobName} || archive {batchResult} data || {sw.Elapsed:c}");
-                    totalResult += batchResult;
+                    _logger.LogInformation($"{jobName} || archive {batchCount} data || {sw.Elapsed:c}");
+                    totalCount += batchCount;
 
                     cancellationToken.ThrowIfCancellationRequested();
                     Thread.Sleep(option.ColdDownTime * 1000);
                 }
 
-                if (totalResult > 0)
+                if (totalCount > 0)
                 {
-                    meassage = $"archive {totalResult} data complete.";
+                    result = $"archive {totalCount} data complete.";
                 }
 
                 return JsonConvert.SerializeObject(new
                 {
                     Success = true,
-                    Count = totalResult,
-                    Message = $"{jobName} || {meassage} || {date} {startTime:HH:mm}～{endTime:HH:mm}"
+                    Count = totalCount,
+                    Message = $"{jobName} || {result} || {date} {startTime:HH:mm}～{endTime:HH:mm}"
                 });
             }
             catch (OperationCanceledException ex)
