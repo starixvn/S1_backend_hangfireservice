@@ -2,6 +2,7 @@
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using Microsoft.Extensions.DependencyInjection;
+using MySql.Data.MySqlClient;
 using System.Data;
 
 namespace HangfireService.Core.DataLayers
@@ -58,6 +59,11 @@ namespace HangfireService.Core.DataLayers
         public IDbTransaction BeginTransaction()
         {
             return _dbClient.BeginTransaction();
+        }
+
+        public MySqlConnection GetMySqlConnection()
+        {
+            return _dbClient.GetMySqlConnection();
         }
     }
 }

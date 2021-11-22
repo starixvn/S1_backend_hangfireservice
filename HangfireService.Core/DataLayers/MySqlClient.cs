@@ -150,5 +150,10 @@ namespace HangfireService.Core.DataLayers
             connection.Open();
             return connection.BeginTransaction();
         }
+
+        public MySqlConnection GetMySqlConnection()
+        {
+            return new MySqlConnection(_connectionString);
+        }
     }
 }

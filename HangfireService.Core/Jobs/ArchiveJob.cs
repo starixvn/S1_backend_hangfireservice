@@ -82,8 +82,10 @@ namespace HangfireService.Core.Jobs
 
                     Parallel.ForEach(data, item =>
                     {
-                        var trans = _mainDBDataLayer.BeginTransaction();
-
+                        var conn = _mainDBDataLayer.GetMySqlConnection();
+                        conn.Open();
+                        var trans = conn.BeginTransaction();
+                        
                         var doDelete = string.IsNullOrEmpty(option.InsertSP); //InsertSP空白為不需要搬資料，僅刪除舊資料
 
                         if (!string.IsNullOrEmpty(option.InsertSP))
@@ -102,8 +104,8 @@ namespace HangfireService.Core.Jobs
                             }                      
                         }
 
-                        trans.Connection?.Close();
-                        trans.Connection?.Dispose();
+                        conn.Close();
+                        conn.Dispose();
                     });
 
                     _logger.LogInformation($"{jobName} || archive {batchCount} data || {sw.Elapsed:c}");
