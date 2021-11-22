@@ -103,6 +103,7 @@ namespace HangfireService.Core.Jobs
                         }
 
                         trans.Connection?.Close();
+                        trans.Connection?.Dispose();
                     });
 
                     _logger.LogInformation($"{jobName} || archive {batchCount} data || {sw.Elapsed:c}");

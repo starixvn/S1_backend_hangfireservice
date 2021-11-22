@@ -1,6 +1,4 @@
-﻿using HangfireService.Core.Helpers;
-
-namespace HangfireService.Extensions
+﻿namespace HangfireService.Extensions
 {
     public static class ConfigurationManagerExtension
     {
