@@ -47,7 +47,7 @@ app.UseHangfireDashboard(pathMatch: "", options: new DashboardOptions()
     AppPath = null,
     Authorization = new[] { new LocalAuthorizationFilter() }
 });
-ScheduledJobManager.Setup(app.Services);
+JobManager.AddRecurringJob(app.Services);
 
 app.UseEndpoints(endpoints =>
 {

@@ -61,7 +61,9 @@ namespace HangfireService.Extensions
             {               
                 config.SchedulePollingInterval = TimeSpan.FromSeconds(15);
                 var jobGroups = configuration.GetSection("ScheduledJob").Get<Dictionary<string, List<JobOption>>>();
-                config.Queues = jobGroups.Select(item => item.Key.ToLower()).ToArray();
+                var queues= jobGroups.Select(item => item.Key.ToLower()).ToList();
+                queues.Add("default");
+                config.Queues = queues.ToArray();
             });
         }
 

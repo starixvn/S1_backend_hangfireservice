@@ -13,10 +13,13 @@ using Hangfire.Server;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using Hangfire;
+using MySql.Data.MySqlClient;
+using System.Collections.Concurrent;
+using System.Text;
 
 namespace HangfireService.Core.Jobs
 {
-    [ManagementPage("ArchiveJob", queue:"archive")]
+    [ManagementPage("ArchiveJob", queue: "archive")]
     public class ArchiveJob : BaseJob, IScheduledJob
     {
         private readonly MainDBDataLayer _mainDBDataLayer;
@@ -25,150 +28,125 @@ namespace HangfireService.Core.Jobs
 
         private static List<JobOption> _archiveJobList = new();
 
+        private static readonly ConcurrentDictionary<string, string> _JobStateList = new();
+
         public ArchiveJob(IServiceProvider provider) : base(provider)
         {
-            LogContext.PushProperty("ClassName", GetType().Name);         
-            _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();         
+            LogContext.PushProperty("ClassName", GetType().Name);
+            _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
             _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
-      
-            var jobGroups = provider.GetRequiredService<Dictionary<string,List<JobOption>>>();
-            jobGroups.TryGetValue("Archive", out _archiveJobList);      
+
+            var jobGroups = provider.GetRequiredService<Dictionary<string, List<JobOption>>>();
+            jobGroups.TryGetValue("Archive", out _archiveJobList);
         }
+
 
         [DisplayName("{0}")]
         public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
         {
+            var sw = Stopwatch.StartNew();
+            var message = $"{jobName} || {GetUTC8Time():yyyy/MM/dd HH:mm ss}";
             try
-            {         
-                var option = JsonConvert.DeserializeObject<ArchiveOption>(JsonConvert.SerializeObject(jobOption.Parameters));
-
-                // 設定執行日期與時間
-                var date = GetUTC8Time().ToString("yyyy/MM/dd");
-                if (!DateTime.TryParse($"{date} {option.StartTime}", out var startTime)
-                    || !DateTime.TryParse($"{date} {option.EndTime}", out var endTime))
+            {     
+                if (IsProcessing(jobName, context.BackgroundJob.Id, out var lastjobId))
                 {
-                    return JsonConvert.SerializeObject(new
-                    {
-                        Success = false,
-                        Message = $"{jobName} || time format error. || Date:{date} StartTime:{option.StartTime} EndTime:{option.EndTime}"
-                    });
+                   message += $" || {lastjobId} is Processing.";
+                   _logger.LogWarning(message);
+                   return message;
                 }
-
-                if (endTime < startTime)
+              
+                var option = JsonConvert.DeserializeObject<ArchiveOption>(JsonConvert.SerializeObject(jobOption.Parameters));         
+                var archiveList = _reportDBDataLayer.GetArchiveData(option.GetSP, option.LiminNum).ToList();
+                
+                var queue = new ConcurrentQueue<dynamic>(archiveList);            
+                var tasks = new Task<int>[option.TaskCount];
+                var success = 0;
+                while (!queue.IsEmpty)
                 {
-                    endTime = endTime.AddDays(1);
-                }
-                _logger.LogInformation($"{jobName} || {date} {startTime:HH:mm}～{endTime:HH:mm} ");
-
-                var totalCount = 0;
-                var result = string.Empty;
-                while (true)
-                {
-                    var sw = Stopwatch.StartNew();
-                    var batchCount = 0;
-                    var beginAt = GetUTC8Time();
-                    if (!beginAt.IsBetween(startTime, endTime, true))
+                    for (var i = 0; i < option.TaskCount; i++)
                     {
-                        result = $"{beginAt:yyyy/MM/dd HH:mm} is not in the StartTime and EndTime.";
-                        break;
-                    }
-                    
-                    var data = _reportDBDataLayer.GetArchiveData(option.GetSP, option.LiminNum).ToList();
-                    if (data.Count < option.LiminNum)
-                    {
-                        result = $"archive data({data.Count}) is less than LiminNum({option.LiminNum})";
-                        break;
+                        if (queue.TryDequeue(out var data))
+                        {
+                            Task<int> task = ArchiveData(option, data);
+                            tasks[i] = Task.Run(() => task);
+                        }
+                        else
+                        {
+                            tasks[i] = Task.FromResult(0);
+                        }
                     }
 
-                    Parallel.ForEach(data, item =>
+                    var finished = Task.WhenAll(tasks);
+                    foreach (var i in await finished)
                     {
-                        var conn = _mainDBDataLayer.GetMySqlConnection();
-                        conn.Open();
-                        var trans = conn.BeginTransaction();
-                        
-                        var doDelete = string.IsNullOrEmpty(option.InsertSP); //InsertSP空白為不需要搬資料，僅刪除舊資料
-
-                        if (!string.IsNullOrEmpty(option.InsertSP))
-                        {
-                            var insertResult = _mainDBDataLayer.ExecuteSP(option.InsertSP, item, trans);
-                            doDelete = insertResult > 0;
-                        }
-
-                        if (doDelete)
-                        {
-                            var deleteResult = _mainDBDataLayer.ExecuteSP(option.DeleteSP, item, trans);
-                            if (deleteResult > 0)
-                            {
-                                Interlocked.Add(ref batchCount, deleteResult);
-                                trans.Commit();                                           
-                            }                      
-                        }
-
-                        conn.Close();
-                        conn.Dispose();
-                    });
-
-                    _logger.LogInformation($"{jobName} || archive {batchCount} data || {sw.Elapsed:c}");
-                    totalCount += batchCount;
+                        Interlocked.Add(ref success, i);
+                    }
 
                     cancellationToken.ThrowIfCancellationRequested();
-                    Thread.Sleep(option.ColdDownTime * 1000);
                 }
 
-                if (totalCount > 0)
+                message += $" || Elapsed:{sw.Elapsed:c} ";
+           
+                //小於批次數量暫停
+                if (archiveList.Count < option.LiminNum)
                 {
-                    result = $"archive {totalCount} data complete.";
+                    var reason = $"archive data({archiveList.Count}) is less than LiminNum({option.LiminNum})";
+                    Pause(jobName, reason, option.PauseHours);
+                    message += $" || {reason}";
                 }
 
-                return JsonConvert.SerializeObject(new
+                //批次數量全部失敗暫停
+                if (archiveList.Count > 0 && success == 0)
                 {
-                    Success = true,
-                    Count = totalCount,
-                    Message = $"{jobName} || {result} || {date} {startTime:HH:mm}～{endTime:HH:mm}"
-                });
+                    var reason = $"archive data({archiveList.Count}) all fail.";
+                    Pause(jobName, reason, option.PauseHours);
+                    message += $" || {reason}";
+                }
+
+                if (success > 0)
+                {
+                    message += $" || archive {success} data complete.";
+                }
+                
+                _logger.LogInformation(message);    
             }
             catch (OperationCanceledException ex)
             {
-                _logger.LogInformation(ex, $"{jobName} || {ex.Message}");
-                return JsonConvert.SerializeObject(new
-                {
-                    Success = false,
-                    Message = $"{jobName} ||{ex.Message}"
-                });
+                message += $" || {ex.Message}";
+                _logger.LogWarning(ex, message);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"{jobName} || {ex.Message}");
-                return JsonConvert.SerializeObject(ex);
+                message += $" || {ex.Message}";
+                _logger.LogError(ex, message);
             }
+            finally
+            {
+                _JobStateList.TryRemove(jobName, out _);
+            }
+            return message;
         }
 
         [Job]
         [DisplayName("Run {2} by ManagementPage")]
         public object Run(
-            PerformContext context = null,
-            IJobCancellationToken cancellationToken = null,
+            PerformContext? context = null,
+            IJobCancellationToken? cancellationToken = null,
             [DisplayData("JobName", ConvertType = typeof(ArchiveJobList))]
-            string jobName = null,
-            [DisplayData("StartTime", defaultValue:"00:00")]
-            string startTime= "00:00",
-            [DisplayData("EndTime", defaultValue:"23:59")]
-            string endTime= "23:59",
+            string? jobName = null,
             [DisplayData("LiminNum", defaultValue:"1000")]
             string liminNum = "1000",
-            [DisplayData("ColdDownTime", defaultValue:"1")]
-            string coldDownTime = "1")
+            [DisplayData("TaskCount", defaultValue:"1")]
+            string taskCount = "1")
         {
             if (!_archiveJobList.Any())
             {
-                return null; 
+                return null;
             }
 
             var jobOption = _archiveJobList.First(i => i.JobName == jobName);
-            jobOption.Parameters.Update("StartTime", startTime);
-            jobOption.Parameters.Update("EndTime", endTime);
             jobOption.Parameters.Update("LiminNum", liminNum);
-            jobOption.Parameters.Update("ColdDownTime", coldDownTime);
+            jobOption.Parameters.Update("TaskCount", taskCount);
 
             return ExecuteAsync($"Execute {jobName}", jobOption, context, cancellationToken).Result;
         }
@@ -179,7 +157,7 @@ namespace HangfireService.Core.Jobs
         }
 
         private class ArchiveJobList : IInputDataList
-        {      
+        {
             public Dictionary<string, string>? GetData()
             {
                 return _archiveJobList?.ToDictionary(f => f.JobName, f => f.JobName);
@@ -189,6 +167,66 @@ namespace HangfireService.Core.Jobs
             {
                 return null;
             }
+        }
+
+        private async Task<int> ArchiveData(ArchiveOption option, dynamic data)
+        {
+            using var conn = _mainDBDataLayer.GetMySqlConnection();
+            try
+            {
+                conn.Open();
+                var trans = conn.BeginTransaction();
+
+                var doDelete = string.IsNullOrEmpty(option.InsertSP); //InsertSP空白為不需要搬資料，僅刪除舊資料
+
+                if (!string.IsNullOrEmpty(option.InsertSP))
+                {
+                    var insertResult = _mainDBDataLayer.ExecuteSP(option.InsertSP, data, trans);
+                    doDelete = insertResult > 0;
+                }
+
+                if (doDelete)
+                {
+                    var deleteResult = _mainDBDataLayer.ExecuteSP(option.DeleteSP, data, trans);
+                    if (deleteResult > 0)
+                    {
+                        trans.Commit();
+                        return deleteResult;
+                    }
+                }
+                return 0;
+            }
+            catch (MySqlException ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                if (ex.Number == (int)MySqlErrorCode.DuplicateKeyEntry) //匯入資料重複
+                {
+                    _mainDBDataLayer.ExecuteSP(option.DeleteSP, data);
+                }
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return 0;
+            }
+        }
+
+        private static bool IsProcessing(string jobName, string jobId, out string? lastjobId)
+        {
+            if (_JobStateList.TryGetValue(jobName, out lastjobId))
+            {
+                return true;
+            }
+
+            _JobStateList.TryAdd(jobName, jobId);
+            return false;
+        }
+
+        private void Pause(string jobName, string reason, int pauseHours)
+        {
+            _logger.LogWarning($"{jobName} restart after {pauseHours} hours, because {reason}.");
+            JobManager.PauseThenRestart(jobName, pauseHours);
         }
     }
 }

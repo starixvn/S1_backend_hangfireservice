@@ -1,13 +1,15 @@
 ﻿namespace HangfireService.Core.Models.Options
 {
     public class ArchiveOption
-    { 
-        public int LiminNum { get; set; }
-        public string StartTime { get; set; }
-        public string EndTime { get; set; }
-        public int ColdDownTime { get; set; }
-        public string GetSP { get; set; }
-        public string InsertSP { get; set; }
-        public string DeleteSP { get; set; }
+    {
+        public int LiminNum { get; set; } = 100;
+        public int TaskCount { get; set; } = 2;
+        /// <summary>
+        /// 暫停小時
+        /// </summary>
+        public int PauseHours { get; set; } = 12;
+        public string GetSP { get; set; } = string.Empty;
+        public string InsertSP { get; set; } = string.Empty;
+        public string DeleteSP { get; set; } = string.Empty;
     }
 }

@@ -1,17 +1,19 @@
 ﻿using Hangfire;
+using Hangfire.Dashboard.Management.Pages;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.ComponentModel;
 
 namespace HangfireService.Core.Jobs
 {
-    public static class ScheduledJobManager
+    public static class JobManager
     {
-        public static void Setup(IServiceProvider provider)
+        public static void AddRecurringJob(IServiceProvider provider)
         {
             var jobGroups = provider.GetRequiredService<Dictionary<string, List<JobOption>>>();
             var jobManager = new RecurringJobManager();
+
             foreach (var jobGroup in jobGroups)
             {          
                 foreach (var option in jobGroup.Value)
@@ -32,5 +34,28 @@ namespace HangfireService.Core.Jobs
             }
         }
 
+        public static void PauseThenRestart(string jobName, int pauseHours)
+        {
+            Pause(jobName);
+            BackgroundJob.Schedule(() => RestartByHours(jobName, pauseHours), TimeSpan.FromHours(pauseHours));
+        }
+        public static void Pause(string jobName)
+        {
+            using var connection = JobStorage.Current.GetConnection();
+            if (!connection.GetRecurringJob(jobName).PauseState)
+            {
+                connection.SetPauseState(jobName, true);
+            }      
+        }
+
+        [DisplayName("{0} restart after {1} hours.")]
+        public static void RestartByHours(string jobName, int pauseHours)
+        {
+            using var connection = JobStorage.Current.GetConnection();
+            if (connection.GetRecurringJob(jobName).PauseState)
+            {
+                connection.SetPauseState(jobName, false);
+            }
+        }
     }
 }
