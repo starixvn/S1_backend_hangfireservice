@@ -64,6 +64,7 @@ namespace HangfireService.Extensions
                 var queues= jobGroups.Select(item => item.Key.ToLower()).ToList();
                 queues.Add("default");
                 config.Queues = queues.ToArray();
+                config.WorkerCount = Environment.ProcessorCount * 10;
             });
         }
 
