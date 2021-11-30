@@ -18,7 +18,7 @@ namespace HangfireService.Core.Jobs
             {          
                 foreach (var option in jobGroup.Value)
                 { 
-                    if (option.Enable && option.Type == typeof(IScheduledJob).Name)
+                    if (option.Type == typeof(IScheduledJob).Name)
                     {
                         var job = provider.GetServices<IScheduledJob>()
                             .First(job => job.GetType().Name.Equals(option.ClassName, StringComparison.OrdinalIgnoreCase));
@@ -29,6 +29,11 @@ namespace HangfireService.Core.Jobs
                           cronExpression: option.Cron,
                           queue: jobGroup.Key.ToLower(),
                           timeZone:TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time"));
+
+                        if (!option.Enable)
+                        {
+                            Pause(option.JobName);
+                        }
                     }
                 }
             }
