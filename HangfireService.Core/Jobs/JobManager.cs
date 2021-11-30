@@ -39,10 +39,10 @@ namespace HangfireService.Core.Jobs
             }
         }
 
-        public static void PauseThenRestart(string jobName, int pauseHours)
+        public static void PauseThenRestart(string jobName, int pauseHours, string reason)
         {
             Pause(jobName);
-            BackgroundJob.Schedule(() => RestartByHours(jobName, pauseHours), TimeSpan.FromHours(pauseHours));
+            BackgroundJob.Schedule(() => RestartByHours(jobName, pauseHours, reason), TimeSpan.FromHours(pauseHours));
         }
         public static void Pause(string jobName)
         {
@@ -53,8 +53,8 @@ namespace HangfireService.Core.Jobs
             }      
         }
 
-        [DisplayName("{0} restart after {1} hours.")]
-        public static void RestartByHours(string jobName, int pauseHours)
+        [DisplayName("{0} restart after {1} hours, because {2}.")]
+        public static void RestartByHours(string jobName, int pauseHours, string reason)
         {
             using var connection = JobStorage.Current.GetConnection();
             if (connection.GetRecurringJob(jobName).PauseState)

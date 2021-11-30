@@ -86,28 +86,18 @@ namespace HangfireService.Core.Jobs
                 }
 
                 message += $" || Elapsed:{sw.Elapsed:c} ";
-           
-                //小於批次數量暫停
-                if (archiveList.Count < option.LiminNum)
-                {
-                    var reason = $"archive data({archiveList.Count}) is less than LiminNum({option.LiminNum})";
-                    Pause(jobName, reason, option.PauseHours);
-                    message += $" || {reason}";
-                }
 
-                //批次數量全部失敗暫停
-                if (archiveList.Count > 0 && success == 0)
+                if (PauseCheck(archiveList.Count,option.LiminNum,success, out var reason))
                 {
-                    var reason = $"archive data({archiveList.Count}) all fail.";
-                    Pause(jobName, reason, option.PauseHours);
                     message += $" || {reason}";
+                    Pause(jobName, reason, option.PauseHours);
                 }
 
                 if (success > 0)
                 {
                     message += $" || archive {success} data complete.";
                 }
-                
+
                 _logger.LogInformation(message);    
             }
             catch (OperationCanceledException ex)
@@ -223,10 +213,30 @@ namespace HangfireService.Core.Jobs
             return false;
         }
 
+        private static bool PauseCheck(int archiveData , int liminNum, int success , out string reason)
+        {
+            reason = string.Empty;
+            //小於批次數量暫停
+            if (archiveData < liminNum)
+            {
+                reason = $"archive data({archiveData}) is less than LiminNum({liminNum})";
+                return true;
+            }
+
+            //批次數量全部失敗暫停
+            if (archiveData > 0 && success == 0)
+            {
+                reason = $"archive data({archiveData}) all fail.";
+                return true;
+            }
+
+            return false;
+        }
+
         private void Pause(string jobName, string reason, int pauseHours)
         {
             _logger.LogWarning($"{jobName} restart after {pauseHours} hours, because {reason}.");
-            JobManager.PauseThenRestart(jobName, pauseHours);
+            JobManager.PauseThenRestart(jobName, pauseHours, reason);
         }
     }
 }
