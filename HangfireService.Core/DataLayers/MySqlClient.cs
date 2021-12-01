@@ -144,6 +144,28 @@ namespace HangfireService.Core.DataLayers
             return result;
         }
 
+        public T QueryFirst<T>(string name, object? parameters = null, IDbTransaction? trans = null)
+        {
+            var sw = Stopwatch.StartNew();
+            T result;
+            try
+            {
+                using var connection = new MySqlConnection(_connectionString);
+                result = connection.QueryFirst<T>(name, param: parameters, transaction: trans, commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, name);
+                throw;
+            }
+
+            LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
+            _logger.LogDebug($"{name} {sw.Elapsed:c}");
+            return result;
+        }
+
+
+
         public IDbTransaction BeginTransaction()
         {
             var connection = new MySqlConnection(_connectionString);

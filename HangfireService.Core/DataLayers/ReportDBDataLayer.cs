@@ -18,7 +18,7 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Query<ThirdPartyModel>("Service_TpList_GetAll");
         }
 
-        public IEnumerable<dynamic> GetArchiveData(string sp, int liminNum)
+        public IEnumerable<dynamic> GetArchiveList(string sp, int liminNum)
         {
             return _dbClient.Query(sp, parameters: new { LIMINNUM = liminNum });
         }

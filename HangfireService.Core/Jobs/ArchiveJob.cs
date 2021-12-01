@@ -56,7 +56,7 @@ namespace HangfireService.Core.Jobs
                 }
               
                 var option = JsonConvert.DeserializeObject<ArchiveOption>(JsonConvert.SerializeObject(jobOption.Parameters));         
-                var archiveList = _reportDBDataLayer.GetArchiveData(option.GetSP, option.LiminNum).ToList();
+                var archiveList = _reportDBDataLayer.GetArchiveList(option.GetSP, option.LiminNum).ToList();
                 
                 var queue = new ConcurrentQueue<dynamic>(archiveList);            
                 var tasks = new Task<int>[option.TaskCount];
@@ -67,7 +67,7 @@ namespace HangfireService.Core.Jobs
                     {
                         if (queue.TryDequeue(out var data))
                         {
-                            Task<int> task = ArchiveData(option, data);
+                            Task<int> task = ExcuteArchive(option, data);
                             tasks[i] = Task.Run(() => task);
                         }
                         else
@@ -159,7 +159,7 @@ namespace HangfireService.Core.Jobs
             }
         }
 
-        private async Task<int> ArchiveData(ArchiveOption option, dynamic data)
+        private async Task<int> ExcuteArchive(ArchiveOption option, dynamic data)
         {
             using var conn = _mainDBDataLayer.GetMySqlConnection();
             try
@@ -171,13 +171,13 @@ namespace HangfireService.Core.Jobs
 
                 if (!string.IsNullOrEmpty(option.InsertSP))
                 {
-                    var insertResult = _mainDBDataLayer.ExecuteSP(option.InsertSP, data, trans);
+                    var insertResult = _mainDBDataLayer.InsertArchive(option.InsertSP, data, trans);
                     doDelete = insertResult > 0;
                 }
 
                 if (doDelete)
                 {
-                    var deleteResult = _mainDBDataLayer.ExecuteSP(option.DeleteSP, data, trans);
+                    var deleteResult = _mainDBDataLayer.DeleteArchive(option.DeleteSP, data, trans);
                     if (deleteResult > 0)
                     {
                         trans.Commit();
@@ -191,7 +191,7 @@ namespace HangfireService.Core.Jobs
                 _logger.LogError(ex, ex.Message);
                 if (ex.Number == (int)MySqlErrorCode.DuplicateKeyEntry) //匯入資料重複
                 {
-                    _mainDBDataLayer.ExecuteSP(option.DeleteSP, data);
+                    _mainDBDataLayer.DeleteArchive(option.DeleteSP, data);
                 }
                 return 1;
             }
