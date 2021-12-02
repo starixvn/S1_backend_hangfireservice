@@ -44,8 +44,7 @@ namespace HangfireService.Core.Jobs
         [DisplayName("{0}")]
         public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
         {
-            var sw = Stopwatch.StartNew();
-            var message = $"{jobName} || {GetUTC8Time():yyyy/MM/dd HH:mm ss}";
+            var message = string.Empty;
             try
             {
                 if (IsProcessing(jobName, context.BackgroundJob.Id, out var lastjobId))
@@ -56,9 +55,9 @@ namespace HangfireService.Core.Jobs
                 }
 
                 var option = JsonConvert.DeserializeObject<ArchiveOption>(JsonConvert.SerializeObject(jobOption.Parameters));
-                var archiveList = _reportDBDataLayer.GetArchiveList(option.GetSP, option.LiminNum).ToList();
+                var archiveList = _reportDBDataLayer.GetArchiveList(option.GetSP, option.LiminNum);
+                
                 var success = 0;
-
                 Parallel.ForEach(archiveList,
                     new ParallelOptions() { MaxDegreeOfParallelism = option.TaskCount },
                     async (data) =>
@@ -68,17 +67,15 @@ namespace HangfireService.Core.Jobs
                         cancellationToken.ThrowIfCancellationRequested();
                     });
 
-                message += $" || Elapsed:{sw.Elapsed:c} ";
-
-                if (PauseCheck(archiveList.Count, option.LiminNum, success, out var reason))
+                if (PauseCheck(archiveList.Count(), option.LiminNum, success, out var reason))
                 {
-                    message += $" || {reason}";
+                    message += $"{reason} || ";
                     Pause(jobName, reason, option.PauseHours);
                 }
 
                 if (success > 0)
                 {
-                    message += $" || archive {success} data complete.";
+                    message += $"archive {success} data complete.";
                 }
 
                 _logger.LogInformation(message);
@@ -109,8 +106,8 @@ namespace HangfireService.Core.Jobs
             string? jobName = null,
             [DisplayData("LiminNum", defaultValue:"1000")]
             string liminNum = "1000",
-            [DisplayData("TaskCount", defaultValue:"1")]
-            string taskCount = "1")
+            [DisplayData("TaskCount", defaultValue:"2")]
+            string taskCount = "2")
         {
             if (!_archiveJobList.Any())
             {
