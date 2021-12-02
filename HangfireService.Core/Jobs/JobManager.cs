@@ -18,7 +18,7 @@ namespace HangfireService.Core.Jobs
             {          
                 foreach (var option in jobGroup.Value)
                 { 
-                    if (option.Type == typeof(IScheduledJob).Name)
+                    if (option.Enable && option.Type == typeof(IScheduledJob).Name)
                     {
                         var job = provider.GetServices<IScheduledJob>()
                             .First(job => job.GetType().Name.Equals(option.ClassName, StringComparison.OrdinalIgnoreCase));
@@ -30,10 +30,8 @@ namespace HangfireService.Core.Jobs
                           queue: jobGroup.Key.ToLower(),
                           timeZone:TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time"));
 
-                        if (!option.Enable)
-                        {
-                            Pause(option.JobName);
-                        }
+                        //先設定為暫停狀態，再透過介面手動啟動
+                        Pause(option.JobName);
                     }
                 }
             }

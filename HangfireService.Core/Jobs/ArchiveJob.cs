@@ -47,47 +47,30 @@ namespace HangfireService.Core.Jobs
             var sw = Stopwatch.StartNew();
             var message = $"{jobName} || {GetUTC8Time():yyyy/MM/dd HH:mm ss}";
             try
-            {     
+            {
                 if (IsProcessing(jobName, context.BackgroundJob.Id, out var lastjobId))
                 {
-                   message += $" || {lastjobId} is Processing.";
-                   _logger.LogWarning(message);
-                   return message;
+                    message += $" || {lastjobId} is Processing.";
+                    _logger.LogWarning(message);
+                    return message;
                 }
-              
-                var option = JsonConvert.DeserializeObject<ArchiveOption>(JsonConvert.SerializeObject(jobOption.Parameters));         
+
+                var option = JsonConvert.DeserializeObject<ArchiveOption>(JsonConvert.SerializeObject(jobOption.Parameters));
                 var archiveList = _reportDBDataLayer.GetArchiveList(option.GetSP, option.LiminNum).ToList();
-                
-                var queue = new ConcurrentQueue<dynamic>(archiveList);            
-                var tasks = new Task<int>[option.TaskCount];
                 var success = 0;
-                while (!queue.IsEmpty)
-                {
-                    for (var i = 0; i < option.TaskCount; i++)
-                    {
-                        if (queue.TryDequeue(out var data))
-                        {
-                            Task<int> task = ExcuteArchive(option, data);
-                            tasks[i] = Task.Run(() => task);
-                        }
-                        else
-                        {
-                            tasks[i] = Task.FromResult(0);
-                        }
-                    }
 
-                    var finished = Task.WhenAll(tasks);
-                    foreach (var i in await finished)
+                Parallel.ForEach(archiveList,
+                    new ParallelOptions() { MaxDegreeOfParallelism = option.TaskCount },
+                    async (data) =>
                     {
-                        Interlocked.Add(ref success, i);
-                    }
-
-                    cancellationToken.ThrowIfCancellationRequested();
-                }
+                        int excuteResult = await ExcuteArchive(option, data);
+                        Interlocked.Add(ref success, excuteResult);
+                        cancellationToken.ThrowIfCancellationRequested();
+                    });
 
                 message += $" || Elapsed:{sw.Elapsed:c} ";
 
-                if (PauseCheck(archiveList.Count,option.LiminNum,success, out var reason))
+                if (PauseCheck(archiveList.Count, option.LiminNum, success, out var reason))
                 {
                     message += $" || {reason}";
                     Pause(jobName, reason, option.PauseHours);
@@ -98,7 +81,7 @@ namespace HangfireService.Core.Jobs
                     message += $" || archive {success} data complete.";
                 }
 
-                _logger.LogInformation(message);    
+                _logger.LogInformation(message);
             }
             catch (OperationCanceledException ex)
             {
@@ -213,7 +196,7 @@ namespace HangfireService.Core.Jobs
             return false;
         }
 
-        private static bool PauseCheck(int archiveData , int liminNum, int success , out string reason)
+        private static bool PauseCheck(int archiveData, int liminNum, int success, out string reason)
         {
             reason = string.Empty;
             //小於批次數量暫停
