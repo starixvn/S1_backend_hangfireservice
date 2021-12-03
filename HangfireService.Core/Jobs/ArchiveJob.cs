@@ -7,7 +7,6 @@ using Serilog.Context;
 using Newtonsoft.Json;
 using System.ComponentModel;
 using HangfireService.Core.Models.Options;
-using System.Diagnostics;
 using HangfireService.Core.Extensions;
 using Hangfire.Server;
 using Hangfire.Dashboard.Management.Metadata;
@@ -15,7 +14,7 @@ using Hangfire.Dashboard.Management.Support;
 using Hangfire;
 using MySql.Data.MySqlClient;
 using System.Collections.Concurrent;
-using System.Text;
+using Hangfire.Dashboard.Management.Pages;
 
 namespace HangfireService.Core.Jobs
 {
@@ -47,9 +46,17 @@ namespace HangfireService.Core.Jobs
             var message = string.Empty;
             try
             {
+                // 處理透過web介面手動新增的RecurringJob名稱
+                if (context.BackgroundJob.Job.ToString().Equals("ArchiveJob.Run", StringComparison.OrdinalIgnoreCase))
+                {
+                    jobName = context.Connection.GetRecurringJobs().First(item => item.LastJobId == context.BackgroundJob.Id).Id;
+                }
+
+                message += $"{jobName} || ";
+
                 if (IsProcessing(jobName, context.BackgroundJob.Id, out var lastjobId))
                 {
-                    message += $" || {lastjobId} is Processing.";
+                    message += $"{lastjobId} is Processing.";
                     _logger.LogWarning(message);
                     return message;
                 }
@@ -118,12 +125,7 @@ namespace HangfireService.Core.Jobs
             jobOption.Parameters.Update("LiminNum", liminNum);
             jobOption.Parameters.Update("TaskCount", taskCount);
 
-            return ExecuteAsync($"Execute {jobName}", jobOption, context, cancellationToken).Result;
-        }
-
-        private DateTime GetUTC8Time()
-        {
-            return new DateTimeOffset(DateTime.UtcNow).ToOffset(new TimeSpan(8, 0, 0)).DateTime;
+            return ExecuteAsync($"Execute.{jobName}.({liminNum}/{taskCount})", jobOption, context, cancellationToken).Result;
         }
 
         private class ArchiveJobList : IInputDataList
