@@ -10,6 +10,7 @@ using HangfireService.Core.ThirdParty.Interfaces;
 using System.ComponentModel;
 using Hangfire.Server;
 using Hangfire;
+using HangfireService.Core.Models.Options;
 
 namespace HangfireService.Core.Jobs
 {
@@ -34,19 +35,20 @@ namespace HangfireService.Core.Jobs
         public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
         {
             try
-            {              
-                int tpId = Convert.ToInt32(jobOption.Parameters.First().Value);
-                if (!_tpHandler.TryGetValue(tpId, out ITpHelper tpHelper))
+            {
+                var option = JsonConvert.DeserializeObject<TpDetailOption>(JsonConvert.SerializeObject(jobOption.Parameters));
+                if (!_tpHandler.TryGetValue(option.TpId, out ITpHelper tpHelper))
                 {
-                    throw new NotImplementedException($"{tpId} NotImplemented");
+                    throw new NotImplementedException($"{option.TpId} NotImplemented");
                 }
 
-                LogContext.PushProperty("tpId", tpId);
+                LogContext.PushProperty("tpId", option.TpId);
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
 
-                var todoList = await _mainDBDataLayer.GetTpDetailTodoListByTpId(tpId);
-                var result =  await tpHelper.GetTpBetRecordDetailAsync(todoList);
+                var todoList = await _mainDBDataLayer.GetTpDetailTodoListByTpId(option);
+                var result =  await tpHelper.GetTpBetRecordDetailAsync(todoList, option);
 
+                
                 return JsonConvert.SerializeObject(new
                 {
                     Todo = todoList.Distinct(p => new { p.TpId, p.GameType, p.TransId }).Count(),

@@ -1,4 +1,5 @@
 ﻿using HangfireService.Core.Models.DBs;
+using HangfireService.Core.Models.Options;
 
 namespace HangfireService.Core.ThirdParty.Interfaces
 {
@@ -6,6 +7,6 @@ namespace HangfireService.Core.ThirdParty.Interfaces
     {
         int TpId { get;}
 
-        Task<IEnumerable<bool>> GetTpBetRecordDetailAsync(IEnumerable<TpDetailTodo> todoList);
+        Task<IEnumerable<bool>> GetTpBetRecordDetailAsync(IEnumerable<TpDetailTodo> todoList, TpDetailOption option);
     }
 }

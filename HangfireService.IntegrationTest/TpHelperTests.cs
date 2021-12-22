@@ -2,6 +2,7 @@ using Dapper;
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
+using HangfireService.Core.Models.Options;
 using HangfireService.Core.ThirdParty.Interfaces;
 using HangfireService.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -74,7 +75,8 @@ namespace HangfireService.IntegrationTest
                 _dbClient.Query<int>("Service_TpDetailTodo_Ins", parameters: new DynamicParameters(todo));
             }
             
-            var resultList = _tpHelper.GetTpBetRecordDetailAsync(todoList).ConfigureAwait(false).GetAwaiter().GetResult();
+            var resultList = _tpHelper.GetTpBetRecordDetailAsync(todoList, new TpDetailOption() { TpId = tpId })
+                .ConfigureAwait(false).GetAwaiter().GetResult();
             var alltrue = resultList.ToList().TrueForAll(b => b);
             Assert.IsTrue(alltrue);
         }

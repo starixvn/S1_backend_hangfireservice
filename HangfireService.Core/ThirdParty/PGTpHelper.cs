@@ -1,4 +1,5 @@
 ﻿using HangfireService.Core.Models.DBs;
+using HangfireService.Core.Models.Options;
 using HangfireService.Core.Models.ThirdParty.PG;
 using HangfireService.Core.ThirdParty.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,10 +19,12 @@ namespace HangfireService.Core.ThirdParty
             _thirdPartyModel = provider.GetRequiredService<IEnumerable<ThirdPartyModel>>().First(item => item.TpId == TpId);
         }
 
-        public async Task<IEnumerable<bool>> GetTpBetRecordDetailAsync(IEnumerable<TpDetailTodo> todoList)
+        public async Task<IEnumerable<bool>> GetTpBetRecordDetailAsync(IEnumerable<TpDetailTodo> todoList, TpDetailOption option)
         {
             var result = new List<bool>();
-            Parallel.ForEach(todoList, todo =>
+            Parallel.ForEach(todoList,
+                new ParallelOptions() { MaxDegreeOfParallelism = option.TaskCount },
+                todo =>
             {
                 try
                 {

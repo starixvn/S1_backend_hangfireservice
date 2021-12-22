@@ -1,4 +1,5 @@
 ﻿using HangfireService.Core.Models.DBs;
+using HangfireService.Core.Models.Options;
 using HangfireService.Core.Models.ThirdParty.Saba;
 using HangfireService.Core.ThirdParty.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,12 +29,14 @@ namespace HangfireService.Core.ThirdParty
             };
         }
 
-        public async Task<IEnumerable<bool>> GetTpBetRecordDetailAsync(IEnumerable<TpDetailTodo> todoList)
+        public async Task<IEnumerable<bool>> GetTpBetRecordDetailAsync(IEnumerable<TpDetailTodo> todoList, TpDetailOption option)
         {
             var result = new List<bool>();
 
             //要注意第三方api可否接受Parallel，不支援可改用foreach
-            Parallel.ForEach(todoList, todo =>
+            Parallel.ForEach(todoList,
+                new ParallelOptions() { MaxDegreeOfParallelism = option.TaskCount },
+                todo =>
             {
                 try
                 {

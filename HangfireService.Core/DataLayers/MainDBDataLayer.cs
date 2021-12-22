@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
+using HangfireService.Core.Models.Options;
 using Microsoft.Extensions.DependencyInjection;
 using MySql.Data.MySqlClient;
 using System.Data;
@@ -21,9 +22,9 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.QueryAsync<TpDetailTodo>("Service_TpDetailTodo_Get_V1", parameters: new DynamicParameters(new { Status }));
         }
 
-        public Task<IEnumerable<TpDetailTodo>> GetTpDetailTodoListByTpId(int TpId)
+        public Task<IEnumerable<TpDetailTodo>> GetTpDetailTodoListByTpId(TpDetailOption option)
         {
-            return _dbClient.QueryAsync<TpDetailTodo>("Service_TpDetailTodo_ByTpId_Get_V1", parameters: new DynamicParameters(new { TpId }));
+            return _dbClient.QueryAsync<TpDetailTodo>("Service_TpDetailTodo_ByTpId_Get_V2", parameters: new DynamicParameters(new { option.TpId, option.LiminNum }));
         }
 
         public async Task<bool> UpdateTpDetailTodo(TpBetRecordDetail detail)
