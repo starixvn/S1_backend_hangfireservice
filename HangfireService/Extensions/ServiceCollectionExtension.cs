@@ -4,6 +4,7 @@ using Hangfire.Dashboard.Management;
 using Hangfire.MemoryStorage;
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Helpers;
+using HangfireService.Core.Jobs;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Jobs;
@@ -98,8 +99,7 @@ namespace HangfireService.Extensions
 
         public static IServiceCollection RegisterScheduledJobs(this IServiceCollection services, IConfiguration configuration)
         {
-            var jobGroups = configuration.GetSection("ScheduledJob").Get<Dictionary<string, List<JobOption>>>();
-            services.AddSingleton(provider => jobGroups);
+            MyJobManager.SettingJob(configuration);
 
             var scheduledJobs = typeof(IScheduledJob).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IScheduledJob)));
             foreach (var job in scheduledJobs)

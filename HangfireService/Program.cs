@@ -31,7 +31,6 @@ builder.Services
     .RegisterScheduledJobs(builder.Configuration)
     .RegisterTpHelper();
 
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -47,8 +46,8 @@ app.UseHangfireDashboard(pathMatch: "", options: new DashboardOptions()
     AppPath = null,
     Authorization = new[] { new LocalAuthorizationFilter() }
 });
-JobManager.AddRecurringJob(app.Services);
 
+MyJobManager.AddRecurringJob(app.Services);
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapGet("/", async context =>

@@ -25,7 +25,7 @@ namespace HangfireService.Core.Jobs
 
         private readonly ReportDBDataLayer _reportDBDataLayer;
 
-        private static List<JobOption> _archiveJobList = new();
+        private static List<JobOption>? _archiveJobList;
 
         private static readonly ConcurrentDictionary<string, string> _JobStateList = new();
 
@@ -34,14 +34,11 @@ namespace HangfireService.Core.Jobs
             LogContext.PushProperty("ClassName", GetType().Name);
             _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
             _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
-
-            var jobGroups = provider.GetRequiredService<Dictionary<string, List<JobOption>>>();
-            jobGroups.TryGetValue("Archive", out _archiveJobList);
+            MyJobManager.GetJobGroups()?.TryGetValue("Archive", out _archiveJobList);
         }
 
 
         [DisplayName("{0}")]
-        [AutomaticRetry(Attempts = 3)]
         public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
         {
             var message = string.Empty;
@@ -54,7 +51,7 @@ namespace HangfireService.Core.Jobs
                 }
 
                 message += $"{jobName} || ";
-
+                _logger.LogInformation(message + context.BackgroundJob.Id);
                 if (IsProcessing(jobName, context.BackgroundJob.Id, out var lastjobId))
                 {
                     message += $"{lastjobId} is Processing.";
@@ -170,13 +167,14 @@ namespace HangfireService.Core.Jobs
                 return 0;
             }
             catch (MySqlException ex)
-            {
-                _logger.LogError(ex, ex.Message);
+            {     
                 if (ex.Number == (int)MySqlErrorCode.DuplicateKeyEntry) //匯入資料重複
                 {
-                    _mainDBDataLayer.DeleteArchive(option.DeleteSP, data);
+                    var deleteResult = _mainDBDataLayer.DeleteArchive(option.DeleteSP, data);
+                    return deleteResult;
                 }
-                return 1;
+                _logger.LogError(ex, ex.Message);
+                return 0;
             }
             catch (Exception ex)
             {
@@ -219,7 +217,7 @@ namespace HangfireService.Core.Jobs
         private void Pause(string jobName, string reason, int pauseHours)
         {
             _logger.LogWarning($"{jobName} restart after {pauseHours} hours, because {reason}.");
-            JobManager.PauseThenRestart(jobName, pauseHours, reason);
+            MyJobManager.PauseThenRestart(jobName, pauseHours, reason);
         }
     }
 }
