@@ -84,7 +84,7 @@ namespace HangfireService.Core.DataLayers
             return result;
         }
 
-        public async Task<int> ExecuteAsync(string name, CommandType commandType = CommandType.StoredProcedure, DynamicParameters? parameters = null)
+        public async Task<int> ExecuteAsync(string name, CommandType commandType = CommandType.StoredProcedure, object? parameters = null)
         {
             var sw = Stopwatch.StartNew();
             int result;
@@ -124,14 +124,13 @@ namespace HangfireService.Core.DataLayers
             return result;
         }
 
-        public int Execute(string name, object? parameters = null, IDbTransaction? trans = null)
+        public int Execute(string name, IDbTransaction trans, object? parameters = null)
         {
             var sw = Stopwatch.StartNew();
             int result;
             try
             {
-                using var connection = new MySqlConnection(_connectionString);
-                result = connection.Execute(name, param: parameters, transaction: trans, commandType: CommandType.StoredProcedure);
+                result = trans.Connection.Execute(name, param: parameters, transaction: trans, commandType: CommandType.StoredProcedure);
             }
             catch (Exception e)
             {
@@ -144,14 +143,13 @@ namespace HangfireService.Core.DataLayers
             return result;
         }
 
-        public T QueryFirst<T>(string name, object? parameters = null, IDbTransaction? trans = null)
+        public T QueryFirst<T>(string name, IDbTransaction trans , object? parameters = null)
         {
             var sw = Stopwatch.StartNew();
             T result;
             try
             {
-                using var connection = new MySqlConnection(_connectionString);
-                result = connection.QueryFirst<T>(name, param: parameters, transaction: trans, commandType: CommandType.StoredProcedure);
+                result = trans.Connection.QueryFirst<T>(name, param: parameters, transaction: trans, commandType: CommandType.StoredProcedure);
             }
             catch (Exception e)
             {
@@ -162,15 +160,6 @@ namespace HangfireService.Core.DataLayers
             LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
             _logger.LogDebug($"{name} {sw.Elapsed:c}");
             return result;
-        }
-
-
-
-        public IDbTransaction BeginTransaction()
-        {
-            var connection = new MySqlConnection(_connectionString);
-            connection.Open();
-            return connection.BeginTransaction();
         }
 
         public MySqlConnection GetMySqlConnection()

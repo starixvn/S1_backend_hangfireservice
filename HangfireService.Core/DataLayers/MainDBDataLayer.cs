@@ -52,19 +52,18 @@ namespace HangfireService.Core.DataLayers
             return await _dbClient.ExecuteAsync(sql, CommandType.Text, parameters);
         }
 
-        public int DeleteArchive(string sp, dynamic parameters, IDbTransaction? trans = null)
+        public int DeleteArchive(string sp, dynamic parameters, IDbTransaction trans)
         {
-            return _dbClient.Execute(sp, parameters, trans);
+            return _dbClient.Execute(sp, trans,parameters);
+        }
+        public int DeleteArchive(string sp, dynamic parameters)
+        {
+            return _dbClient.ExecuteAsync(sp, parameters: parameters);
         }
 
-        public int InsertArchive(string sp, dynamic parameters, IDbTransaction? trans = null)
+        public int InsertArchive(string sp, dynamic parameters, IDbTransaction trans)
         {
-            return _dbClient.QueryFirst<int>(sp, parameters, trans);
-        }
-
-        public IDbTransaction BeginTransaction()
-        {
-            return _dbClient.BeginTransaction();
+            return _dbClient.QueryFirst<int>(sp, trans, parameters );
         }
 
         public MySqlConnection GetMySqlConnection()

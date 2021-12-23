@@ -41,6 +41,7 @@ namespace HangfireService.Core.Jobs
 
 
         [DisplayName("{0}")]
+        [AutomaticRetry(Attempts = 3)]
         public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
         {
             var message = string.Empty;
