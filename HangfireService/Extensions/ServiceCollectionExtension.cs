@@ -92,6 +92,7 @@ namespace HangfireService.Extensions
             .AddSingleton<HttpHelper>()
             .AddSingleton<SecureHelper>()
             .AddSingleton<ExcelHelper>()
+            .AddSingleton<TelegramBotHelper>()
             .AddTransient<MainDBDataLayer>()
             .AddTransient<WagerDBDataLayer>()
             .AddTransient<ReportDBDataLayer>()

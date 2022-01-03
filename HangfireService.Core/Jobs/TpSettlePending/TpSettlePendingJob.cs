@@ -1,0 +1,135 @@
+﻿using Hangfire;
+using Hangfire.Dashboard.Management.Metadata;
+using Hangfire.Server;
+using HangfireService.Core.DataLayers;
+using HangfireService.Core.Extensions;
+using HangfireService.Core.Helpers;
+using HangfireService.Core.Jobs.Interfaces;
+using HangfireService.Core.Models.DBs;
+using HangfireService.Core.Models.Jobs;
+using HangfireService.Core.Models.Options;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Serilog.Context;
+using System.ComponentModel;
+
+namespace HangfireService.Core.Jobs
+{
+    [ManagementPage("TpSettlePendingJob", queue: "TpSettlePending")]
+    public class TpSettlePendingJob : BaseJob, IScheduledJob
+    {
+        private readonly ReportDBDataLayer _reportDBDataLayer;
+        private readonly WagerDBDataLayer _wagerDBDataLayer;
+
+        private readonly TelegramBotHelper _telegramBotHelper;
+
+        public TpSettlePendingJob(IServiceProvider provider) : base(provider)
+        {
+            LogContext.PushProperty("ClassName", GetType().Name);
+            _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
+            _wagerDBDataLayer = provider.GetRequiredService<WagerDBDataLayer>();
+            _telegramBotHelper = provider.GetRequiredService<TelegramBotHelper>();
+        }
+
+        [DisplayName("{0}")]
+        public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
+        {
+            try
+            {
+                _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
+
+                var option = JsonConvert.DeserializeObject<TpSettleOption>(JsonConvert.SerializeObject(jobOption.Parameters));
+                int subtractDay = option.SubtractDay;
+                int categoryId = option.CategoryId;
+                string categoryName = option.CategoryName;
+
+                int cnt = 0;
+                var begin = DateTimeExtensions.GetUnixTimeByDay(DateTime.Today.AddDays(subtractDay));
+                var end = DateTimeExtensions.GetUnixTimeByDay(DateTime.Today);
+                var tpGameTypeData = _reportDBDataLayer.GetGameTypeByCategoryId(categoryId).Result;
+
+                foreach (var tpGameType in tpGameTypeData)
+                {
+                    if (tpGameType.TpId == 1)
+                    {
+                        // 排除saba檢查
+                        continue;
+                    }
+
+                    if (categoryId == 8 && (tpGameType.Type == 47 || tpGameType.Type == 61))
+                    {
+                        // 排除Poker V8 & MP No Revenue GameType重複檢查 
+                        continue;
+                    }
+
+                    LogContext.PushProperty("Tp", tpGameType.TpId);
+                    LogContext.PushProperty("GameType", tpGameType.TypeName);
+                    var bettrans = Enumerable.Empty<TpSettlePendingModel>();
+
+                    switch (categoryId)
+                    {
+                        //case 2:
+                        //    bettrans = await _reportDBDataLayer.GetTpSettlePendingSlotByTpGameType(tpGameType.Type, begin, end);
+                        //    break;
+                        case 3:
+                            bettrans = (tpGameType.Type == 45 || tpGameType.Type == 48) ? await _wagerDBDataLayer.GetTpSettlePendingLiveCasinoByTpGameType(tpGameType.Type, begin, end) : await _reportDBDataLayer.GetTpSettlePendingLiveCasinoByTpGameType(tpGameType.Type, begin, end);
+                            break;
+                        //case 4:
+                        //    bettrans = await _reportDBDataLayer.GetTpSettlePendingFishByTpGameType(tpGameType.Type, begin, end);
+                        //    break;
+                        //case 6:
+                        //    bettrans = await _reportDBDataLayer.GetTpSettlePendingLotteryByTpGameType(tpGameType.Type, begin, end);
+                        //    break;
+                        //case 8:
+                        //    bettrans = await _reportDBDataLayer.GetTpSettlePendingPokerByTpGameType(tpGameType.Type, begin, end);
+                        //    break;
+                        default:
+                            cnt = -1;
+                            _logger.LogError($"遊戲: {tpGameType.TypeName}, CategoryName: {categoryName}, CategoryId 尚不支援: {categoryId}");
+                            break;
+                    }
+
+                    if (bettrans.Any())
+                    {
+                        cnt += bettrans.Count();
+                        
+                        var result = bettrans.GroupBy(g => g.TpUserName).Select(s => new
+                        {
+                            TpUserName = s.Key,
+                            TransId = s.Aggregate(string.Empty, (c, n) => c + (string.IsNullOrEmpty(c) ? string.Empty : ", ") + n.TransId)
+                        });
+
+                        var msgRow = "未結帳資料:";
+                        foreach (var i in result)
+                        {
+                            msgRow += $"\r\nTpUserName: {i.TpUserName}, TransId: {i.TransId}";
+                        }
+
+                        _logger.LogError($"遊戲: {tpGameType.TypeName}, 未結帳筆數: {bettrans.Count()}");
+                        _logger.LogError(msgRow);
+                    }
+                }
+
+                var msg = $"[結帳檢查: {DateTime.Today:yyyy-MM-dd}] 未結帳總筆數: {cnt}\r\nCategoryName: {categoryName}, CategoryId: {categoryId}, 時間範圍: {begin} ~ {end}";
+                if (cnt != 0)
+                {
+                    _logger.LogError(msg);
+                }
+                else
+                {
+                    _logger.LogInformation(msg);
+                }
+
+                _telegramBotHelper.SendMessage(msg);
+
+                return JsonConvert.SerializeObject(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return JsonConvert.SerializeObject(ex);
+            }
+        }
+    }
+}
