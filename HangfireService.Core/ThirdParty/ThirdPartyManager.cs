@@ -20,19 +20,9 @@ namespace HangfireService.Core.ThirdParty
             _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
         }
 
-        public Task<int> TpNotImplemented(IEnumerable<int> excludesTpList)
-        {
-            return DeleteTpNotImplemented(excludesTpList);
-        }
-
         public IEnumerable<ThirdPartyModel> GetAllTpList()
         {
             return _reportDBDataLayer.GetAllTpList();
-        }
-
-        private async Task<int> DeleteTpNotImplemented(IEnumerable<int> tpIds)
-        {      
-            return await _mainDBDataLayer.DeleteTpNotImplemented(tpIds);
         }
 
         public async Task<IEnumerable<bool>> ResetTpDetailTodo(IEnumerable<TpDetailTodo> todoList)
