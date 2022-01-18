@@ -23,7 +23,7 @@ namespace HangfireService.Core.DataLayers
             _logger = logger;
         }
 
-        public IEnumerable<T> Query<T>(string name, CommandType commandType = CommandType.StoredProcedure, DynamicParameters? parameters = null, int? commandTimeout = null)
+        public IEnumerable<T> Query<T>(string name, CommandType commandType = CommandType.StoredProcedure, object? parameters = null, int? commandTimeout = null)
         {
             IEnumerable<T> result;
             var sw = Stopwatch.StartNew();

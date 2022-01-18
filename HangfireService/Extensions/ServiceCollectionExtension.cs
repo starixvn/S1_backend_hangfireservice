@@ -91,6 +91,7 @@ namespace HangfireService.Extensions
             return services
             .AddSingleton<HttpHelper>()
             .AddSingleton<SecureHelper>()
+            .AddSingleton<ExcelHelper>()
             .AddTransient<MainDBDataLayer>()
             .AddTransient<WagerDBDataLayer>()
             .AddTransient<ReportDBDataLayer>()
@@ -113,6 +114,7 @@ namespace HangfireService.Extensions
         public static IServiceCollection RegisterTpHelper(this IServiceCollection services)
         {
             var provider = services.BuildServiceProvider();
+            services.AddSingleton<BaseTpHelper>();
             var tpList = provider.GetRequiredService<ThirdPartyManager>().GetAllTpList();
             services.AddSingleton(provider => tpList);
 
