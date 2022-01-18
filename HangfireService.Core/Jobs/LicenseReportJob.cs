@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Net;
 using Amazon;
@@ -22,19 +21,19 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Serilog.Context;
 
+
 namespace HangfireService.Core.Jobs
 {
     [ManagementPage("LicenseReportJob", queue: "report")]
     public class LicenseReportJob : BaseJob, IScheduledJob
     {
         private readonly ReportDBDataLayer _reportDbDataLayer;
-        private static List<JobOption>? _reportList;
         private readonly ExcelHelper _excelHelper;
         private readonly string _proxyHost;
         private readonly int _proxyPort;
         private readonly string _awsKey;
         private readonly string _awsSecretKey;
-        private readonly Dictionary<int, SiteId> _sites;
+
         private readonly BaseTpHelper _baseTpHelper;
         private static List<JobOption>? _reportJobList;
 
@@ -45,37 +44,31 @@ namespace HangfireService.Core.Jobs
             _baseTpHelper = provider.GetRequiredService<BaseTpHelper>();
             MyJobManager.GetJobGroups()?.TryGetValue("Report", out _reportJobList);
             _excelHelper = provider.GetRequiredService<ExcelHelper>();
-            var configuration =provider.GetRequiredService<IConfiguration>();
+            var configuration = provider.GetRequiredService<IConfiguration>();
             _proxyHost = configuration.GetValue<string>("ProxyHost");
             _proxyPort = configuration.GetValue<int>("ProxyPort");
             _awsKey = configuration.GetValue<string>("ProxyHost");
             _awsKey = configuration.GetValue<string>("AWSKey");
             _awsSecretKey = configuration.GetValue<string>("AwsSecretKey");
-            _sites = new Dictionary<int, SiteId>
-            {
-                { (int)SiteId.Nova88, SiteId.Nova88 },
-                { (int)SiteId.Goal123, SiteId.Goal123 },
-                { (int)SiteId.Bwing, SiteId.Bwing }
-            };
         }
-        
+
         [DisplayName("{0}")]
-        public async Task<object> ExecuteAsync(string jobName, JobOption jobOption , PerformContext context, IJobCancellationToken cancellationToken)
+        public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
         {
             try
             {
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
 
+                var uploadUrl = jobOption.Parameters.FirstOrDefault().Value?.ToString();
                 var date = GetLastDayOfMonth(DateTime.UtcNow.AddHours(8).AddMonths(-1));
                 var jobResult = new JobResult();
-
-                foreach (var site in _sites)
+                foreach (var site in Enum.GetValues<SiteId>())
                 {
-                    var data = _reportDbDataLayer.GetBalanceForLicense(site.Key, date);
+                    var data = _reportDbDataLayer.GetBalanceForLicense((int)site, date);
                     var stream = _excelHelper.Export(data, "1qaz#EDC2wsx$RFV");
-                    var name = $"{date.Year}{date.Month}-{site.Key}";
+                    var name = $"{date.Year}{date.Month}-{(int)site}";
 
-                    
+
                     var s3Result = UploadS3FileAsync(new MemoryStream(stream), $"{name}.csv");
                     if (s3Result.Result)
                     {
@@ -85,9 +78,8 @@ namespace HangfireService.Core.Jobs
                     {
                         jobResult.UploadS3Fail++;
                     }
-                    
-                    var url = "https://reports.xcm.cw/settlement/api/www.tyremgames.com/files/a363fcb0-1aeb-441b-a2c0-5e3d598fad4d";
-                    var result = await _baseTpHelper.HttpPostAsync(url, stream, name, "text/csv");
+
+                    var result = await _baseTpHelper.HttpPostAsync(uploadUrl, stream, name, "text/csv");
                     await using var s = await result.Content.ReadAsStreamAsync();
                     using var sr = new StreamReader(s);
                     using JsonReader reader = new JsonTextReader(sr);
@@ -108,18 +100,18 @@ namespace HangfireService.Core.Jobs
                 return JsonConvert.SerializeObject(jobResult);
             }
             catch (Exception ex)
-            {            
+            {
                 _logger.LogError(ex, "LicenseReportJob");
                 return JsonConvert.SerializeObject(ex);
             }
-          
+
         }
 
         private static DateTime GetLastDayOfMonth(DateTime dateTime)
         {
             return new DateTime(dateTime.Year, dateTime.Month, DateTime.DaysInMonth(dateTime.Year, dateTime.Month));
         }
-        
+
         private async Task<bool> UploadS3FileAsync(MemoryStream stream, string name)
         {
             try
@@ -128,13 +120,13 @@ namespace HangfireService.Core.Jobs
                 {
                     RegionEndpoint = RegionEndpoint.APSoutheast1
                 };
-        
+
                 if (!string.IsNullOrEmpty(_proxyHost) && _proxyPort != 0)
                 {
                     config.ProxyHost = _proxyHost;
                     config.ProxyPort = _proxyPort;
                 }
-        
+
                 IAmazonS3 client = new AmazonS3Client(_awsKey, _awsSecretKey, config);
                 var putRequest = new PutObjectRequest
                 {
@@ -143,9 +135,9 @@ namespace HangfireService.Core.Jobs
                     InputStream = stream,
                     Key = name
                 };
-        
+
                 var putResponse = await client.PutObjectAsync(putRequest);
-        
+
                 if (putResponse.HttpStatusCode != HttpStatusCode.OK)
                 {
                     _logger.LogError($"UploadS3File, Response={JsonConvert.SerializeObject(putResponse)}");
@@ -164,14 +156,14 @@ namespace HangfireService.Core.Jobs
                 return false;
             }
         }
-        
+
         private class ArchiveJobList : IInputDataList
         {
             public Dictionary<string, string>? GetData()
             {
                 return _reportJobList?.ToDictionary(f => f.JobName, f => f.JobName);
             }
-        
+
             public string? GetDefaultValue()
             {
                 return null;
