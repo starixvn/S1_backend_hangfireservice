@@ -23,6 +23,9 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Query(sp, parameters: new { LIMINNUM = liminNum });
         }
 
-
+        public IEnumerable<LicenseReport> GetBalanceForLicense(int siteId, DateTime time)
+        {
+            return _dbClient.Query<LicenseReport>("Service_BalanceForLicense_Get", parameters: new { _Time = time, _SiteId = siteId });
+        }
     }
 }

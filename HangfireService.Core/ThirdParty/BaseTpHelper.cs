@@ -1,4 +1,5 @@
-﻿using HangfireService.Core.DataLayers;
+﻿using System.Globalization;
+using HangfireService.Core.DataLayers;
 using HangfireService.Core.Helpers;
 using HangfireService.Core.Models.DBs;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,6 +35,27 @@ namespace HangfireService.Core.ThirdParty
         protected async Task<bool> UpdateTpDetailTodo(TpBetRecordDetail detail)
         {
             return await _mainDBDataLayer.UpdateTpDetailTodo(detail);
+        }
+
+        public async Task<HttpResponseMessage> HttpPostAsync(string url, byte[] data, string name, string contentType)
+        {
+            try
+            {
+                var formData = new MultipartFormDataContent();
+                var streamContent = new StreamContent(new MemoryStream(data));
+                streamContent.Headers.Add("Content-Type", contentType);
+                streamContent.Headers.Add("Content-Disposition", $"form-data; name=\"{name}\"; filename=\"{name}\"");
+                formData.Add(streamContent, "file", $"{name}");
+
+                var response = await _httpHelper.GetClient().PostAsync(url, formData);
+                response.EnsureSuccessStatusCode();
+                return response;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, e.Message);
+                throw;
+            }
         }
 
         protected async Task<HttpResponseMessage> HttpPostAsync(string url, Dictionary<string, string> parameters)
