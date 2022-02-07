@@ -1,5 +1,6 @@
 ﻿using Hangfire;
 using Hangfire.Dashboard.Management.Metadata;
+using Hangfire.Dashboard.Management.Support;
 using Hangfire.Server;
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Extensions;
@@ -23,6 +24,7 @@ namespace HangfireService.Core.Jobs
         private readonly WagerDBDataLayer _wagerDBDataLayer;
 
         private readonly TelegramBotHelper _telegramBotHelper;
+        private static List<JobOption>? _jobList;
 
         public TpSettlePendingJob(IServiceProvider provider) : base(provider)
         {
@@ -30,6 +32,7 @@ namespace HangfireService.Core.Jobs
             _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
             _wagerDBDataLayer = provider.GetRequiredService<WagerDBDataLayer>();
             _telegramBotHelper = provider.GetRequiredService<TelegramBotHelper>();
+            MyJobManager.GetJobGroups()?.TryGetValue("TpSettlePending", out _jobList);
         }
 
         [DisplayName("{0}")]
@@ -130,6 +133,37 @@ namespace HangfireService.Core.Jobs
                 _logger.LogError(ex, ex.Message);
                 return JsonConvert.SerializeObject(ex);
             }
+        }
+
+        private class TpSettlePendingJobList : IInputDataList
+        {
+            public Dictionary<string, string>? GetData()
+            {
+                return _jobList?.ToDictionary(f => f.JobName, f => f.JobName);
+            }
+
+            public string? GetDefaultValue()
+            {
+                return null;
+            }
+        }
+
+        [Job]
+        [DisplayName("Run {2} by ManagementPage")]
+        public object Run(
+            PerformContext? context = null,
+            IJobCancellationToken? cancellationToken = null,
+            [DisplayData("JobName", ConvertType = typeof(TpSettlePendingJobList))]
+            string? jobName = null)
+        {
+            if (!_jobList.Any())
+            {
+                return null;
+            }
+
+            var jobOption = _jobList.First(i => i.JobName == jobName);
+
+            return ExecuteAsync($"Execute.{jobName}", jobOption, context, cancellationToken).Result;
         }
     }
 }
