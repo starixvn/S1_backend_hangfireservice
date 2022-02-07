@@ -45,8 +45,8 @@ namespace HangfireService.Core.Jobs
                 string categoryName = option.CategoryName;
 
                 int cnt = 0;
-                var begin = DateTimeExtensions.GetUnixTimeByDay(DateTime.Today.AddDays(subtractDay));
-                var end = DateTimeExtensions.GetUnixTimeByDay(DateTime.Today);
+                var begin = DateTime.Today.AddDays(subtractDay).GetUnixTimeByDay();
+                var end = DateTime.Today.GetUnixTimeByDay();
                 var tpGameTypeData = _reportDBDataLayer.GetGameTypeByCategoryId(categoryId).Result;
 
                 foreach (var tpGameType in tpGameTypeData)

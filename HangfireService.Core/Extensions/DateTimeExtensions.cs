@@ -9,7 +9,7 @@
                dt.Date >= startDate.Date && dt.Date <= endDate.Date;
         }
 
-        public static long GetUnixTimeByDay(DateTime datetime)
+        public static long GetUnixTimeByDay(this DateTime datetime)
         {
             var time = new DateTime(
                 datetime.Year,
