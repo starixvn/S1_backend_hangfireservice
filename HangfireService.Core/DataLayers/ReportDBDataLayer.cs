@@ -1,11 +1,12 @@
-﻿using HangfireService.Core.Models.DBs;
+﻿using Dapper;
+using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace HangfireService.Core.DataLayers
 {
     public class ReportDBDataLayer
-    {   
+    {
         private readonly MySqlClient _dbClient;
 
         public ReportDBDataLayer(IServiceProvider provider)
@@ -26,6 +27,16 @@ namespace HangfireService.Core.DataLayers
         public IEnumerable<LicenseReport> GetBalanceForLicense(int siteId, DateTime time)
         {
             return _dbClient.Query<LicenseReport>("Service_BalanceForLicense_Get", parameters: new { _Time = time, _SiteId = siteId });
+        }
+
+        public Task<IEnumerable<TpGameTypeModel>> GetGameTypeByCategoryId(int CategoryId)
+        {
+            return _dbClient.QueryAsync<TpGameTypeModel>("Service_GameTypeByCategoryId_Get", parameters: new DynamicParameters(new { CategoryId }));
+        }
+
+        public Task<IEnumerable<TpSettlePendingModel>> GetTpSettlePendingLiveCasinoByTpGameType(int TpGameType, long BeginTime, long EndTime)
+        {
+            return _dbClient.QueryAsync<TpSettlePendingModel>("Service_TpSettlePending_LiveCasino_Bettrans_Get", parameters: new DynamicParameters(new { TpGameType, BeginTime, EndTime }));
         }
     }
 }

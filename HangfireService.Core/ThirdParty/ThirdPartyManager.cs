@@ -12,7 +12,7 @@ namespace HangfireService.Core.ThirdParty
         private readonly ReportDBDataLayer _reportDBDataLayer;
 
         private readonly MainDBDataLayer _mainDBDataLayer;
-    
+
         public ThirdPartyManager(IServiceProvider provider)
         {
             _logger = provider.GetRequiredService<ILogger<ThirdPartyManager>>();
