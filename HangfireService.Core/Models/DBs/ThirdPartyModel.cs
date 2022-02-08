@@ -10,4 +10,13 @@ namespace HangfireService.Core.Models.DBs
         public string Setting { set; get; }
         public Dictionary<string, string> TpSetting => JsonConvert.DeserializeObject<Dictionary<string, string>>(Setting);
     }
+
+    public class TpGameTypeModel
+    {
+        public int Type { set; get; }
+        public string? TypeName { set; get; }
+        public int TpId { set; get; }
+        public int CategoryId { set; get; }
+    }
+
 }
