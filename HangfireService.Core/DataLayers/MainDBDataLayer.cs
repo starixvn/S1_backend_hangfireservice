@@ -62,5 +62,10 @@ namespace HangfireService.Core.DataLayers
         {
             return _dbClient.GetMySqlConnection();
         }
+
+        public async Task<int> ResetTpUnsettle()
+        {
+            return await _dbClient.ExecuteAsync("Service_TpUnsettle_Reset");
+        }
     }
 }
