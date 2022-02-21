@@ -22,10 +22,9 @@ namespace HangfireService.Core.ThirdParty
 
             _kenoGameTypeList = new List<int>
             {
-                5,  // 202 OW Keno
-                19, // 220 OW Lottery
-                20, // 223 OW Togel 4D
-                23  // 222 OW Table Game
+                73,  // 202 OW Keno
+                74, // 220 OW Lottery
+                75  // 222 OW Table Game
             };
         }
 
