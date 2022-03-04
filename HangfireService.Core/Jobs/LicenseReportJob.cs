@@ -78,7 +78,7 @@ namespace HangfireService.Core.Jobs
                     {
                         jobResult.UploadS3Fail++;
                     }
-
+                    
                     var result = await _baseTpHelper.HttpPostAsync(uploadUrl, stream, name, "text/csv");
                     await using var s = await result.Content.ReadAsStreamAsync();
                     using var sr = new StreamReader(s);

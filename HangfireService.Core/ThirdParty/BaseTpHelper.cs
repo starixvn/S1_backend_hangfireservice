@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Text;
+using Serilog.Context;
 
 namespace HangfireService.Core.ThirdParty
 {
@@ -41,6 +42,7 @@ namespace HangfireService.Core.ThirdParty
         {
             try
             {
+                _logger.LogWarning($"Tp.Request.URL:{url}");
                 var formData = new MultipartFormDataContent();
                 var streamContent = new StreamContent(new MemoryStream(data));
                 streamContent.Headers.Add("Content-Type", contentType);
@@ -48,6 +50,9 @@ namespace HangfireService.Core.ThirdParty
                 formData.Add(streamContent, "file", $"{name}");
 
                 var response = await _httpHelper.GetClient().PostAsync(url, formData);
+                
+                _logger.LogWarning($"Tp.Request.Response:{JsonConvert.SerializeObject(response)}");
+
                 response.EnsureSuccessStatusCode();
                 return response;
             }
