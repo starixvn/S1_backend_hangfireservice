@@ -79,10 +79,12 @@ namespace HangfireService.Core.Jobs
                         jobResult.UploadS3Fail++;
                     }
 
+                    LogContext.PushProperty("Tp.Request.URL", uploadUrl);
                     var result = await _baseTpHelper.HttpPostAsync(uploadUrl, stream, name, "text/csv");
                     await using var s = await result.Content.ReadAsStreamAsync();
                     using var sr = new StreamReader(s);
                     using JsonReader reader = new JsonTextReader(sr);
+                    _logger.LogWarning($"Tp.Request.Response:{result}");
                     var serializer = new JsonSerializer();
                     var response = serializer.Deserialize<CuracaoResponse>(reader);
 
