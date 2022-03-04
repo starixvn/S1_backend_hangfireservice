@@ -42,7 +42,6 @@ namespace HangfireService.Core.ThirdParty
         {
             try
             {
-                LogContext.PushProperty("Tp.Request.URL", url);
                 _logger.LogWarning($"Tp.Request.URL:{url}");
                 var formData = new MultipartFormDataContent();
                 var streamContent = new StreamContent(new MemoryStream(data));
