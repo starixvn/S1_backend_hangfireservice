@@ -129,14 +129,13 @@ namespace HangfireService.Core.Jobs
                 var msg = $"[結帳檢查: {DateTime.Today:yyyy-MM-dd}] 未結帳總筆數: {cnt}\r\nCategoryName: {categoryName}, CategoryId: {categoryId}, 時間範圍: {begin} ~ {end}";
                 if (cnt != 0)
                 {
+                    _telegramBotHelper.SendMessage(msg);
                     _logger.LogError(msg);
                 }
                 else
                 {
                     _logger.LogInformation(msg);
                 }
-
-                _telegramBotHelper.SendMessage(msg);
 
                 return msg;
             }
