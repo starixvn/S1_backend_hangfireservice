@@ -17,10 +17,11 @@ namespace HangfireService.Core.DataLayers
 
         public DataBase DataBase { get; set; }
 
-        public MySqlClient(string connectionString, ILogger<MySqlClient> logger)
+        public MySqlClient(string connectionString, ILogger<MySqlClient> logger, DataBase dataBase)
         {
             _connectionString = connectionString;
             _logger = logger;
+            DataBase = dataBase;
         }
 
         public IEnumerable<T> Query<T>(string name, object? parameters = null, int? commandTimeout = null)
