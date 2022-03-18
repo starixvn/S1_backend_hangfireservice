@@ -48,5 +48,10 @@ namespace HangfireService.Core.DataLayers
         {
             return _dbClient.QueryAsync<TpSettlePendingModel>("Service_TpSettlePending_TpUnsettle_Get", parameters: new DynamicParameters(new { TpId, TpGameType, BeginTime, EndTime }), commandTimeout: 60);
         }
+
+        public Task<IEnumerable<TpBetRecordCheck>> GetTpBetRecordCheckData(DateTime BeginTime, DateTime EndTime)
+        {
+            return _dbClient.QueryAsync<TpBetRecordCheck>("Finance_TpBetRecord_Check_Get", parameters: new { BeginTime, EndTime }, commandTimeout: 60);
+        }
     }
 }

@@ -119,10 +119,16 @@ namespace HangfireService.Extensions
             var tpList = provider.GetRequiredService<ThirdPartyManager>().GetAllTpList();
             services.AddSingleton(provider => tpList);
 
-            var tpTypes = typeof(ITpHelper).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(ITpHelper)));
-            foreach (var tp in tpTypes)
+            var detailTypes = typeof(IDetailTpHelper).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IDetailTpHelper)));
+            foreach (var tp in detailTypes)
             {
-                services.AddSingleton(provider => (ITpHelper)Activator.CreateInstance(tp, new object[] { provider }));
+                services.AddSingleton(provider => (IDetailTpHelper)Activator.CreateInstance(tp, new object[] { provider }));
+            }
+
+            var financeTypes = typeof(IFinanceTpHelper).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IFinanceTpHelper)));
+            foreach (var tp in financeTypes)
+            {
+                services.AddSingleton(provider => (IFinanceTpHelper)Activator.CreateInstance(tp, new object[] { provider }));
             }
 
             return services;

@@ -18,7 +18,7 @@ namespace HangfireService.IntegrationTest
     {
         private readonly IServiceProvider _provider;
 
-        private ITpHelper? _tpHelper;
+        private IDetailTpHelper? _tpHelper;
 
         private readonly MySqlClient _dbClient;
 
@@ -53,7 +53,7 @@ namespace HangfireService.IntegrationTest
         [TestCase(1, 1, "113608583470", 1, 2, "DNova88_1170", 1170, "tottitest3")]
         public void GetTpBetRecordDetailTest(int tpId, int gameType, string transId, int siteId, int currencyId, string tpUserName, int custId, string userName)
         {
-            _tpHelper = _provider.GetServices<ITpHelper>().First(p => p.TpId == tpId);
+            _tpHelper = _provider.GetServices<IDetailTpHelper>().First(p => p.TpId == tpId);
             var todoList = new List<TpDetailTodo>()
             {
                 new TpDetailTodo

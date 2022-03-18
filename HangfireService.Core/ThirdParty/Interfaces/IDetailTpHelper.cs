@@ -3,7 +3,7 @@ using HangfireService.Core.Models.Options;
 
 namespace HangfireService.Core.ThirdParty.Interfaces
 {
-    public interface ITpHelper
+    public interface IDetailTpHelper
     {
         int TpId { get;}
 
