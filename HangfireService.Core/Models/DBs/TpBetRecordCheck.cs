@@ -35,7 +35,7 @@ namespace HangfireService.Core.Models.DBs
             }
             if (WinlostAmountDiff > 0)
             {
-                result.AppendLine($"Stake difference amount is {WinlostAmountDiff}.");
+                result.AppendLine($"WinlostAmount difference amount is {WinlostAmountDiff}.");
             }
 
             return result.Length > 0 ? new FinanceCheckResult(this, result.ToString()) : null;

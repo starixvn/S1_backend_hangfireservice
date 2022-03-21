@@ -135,7 +135,8 @@ namespace HangfireService.Core.Jobs
             result.AppendLine($"[Check{checkType}：{checkOption.BeginTime:yyyy/MM/dd HH:mm} ~ {checkOption.EndTime:yyyy/MM/dd HH:mm}]");
             foreach (var check in checkResults)
             {
-                result.AppendLine($"TpId:{check.TpId} | CurrencyId:{check.CurrencyId} | {check.ErrorMessage}");
+                result.AppendLine($"TpId:{check.TpId} | CurrencyId:{check.CurrencyId} | ");
+                result.AppendLine($" －{check.ErrorMessage}");
             }
             return result.ToString();
         }
