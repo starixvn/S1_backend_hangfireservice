@@ -8,6 +8,7 @@ using HangfireService.Core.Jobs;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Jobs;
+using HangfireService.Core.Service;
 using HangfireService.Core.ThirdParty;
 using HangfireService.Core.ThirdParty.Interfaces;
 using System.Net;
@@ -87,7 +88,8 @@ namespace HangfireService.Extensions
             .AddTransient<MainDBDataLayer>()
             .AddTransient<WagerDBDataLayer>()
             .AddTransient<ReportDBDataLayer>()
-            .AddSingleton<ThirdPartyManager>();
+            .AddSingleton<ThirdPartyManager>()
+            .AddSingleton<PartitionService>();
         }
 
         public static IServiceCollection RegisterScheduledJobs(this IServiceCollection services, IConfiguration configuration)

@@ -14,9 +14,9 @@ using HangfireService.Core.Models.Options;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using HangfireService.Core.Helpers;
-using HangfireService.Core.Models;
 using HangfireService.Core.Models.Enums;
 using System.Text;
+using HangfireService.Core.Models.Finance;
 
 namespace HangfireService.Core.Jobs
 {
@@ -36,7 +36,7 @@ namespace HangfireService.Core.Jobs
             LogContext.PushProperty("ClassName", GetType().Name);
             _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
             MyJobManager.GetJobGroups()?.TryGetValue("Finance", out _jobList);
-            _telegramBotHelper = provider.GetRequiredService<TelegramBotHelper>(); 
+            _telegramBotHelper = provider.GetRequiredService<TelegramBotHelper>();
             foreach (var tp in provider.GetServices<IFinanceTpHelper>())
             {
                 _tpHandler.Add(tp.TpId, tp);
@@ -63,27 +63,27 @@ namespace HangfireService.Core.Jobs
 
                     if (tpHelper.CanCheckBettransData)
                     {
-                        var bettransResult = tpHelper.CheckBettransData(checkOption, check);
+                        var bettransResult = await tpHelper.CheckBettransData(checkOption, check);
                         if (bettransResult.Any())
                         {
                             var msg = GetMessage(FinanceCheckType.BettransData, checkOption, bettransResult);
                             _logger.LogError(msg);
                             _telegramBotHelper.SendMessage(msg);
-                            result.Append(msg);
+                            result.AppendLine(msg);
                         }
                     }
 
                     if (tpHelper.CanCheckThirdPartyData)
                     {
-                        var thirdPartyResult = tpHelper.CheckThirdPartyData(checkOption, check);
+                        var thirdPartyResult = await tpHelper.CheckThirdPartyData(checkOption, check);
                         if (thirdPartyResult.Any())
                         {
                             var msg = GetMessage(FinanceCheckType.ThirdPartyData, checkOption, thirdPartyResult);
                             _logger.LogError(msg);
                             _telegramBotHelper.SendMessage(msg);
-                            result.Append(msg);
+                            result.AppendLine(msg);
                         }
-                    }              
+                    }
                 }
 
                 return result.ToString();
@@ -100,9 +100,9 @@ namespace HangfireService.Core.Jobs
         public object Run(
             PerformContext? context = null,
             IJobCancellationToken? cancellationToken = null,
-            [DisplayData("JobName", ConvertType = typeof(JobList))]string? jobName = null,
-            [DisplayData("BeginTime")] string? BeginTime = null,
-            [DisplayData("EndTime")]string? EndTime = null)
+            [DisplayData("JobName", ConvertType = typeof(JobList))] string? jobName = null,
+            [DisplayData("BeginTime", defaultValue: "2022-03-01")] string? BeginTime = null,
+            [DisplayData("EndTime", defaultValue: "2022-03-20")] string? EndTime = null)
         {
             if (!_jobList.Any())
             {
@@ -131,10 +131,11 @@ namespace HangfireService.Core.Jobs
 
         private string GetMessage(FinanceCheckType checkType, FinanceCheckOption checkOption, IEnumerable<FinanceCheckResult> checkResults)
         {
-            var result = new StringBuilder($"[Check{checkType}：{checkOption.BeginTime} ~ {checkOption.EndTime}]");
+            var result = new StringBuilder();
+            result.AppendLine($"[Check{checkType}：{checkOption.BeginTime:yyyy/MM/dd HH:mm} ~ {checkOption.EndTime:yyyy/MM/dd HH:mm}]");
             foreach (var check in checkResults)
             {
-                result.AppendLine( $"TpId:{check.TpId} | CurrencyId:{check.CurrencyId} | {check.ErrorMessage}");
+                result.AppendLine($"TpId:{check.TpId} | CurrencyId:{check.CurrencyId} | {check.ErrorMessage}");
             }
             return result.ToString();
         }

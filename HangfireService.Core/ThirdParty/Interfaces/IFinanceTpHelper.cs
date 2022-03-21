@@ -1,11 +1,6 @@
-﻿using HangfireService.Core.Models;
-using HangfireService.Core.Models.DBs;
+﻿using HangfireService.Core.Models.DBs;
+using HangfireService.Core.Models.Finance;
 using HangfireService.Core.Models.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HangfireService.Core.ThirdParty.Interfaces
 {
@@ -13,11 +8,11 @@ namespace HangfireService.Core.ThirdParty.Interfaces
     {
         int TpId { get; }
 
-        bool CanCheckBettransData { get; }
+        bool CanCheckBettransData => true;
 
-        IEnumerable<FinanceCheckResult> CheckBettransData(FinanceCheckOption checkOption, IEnumerable<TpBetRecordCheck> tpBetRecordCheckList);
+        Task<IEnumerable<FinanceCheckResult>> CheckBettransData(FinanceCheckOption checkOption, IEnumerable<TpBetRecordCheck> tpBetRecordCheckList);
 
-        bool CanCheckThirdPartyData { get; }
-        IEnumerable<FinanceCheckResult> CheckThirdPartyData(FinanceCheckOption checkOption, IEnumerable<TpBetRecordCheck> tpBetRecordCheckList);
+        bool CanCheckThirdPartyData => true;
+        Task<IEnumerable<FinanceCheckResult>> CheckThirdPartyData(FinanceCheckOption checkOption, IEnumerable<TpBetRecordCheck> tpBetRecordCheckList);
     }
 }
