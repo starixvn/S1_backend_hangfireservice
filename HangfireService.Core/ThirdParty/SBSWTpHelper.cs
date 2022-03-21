@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 
 namespace HangfireService.Core.ThirdParty
 {
-    public class SBSWTpHelper : BaseTpHelper, ITpHelper
+    public class SBSWTpHelper : BaseTpHelper, IDetailTpHelper
     {
         public int TpId { get; } = 41;
 
