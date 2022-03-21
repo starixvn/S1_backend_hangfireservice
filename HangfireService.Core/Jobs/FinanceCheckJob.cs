@@ -132,7 +132,7 @@ namespace HangfireService.Core.Jobs
         private string GetMessage(FinanceCheckType checkType, FinanceCheckOption checkOption, IEnumerable<FinanceCheckResult> checkResults)
         {
             var result = new StringBuilder();
-            result.AppendLine($"[Check{checkType}：{checkOption.BeginTime:yyyy/MM/dd HH:mm} ~ {checkOption.EndTime:yyyy/MM/dd HH:mm}]");
+            result.AppendLine($"*[Check{checkType}：{checkOption.BeginTime:yyyy/MM/dd HH:mm} ~ {checkOption.EndTime:yyyy/MM/dd HH:mm}]*");
             foreach (var check in checkResults)
             {
                 result.AppendLine($"TpId:{check.TpId} | CurrencyId:{check.CurrencyId}");
