@@ -17,20 +17,21 @@ namespace HangfireService.Core.DataLayers
 
         public DataBase DataBase { get; set; }
 
-        public MySqlClient(string connectionString, ILogger<MySqlClient> logger)
+        public MySqlClient(string connectionString, ILogger<MySqlClient> logger, DataBase dataBase)
         {
             _connectionString = connectionString;
             _logger = logger;
+            DataBase = dataBase;
         }
 
-        public IEnumerable<T> Query<T>(string name, CommandType commandType = CommandType.StoredProcedure, object? parameters = null, int? commandTimeout = null)
+        public IEnumerable<T> Query<T>(string name, object? parameters = null, int? commandTimeout = null)
         {
             IEnumerable<T> result;
             var sw = Stopwatch.StartNew();
             try
             {
                 using var connection = new MySqlConnection(_connectionString);
-                result = connection.Query<T>(name, parameters, commandType: commandType, commandTimeout: commandTimeout);
+                result = connection.Query<T>(name, parameters, commandType: CommandType.StoredProcedure, commandTimeout: commandTimeout);
             }
             catch (Exception e)
             {
@@ -43,14 +44,14 @@ namespace HangfireService.Core.DataLayers
             return result;
         }
 
-        public async Task<IEnumerable<T>> QueryAsync<T>(string name, CommandType commandType = CommandType.StoredProcedure, DynamicParameters? parameters = null, int? commandTimeout = null)
+        public async Task<IEnumerable<T>> QueryAsync<T>(string name, object? parameters = null, int? commandTimeout = null)
         {
             IEnumerable<T> result;
             var sw = Stopwatch.StartNew();
             try
             {
                 using var connection = new MySqlConnection(_connectionString);
-                result = await connection.QueryAsync<T>(name, parameters, commandType: commandType, commandTimeout: commandTimeout);
+                result = await connection.QueryAsync<T>(name, parameters, commandType: CommandType.StoredProcedure, commandTimeout: commandTimeout);
             }
             catch (Exception e)
             {
@@ -63,7 +64,7 @@ namespace HangfireService.Core.DataLayers
             return result;
         }
 
-        public async Task<T> QueryFirstAsync<T>(string name, CommandType commandType = CommandType.StoredProcedure, DynamicParameters? parameters = null, int? commandTimeout = null)
+        public async Task<T> QueryFirstAsync<T>(string name, object? parameters = null, int? commandTimeout = null)
         {
             T result;
             var resultCode = string.Empty;
@@ -71,7 +72,7 @@ namespace HangfireService.Core.DataLayers
             try
             {
                 using var connection = new MySqlConnection(_connectionString);
-                result = await connection.QueryFirstOrDefaultAsync<T>(name, parameters, commandType: commandType, commandTimeout: commandTimeout);
+                result = await connection.QueryFirstOrDefaultAsync<T>(name, parameters, commandType: CommandType.StoredProcedure, commandTimeout: commandTimeout);
             }
             catch (Exception e)
             {
@@ -84,14 +85,14 @@ namespace HangfireService.Core.DataLayers
             return result;
         }
 
-        public async Task<int> ExecuteAsync(string name, CommandType commandType = CommandType.StoredProcedure, object? parameters = null)
+        public async Task<int> ExecuteAsync(string name, object? parameters = null)
         {
             var sw = Stopwatch.StartNew();
             int result;
             try
             {
                 using var connection = new MySqlConnection(_connectionString);
-                result = await connection.ExecuteAsync(name, param: parameters, commandType: commandType);
+                result = await connection.ExecuteAsync(name, param: parameters, commandType: CommandType.StoredProcedure);
             }
             catch (Exception e)
             {

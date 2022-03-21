@@ -157,7 +157,7 @@ namespace HangfireService.Core.Jobs
             }
         }
 
-        private class ArchiveJobList : IInputDataList
+        private class JobList : IInputDataList
         {
             public Dictionary<string, string>? GetData()
             {
@@ -175,7 +175,7 @@ namespace HangfireService.Core.Jobs
         public object Run(
             PerformContext? context = null,
             IJobCancellationToken? cancellationToken = null,
-            [DisplayData("JobName", ConvertType = typeof(ArchiveJobList))]
+            [DisplayData("JobName", ConvertType = typeof(JobList))]
             string? jobName = null)
         {
             if (!_reportJobList.Any())

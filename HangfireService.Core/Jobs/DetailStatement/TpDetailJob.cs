@@ -21,7 +21,7 @@ namespace HangfireService.Core.Jobs
     {
         private readonly MainDBDataLayer _mainDBDataLayer;
 
-        private readonly Dictionary<int, ITpHelper> _tpHandler = new Dictionary<int, ITpHelper>();
+        private readonly Dictionary<int, IDetailTpHelper> _tpHandler = new Dictionary<int, IDetailTpHelper>();
 
         private static List<JobOption>? _tpDetailJobList;
 
@@ -31,7 +31,7 @@ namespace HangfireService.Core.Jobs
             _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
             MyJobManager.GetJobGroups()?.TryGetValue("TpDetail", out _tpDetailJobList);
 
-            foreach (var tp in provider.GetServices<ITpHelper>())
+            foreach (var tp in provider.GetServices<IDetailTpHelper>())
             {
                 _tpHandler.Add(tp.TpId, tp);
             }
@@ -43,7 +43,7 @@ namespace HangfireService.Core.Jobs
             try
             {
                 var option = JsonConvert.DeserializeObject<TpDetailOption>(JsonConvert.SerializeObject(jobOption.Parameters));
-                if (!_tpHandler.TryGetValue(option.TpId, out ITpHelper tpHelper))
+                if (!_tpHandler.TryGetValue(option.TpId, out IDetailTpHelper tpHelper))
                 {
                     throw new NotImplementedException($"{option.TpId} NotImplemented");
                 }
