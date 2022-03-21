@@ -45,7 +45,7 @@ namespace HangfireService.Core.ThirdParty
             CheckData.AddRange(_dbClient.Query<CheckData>("Service_BettransRng_MG_Summary_Get", new { BeginTime, EndTime }));
             
             //Live Casino
-            CheckData.AddRange(partitionService.Query<CheckData>(checkOption.BeginTime, checkOption.EndTime, "Service_BettransLC_MG_Summary_Get", new { BeginTime, EndTime }));
+            //CheckData.AddRange(partitionService.Query<CheckData>(checkOption.BeginTime, checkOption.EndTime, "Service_BettransLC_MG_Summary_Get", new { BeginTime, EndTime }));
 
             //使用TpCurrencyId組合Slot跟Live Casino資料
             var bettransDataList = CheckData.GroupBy(i => i.TpCurrencyId)
