@@ -101,32 +101,20 @@ namespace HangfireService.Core.Jobs
             PerformContext? context = null,
             IJobCancellationToken? cancellationToken = null,
             [DisplayData("JobName", ConvertType = typeof(JobList))] string? jobName = null,
-            [DisplayData("BeginTime", defaultValue: "2022-03-01")] string? BeginTime = null,
-            [DisplayData("EndTime", defaultValue: "2022-03-20")] string? EndTime = null)
+            [DisplayData("CheckDate", ConvertType = typeof(CheckDateList))] string? CheckDate = null)
         {
             if (!_jobList.Any())
             {
                 return null;
-            }
-
+            }       
             var jobOption = _jobList.First(i => i.JobName == jobName);
+            var date = DateTime.ParseExact($"{CheckDate}", "yyyy-MM-dd", null);
+            var BeginTime = date.ToString("yyyy-MM-dd");
+            var EndTime = date.AddDays(1).ToString("yyyy-MM-dd");
             jobOption.Parameters.Update("BeginTime", BeginTime);
             jobOption.Parameters.Update("EndTime", EndTime);
 
             return ExecuteAsync($"Execute.{jobName}.({BeginTime}~{EndTime})", jobOption, context, cancellationToken).Result;
-        }
-
-        private class JobList : IInputDataList
-        {
-            public Dictionary<string, string>? GetData()
-            {
-                return _jobList?.ToDictionary(f => f.JobName, f => f.JobName);
-            }
-
-            public string? GetDefaultValue()
-            {
-                return null;
-            }
         }
 
         private string GetMessage(FinanceCheckType checkType, FinanceCheckOption checkOption, IEnumerable<FinanceCheckResult> checkResults)
@@ -139,6 +127,38 @@ namespace HangfireService.Core.Jobs
                 result.AppendLine($"{check.ErrorMessage}");
             }
             return result.ToString();
+        }
+        private class JobList : IInputDataList
+        {
+            public Dictionary<string, string>? GetData()
+            {
+                return _jobList?.ToDictionary(f => f.JobName, f => f.JobName);
+            }
+            public string? GetDefaultValue()
+            {
+                return null;
+            }
+        }
+
+        private class CheckDateList : IInputDataList
+        {
+            public Dictionary<string, string>? GetData()
+            {
+                var yesterday = DateTime.Today.AddDays(-1);
+                var begin = yesterday.AddDays(-12);
+                var result = new List<string>();
+                while (begin <= yesterday)
+                {
+                    result.Add(begin.ToString("yyyy-MM-dd"));
+                    begin = begin.AddDays(1);
+                }
+                return result.OrderByDescending(i => i).ToDictionary(f => f, f => f);
+            }
+
+            public string? GetDefaultValue()
+            {
+                return null;
+            }
         }
     }
 }
