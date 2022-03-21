@@ -72,9 +72,21 @@ namespace HangfireService.Core.Jobs
 
                     switch (categoryId)
                     {
-                        //case 2:
-                        //    bettrans = await _reportDBDataLayer.GetTpSettlePendingSlotByTpGameType(tpGameType.Type, begin, end);
-                        //    break;
+                        case 2:
+                            if (tpGameType.Type == 34 || tpGameType.Type == 46)
+                            {
+                                bettrans = await _wagerDBDataLayer.GetTpSettlePendingSlotByTpGameType(tpGameType.Type, begin, end);
+                            }
+                            else if (tpGameType.Type <= 65 && (tpGameType.Type != 14 || tpGameType.Type != 13))
+                            {
+                                bettrans = await _reportDBDataLayer.GetTpSettlePendingSlotByTpGameType(tpGameType.Type, begin, end);
+                            }
+                            else
+                            {
+                                // 新遊戲結構改用TpUnsettle
+                                bettrans = await _reportDBDataLayer.GetTpSettlePendingTpUnsettleByTpGameType(tpGameType.TpId, tpGameType.Type, begin, end);
+                            }
+                            break;
                         case 3:
                             bettrans = (tpGameType.Type == 45 || tpGameType.Type == 48) ? await _wagerDBDataLayer.GetTpSettlePendingLiveCasinoByTpGameType(tpGameType.Type, begin, end) : await _reportDBDataLayer.GetTpSettlePendingLiveCasinoByTpGameType(tpGameType.Type, begin, end);
                             break;
@@ -96,7 +108,7 @@ namespace HangfireService.Core.Jobs
                     if (bettrans.Any())
                     {
                         cnt += bettrans.Count();
-                        
+
                         var result = bettrans.GroupBy(g => g.TpUserName).Select(s => new
                         {
                             TpUserName = s.Key,
@@ -125,8 +137,7 @@ namespace HangfireService.Core.Jobs
                 }
 
                 _telegramBotHelper.SendMessage(msg);
-
-                return JsonConvert.SerializeObject(true);
+                return msg;
             }
             catch (Exception ex)
             {

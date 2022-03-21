@@ -21,5 +21,25 @@
             );
             return new DateTimeOffset(time).ToUnixTimeSeconds();
         }
+
+        public static string GetPartitionKey(this DateTime partitionTime)
+        {
+            return partitionTime.ToString("yyyyMM");
+        }
+
+        public static IEnumerable<string> GetPartitionRange(this DateTime beginTime, DateTime EndTime)
+        {
+            var result = new List<string>
+            {
+                beginTime.GetPartitionKey()
+            };
+            var date = beginTime;
+            while (date.GetPartitionKey() != EndTime.GetPartitionKey())
+            {
+                date = date.AddMonths(1);
+                result.Add(date.GetPartitionKey());
+            }
+            return result;
+    }
     }
 }

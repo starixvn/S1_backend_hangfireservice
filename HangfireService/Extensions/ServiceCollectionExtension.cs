@@ -8,6 +8,7 @@ using HangfireService.Core.Jobs;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Jobs;
+using HangfireService.Core.Service;
 using HangfireService.Core.ThirdParty;
 using HangfireService.Core.ThirdParty.Interfaces;
 using System.Net;
@@ -20,20 +21,11 @@ namespace HangfireService.Extensions
         {
             var provider = services.BuildServiceProvider();
             var logger = provider.GetRequiredService<ILogger<MySqlClient>>();
-            var serviceType = configuration.GetValue<string?>("ServiceType");
+            var serviceType = Environment.GetEnvironmentVariable("ServiceType") ?? configuration.GetValue<string>("ServiceType");
             return services
-            .AddSingleton(param => new MySqlClient(configuration.GetConnectionString($"{serviceType}_MainDB"), logger)
-            {
-                DataBase = DataBase.Main
-            })
-            .AddSingleton(param => new MySqlClient(configuration.GetConnectionString($"{serviceType}_ReportDB"), logger)
-            {
-                DataBase = DataBase.Report
-            })
-            .AddSingleton(param => new MySqlClient(configuration.GetConnectionString($"{serviceType}_WagerDB"), logger)
-            {
-                DataBase = DataBase.Wager
-            });
+            .AddSingleton(param => new MySqlClient(configuration.GetConnectionString($"{serviceType}_MainDB"), logger, DataBase.Main))
+            .AddSingleton(param => new MySqlClient(configuration.GetConnectionString($"{serviceType}_ReportDB"), logger, DataBase.Report))
+            .AddSingleton(param => new MySqlClient(configuration.GetConnectionString($"{serviceType}_WagerDB"), logger, DataBase.Wager));
         }
 
         public static IServiceCollection AddHangfireService(this IServiceCollection services, IConfiguration configuration)
@@ -96,7 +88,8 @@ namespace HangfireService.Extensions
             .AddTransient<MainDBDataLayer>()
             .AddTransient<WagerDBDataLayer>()
             .AddTransient<ReportDBDataLayer>()
-            .AddSingleton<ThirdPartyManager>();
+            .AddSingleton<ThirdPartyManager>()
+            .AddSingleton<PartitionService>();
         }
 
         public static IServiceCollection RegisterScheduledJobs(this IServiceCollection services, IConfiguration configuration)
@@ -119,10 +112,16 @@ namespace HangfireService.Extensions
             var tpList = provider.GetRequiredService<ThirdPartyManager>().GetAllTpList();
             services.AddSingleton(provider => tpList);
 
-            var tpTypes = typeof(ITpHelper).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(ITpHelper)));
-            foreach (var tp in tpTypes)
+            var detailTypes = typeof(IDetailTpHelper).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IDetailTpHelper)));
+            foreach (var tp in detailTypes)
             {
-                services.AddSingleton(provider => (ITpHelper)Activator.CreateInstance(tp, new object[] { provider }));
+                services.AddSingleton(provider => (IDetailTpHelper)Activator.CreateInstance(tp, new object[] { provider }));
+            }
+
+            var financeTypes = typeof(IFinanceTpHelper).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IFinanceTpHelper)));
+            foreach (var tp in financeTypes)
+            {
+                services.AddSingleton(provider => (IFinanceTpHelper)Activator.CreateInstance(tp, new object[] { provider }));
             }
 
             return services;
