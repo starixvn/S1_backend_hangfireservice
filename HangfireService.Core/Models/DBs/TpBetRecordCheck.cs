@@ -27,15 +27,15 @@ namespace HangfireService.Core.Models.DBs
             var result = new StringBuilder();      
             if (StakeDiff > 0)
             {
-                result.AppendLine($"Stake difference amount is {StakeDiff}.");
+                result.AppendLine($" －Stake difference amount is {StakeDiff}.");
             }
             if (ValidBetDiff > 0)
             {
-                result.AppendLine($"ValidBet difference amount is {ValidBetDiff}.");
+                result.AppendLine($" －ValidBet difference amount is {ValidBetDiff}.");
             }
             if (WinlostAmountDiff > 0)
             {
-                result.AppendLine($"Stake difference amount is {WinlostAmountDiff}.");
+                result.AppendLine($" －WinlostAmount difference amount is {WinlostAmountDiff}.");
             }
 
             return result.Length > 0 ? new FinanceCheckResult(this, result.ToString()) : null;
