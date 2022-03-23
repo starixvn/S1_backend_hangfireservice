@@ -25,15 +25,15 @@ namespace HangfireService.Core.Models.DBs
             var WinlostAmountDiff = WinlostAmount - check.WinlostAmount;
             
             var result = new StringBuilder();      
-            if (StakeDiff > 0)
+            if (StakeDiff != 0)
             {
                 result.AppendLine($" －Stake difference amount is {StakeDiff}.");
             }
-            if (ValidBetDiff > 0)
+            if (ValidBetDiff != 0)
             {
                 result.AppendLine($" －ValidBet difference amount is {ValidBetDiff}.");
             }
-            if (WinlostAmountDiff > 0)
+            if (WinlostAmountDiff != 0)
             {
                 result.AppendLine($" －WinlostAmount difference amount is {WinlostAmountDiff}.");
             }
