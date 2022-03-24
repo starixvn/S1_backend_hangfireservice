@@ -70,7 +70,7 @@ namespace HangfireService.Core.Jobs
                                 balance = balance,
                                 credit_balance = credit_balance
                             });
-                            _logger.LogInformation($"TPName:{smsOption.SMSTPName} Accountname : {smsOption.Accountname} balance : {balance} Minimumlimit : {smsOption.Minimumlimit}");
+                            _logger.LogError($"TPName:{smsOption.SMSTPName} Accountname : {smsOption.Accountname} balance : {balance} Minimumlimit : {smsOption.Minimumlimit}");
                             if ((int)Convert.ToDecimal(balance) < smsOption.Minimumlimit)
                             {
                                 var msg = MakeAlertMessage(smsOption, balance.ToString());
@@ -131,7 +131,7 @@ namespace HangfireService.Core.Jobs
                     var resultResp = JsonConvert.DeserializeObject<SKYLineSMSResult>(ContentResult);
                     if (resultResp.status == 0)
                     {
-                        _logger.LogInformation($"TPName:{smsOption.SMSTPName} Accountname : {smsOption.Accountname} balance : {resultResp.balance} Minimumlimit : {smsOption.Minimumlimit}");
+                        _logger.LogError($"TPName:{smsOption.SMSTPName} Accountname : {smsOption.Accountname} balance : {resultResp.balance} Minimumlimit : {smsOption.Minimumlimit}");
                         if ((int)Convert.ToDecimal(resultResp.balance) < smsOption.Minimumlimit)
                         {
                             var msg = MakeAlertMessage(smsOption, resultResp.balance);
@@ -194,7 +194,7 @@ namespace HangfireService.Core.Jobs
                     var resultResp = JsonConvert.DeserializeObject<LetsTalkSignResult>(result.Content.ReadAsStringAsync().Result);
                     if (resultResp.status == 1)
                     {
-                        _logger.LogError($"SandLesTalkMessage : {data}");
+                        _logger.LogError($"SandLesTalkMessage : {parameters}");
                         return true;
                     }
                     else
