@@ -10,6 +10,8 @@ namespace HangfireService.Core.Models.Finance
     {
         public string TpCurrencyId { get; set; }
 
+        public int CurrencyId { get; set; }
+        
         public decimal Stake { get; set; }
 
         public decimal ValidBet { get; set; }
@@ -17,6 +19,12 @@ namespace HangfireService.Core.Models.Finance
         public decimal Payout { get; set; }
 
         public decimal WinlostAmount { get; set; }
+
+        public decimal Revenue { get; set; }
+
+        public decimal ProgressiveBet { get; set; }
+
+        public decimal ProgressiveWin { get; set; }
 
     }
 }

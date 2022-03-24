@@ -2,7 +2,7 @@
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Helpers;
 using HangfireService.Core.Models.DBs;
-using Microsoft.Extensions.DependencyInjection;
+
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Text;

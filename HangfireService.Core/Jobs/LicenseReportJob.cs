@@ -16,7 +16,6 @@ using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.ThirdParty;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Serilog.Context;

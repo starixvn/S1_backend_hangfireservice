@@ -3,7 +3,6 @@ using Hangfire.Dashboard.Management.Pages;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel;
 
 namespace HangfireService.Core.Jobs

@@ -7,7 +7,6 @@ using HangfireService.Core.ThirdParty.Interfaces;
 using HangfireService.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NUnit.Framework;

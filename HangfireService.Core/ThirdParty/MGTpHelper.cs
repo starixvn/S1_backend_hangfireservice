@@ -6,7 +6,6 @@ using HangfireService.Core.Models.Finance;
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.Service;
 using HangfireService.Core.ThirdParty.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace HangfireService.Core.ThirdParty
 {
@@ -15,12 +14,13 @@ namespace HangfireService.Core.ThirdParty
         public int TpId { get; } = 34;
 
 
-        public bool CanCheckThirdPartyData => true;
+        public bool CanCheckTpDailySummary => true;
 
         private readonly ReportDBDataLayer _reportDbDataLayer;
         private readonly Dictionary<int, TpCurrency> _tpCurrency;
         private readonly MySqlClient _dbClient;
-        private readonly PartitionService partitionService;
+        private readonly PartitionService _partitionService;
+        private readonly FincanceService _fincanceService;
 
         public MGTpHelper(IServiceProvider provider) : base(provider)
         {
@@ -30,10 +30,12 @@ namespace HangfireService.Core.ThirdParty
 
             _dbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Report);
 
-            partitionService = provider.GetRequiredService<PartitionService>();
+            _partitionService = provider.GetRequiredService<PartitionService>();
+
+            _fincanceService = provider.GetRequiredService<FincanceService>();
         }
 
-        public async Task<IEnumerable<FinanceCheckResult>> CheckBettransData(FinanceCheckOption checkOption, IEnumerable<TpBetRecordCheck> tpBetRecordCheckList)
+        public async Task<IEnumerable<FinanceCheckResult>> CheckBettrans(FinanceCheckOption checkOption, IEnumerable<TpBetRecordCheck> tpBetRecordCheckList)
         {
             var result = new List<FinanceCheckResult>();
             
@@ -42,10 +44,10 @@ namespace HangfireService.Core.ThirdParty
             
             var CheckData = new List<CheckData>();
             //Slot
-            CheckData.AddRange(_dbClient.Query<CheckData>("Service_BettransRng_MG_Summary_Get", new { BeginTime, EndTime }));
-            
+            CheckData.AddRange(_dbClient.Query<CheckData>("Finance_BettransRng_MG_Summary_Get", new { BeginTime, EndTime }));
+
             //Live Casino
-            //CheckData.AddRange(partitionService.Query<CheckData>(checkOption.BeginTime, checkOption.EndTime, "Service_BettransLC_MG_Summary_Get", new { BeginTime, EndTime }));
+            //CheckData.AddRange(_partitionService.Query<CheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransLC_MG_Summary_Get", new { BeginTime, EndTime }));
 
             //使用TpCurrencyId組合Slot跟Live Casino資料
             var bettransDataList = CheckData.GroupBy(i => i.TpCurrencyId)
@@ -82,9 +84,34 @@ namespace HangfireService.Core.ThirdParty
             return result;
         }
 
-        public async Task<IEnumerable<FinanceCheckResult>> CheckThirdPartyData(FinanceCheckOption checkOption, IEnumerable<TpBetRecordCheck> tpBetRecordCheckList)
+        public async Task<IEnumerable<FinanceCheckResult>> CheckTpDailySummary(FinanceCheckOption checkOption, IEnumerable<TpBetRecordCheck> tpBetRecordCheckList)
         {
-            return new List<FinanceCheckResult>();
+            var result = new List<FinanceCheckResult>();
+
+            var CheckDataList = _fincanceService.GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
+            if (tpBetRecordCheckList.Count() != CheckDataList.Count())
+            {
+                result.Add(new FinanceCheckResult(TpId, $"TpBetRecord & TpDailySummary count no match."));
+                return result;
+            }
+
+            foreach (var tpBetRecord in tpBetRecordCheckList)
+            {         
+                var checkData = CheckDataList.FirstOrDefault(i => i.CurrencyId == tpBetRecord.CurrencyId);
+                if (checkData == null)
+                {
+                    result.Add(new FinanceCheckResult(tpBetRecord, $"{tpBetRecord.CurrencyId} TpDailySummary no found."));
+                    continue;
+                }
+
+                var checkResult = tpBetRecord.Check(FinanceCheckType.BettransData, checkData);
+                if (checkResult != null)
+                {
+                    result.Add(checkResult);
+                }
+            }
+            
+            return result;
         }
 
 

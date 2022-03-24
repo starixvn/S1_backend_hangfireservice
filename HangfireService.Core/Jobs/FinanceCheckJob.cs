@@ -2,7 +2,6 @@
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Extensions;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
 using Newtonsoft.Json;
@@ -61,9 +60,9 @@ namespace HangfireService.Core.Jobs
                         continue;
                     }
 
-                    if (tpHelper.CanCheckBettransData)
+                    if (tpHelper.CanCheckBettrans)
                     {
-                        var bettransResult = await tpHelper.CheckBettransData(checkOption, check);
+                        var bettransResult = await tpHelper.CheckBettrans(checkOption, check);
                         if (bettransResult.Any())
                         {
                             var msg = GetMessage(FinanceCheckType.BettransData, checkOption, bettransResult);
@@ -73,9 +72,9 @@ namespace HangfireService.Core.Jobs
                         }
                     }
 
-                    if (tpHelper.CanCheckThirdPartyData)
+                    if (tpHelper.CanCheckTpDailySummary)
                     {
-                        var thirdPartyResult = await tpHelper.CheckThirdPartyData(checkOption, check);
+                        var thirdPartyResult = await tpHelper.CheckTpDailySummary(checkOption, check);
                         if (thirdPartyResult.Any())
                         {
                             var msg = GetMessage(FinanceCheckType.ThirdPartyData, checkOption, thirdPartyResult);
