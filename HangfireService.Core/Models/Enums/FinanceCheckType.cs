@@ -8,7 +8,7 @@ namespace HangfireService.Core.Models.Enums
 {
     public enum FinanceCheckType
     {
-        BettransData,
-        ThirdPartyData,
+        Bettrans,
+        TpDailySummary,
     }
 }

@@ -74,10 +74,10 @@ namespace HangfireService.Core.Jobs
 
                     if (tpHelper.CanCheckTpDailySummary)
                     {
-                        var thirdPartyResult = await tpHelper.CheckTpDailySummary(checkOption, check);
-                        if (thirdPartyResult.Any())
+                        var tpResult = await tpHelper.CheckTpDailySummary(checkOption, check);
+                        if (tpResult.Any())
                         {
-                            var msg = GetMessage(FinanceCheckType.ThirdPartyData, checkOption, thirdPartyResult);
+                            var msg = GetMessage(FinanceCheckType.ThirdPartyData, checkOption, tpResult);
                             _logger.LogError(msg);
                             _telegramBotHelper.SendMessage(msg);
                             result.AppendLine(msg);
