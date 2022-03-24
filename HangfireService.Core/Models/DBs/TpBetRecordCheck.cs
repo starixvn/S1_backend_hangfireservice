@@ -24,7 +24,7 @@ namespace HangfireService.Core.Models.DBs
 
         public decimal ProgressiveWin { get; set; }
 
-        public FinanceCheckResult Check(FinanceCheckType checkType, CheckData check)
+        public FinanceCheckResult Check(CheckData check)
         {
             var stakeDiff = Stake - check.Stake;
             var validBetDiff = ValidBet - check.ValidBet;

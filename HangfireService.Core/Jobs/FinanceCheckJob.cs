@@ -65,7 +65,7 @@ namespace HangfireService.Core.Jobs
                         var bettransResult = await tpHelper.CheckBettrans(checkOption, check);
                         if (bettransResult.Any())
                         {
-                            var msg = GetMessage(FinanceCheckType.BettransData, checkOption, bettransResult);
+                            var msg = GetMessage(FinanceCheckType.Bettrans, checkOption, bettransResult);
                             _logger.LogError(msg);
                             _telegramBotHelper.SendMessage(msg);
                             result.AppendLine(msg);
@@ -77,7 +77,7 @@ namespace HangfireService.Core.Jobs
                         var tpResult = await tpHelper.CheckTpDailySummary(checkOption, check);
                         if (tpResult.Any())
                         {
-                            var msg = GetMessage(FinanceCheckType.ThirdPartyData, checkOption, tpResult);
+                            var msg = GetMessage(FinanceCheckType.TpDailySummary, checkOption, tpResult);
                             _logger.LogError(msg);
                             _telegramBotHelper.SendMessage(msg);
                             result.AppendLine(msg);

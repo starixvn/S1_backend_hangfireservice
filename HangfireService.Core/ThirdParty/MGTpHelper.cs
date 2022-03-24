@@ -75,7 +75,7 @@ namespace HangfireService.Core.ThirdParty
                     continue;
                 }
 
-                var checkResult = tpBetRecord.Check(FinanceCheckType.BettransData, bettransData);
+                var checkResult = tpBetRecord.Check(bettransData);
                 if (checkResult != null)    
                 {
                     result.Add(checkResult);
@@ -104,7 +104,7 @@ namespace HangfireService.Core.ThirdParty
                     continue;
                 }
 
-                var checkResult = tpBetRecord.Check(FinanceCheckType.BettransData, checkData);
+                var checkResult = tpBetRecord.Check(checkData);
                 if (checkResult != null)
                 {
                     result.Add(checkResult);
