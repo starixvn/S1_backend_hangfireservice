@@ -40,27 +40,27 @@ namespace HangfireService.Core.Models.Finance
             
             if (stakeDiff != 0)
             {
-                result.Add($"Stake difference amount is {stakeDiff}.");
+                result.Add($"Stake 差額:{stakeDiff}");
             }
             if (validBetDiff != 0)
             {
-                result.Add($"ValidBet difference amount is {validBetDiff}.");
+                result.Add($"ValidBet 差額:{validBetDiff}.");
             }
             if (winlostAmountDiff != 0)
             {
-                result.Add($"WinlostAmount difference amount is {winlostAmountDiff}.");
+                result.Add($"WinlostAmount 差額:{winlostAmountDiff}.");
             }
             if (revenueDiff != 0)
             {
-                result.Add($"Revenue difference amount is {revenueDiff}.");
+                result.Add($"Revenue 差額:{revenueDiff}.");
             }
             if (progressiveBetDiff != 0)
             {
-                result.Add($"ProgressiveBet difference amount is {progressiveBetDiff}.");
+                result.Add($"ProgressiveBet 差額:{progressiveBetDiff}.");
             }
             if (progressiveWinDiff != 0)
             {
-                result.Add($"ProgressiveWin difference amount is {progressiveWinDiff}.");
+                result.Add($"ProgressiveWin 差額:{progressiveWinDiff}.");
             }
 
             return new FinanceCheckResult(checkType, CurrencyId, result);
@@ -86,7 +86,7 @@ namespace HangfireService.Core.Models.Finance
             var payoutDiff = Payout - check.Payout;
             if (payoutDiff != 0)
             {
-                result.Add($"Payout difference amount is {payoutDiff}.");
+                result.Add($"Payout 差額:{payoutDiff}.");
                 if (baseCheck != null)
                 {
                     baseCheck.ErrorList.AddRange(result);
