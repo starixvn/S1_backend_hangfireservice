@@ -194,7 +194,7 @@ namespace HangfireService.Core.Jobs
                     var resultResp = JsonConvert.DeserializeObject<LetsTalkSignResult>(result.Content.ReadAsStringAsync().Result);
                     if (resultResp.status == 1)
                     {
-                        _logger.LogError($"SandLesTalkMessage : {parameters}");
+                        _logger.LogError($"SandLesTalkMessage Message :{Message} parameters:{parameters}");
                         return true;
                     }
                     else
