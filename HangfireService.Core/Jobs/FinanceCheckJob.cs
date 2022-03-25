@@ -133,12 +133,13 @@ namespace HangfireService.Core.Jobs
             var group = checkResults.Where(i => i.ErrorList.Any()).GroupBy(i => i.FinanceCheckType);
             foreach (var check in group)
             {
-                result.AppendLine($"\u3000{check.Key}:");
+                result.AppendLine($"\u3000{check.Key}：");
                 foreach (var item in check.OrderBy(i => i.CurrencyId))
                 {
+                    result.AppendLine($"\u3000\u3000*{item.CurrencyId}:");
                     foreach (var error in item.ErrorList)
                     {
-                        result.AppendLine($"\u3000\u3000 - {error}");
+                        result.AppendLine($"\u3000\u3000\u3000 - {error}");
                     }
                 }
             }
