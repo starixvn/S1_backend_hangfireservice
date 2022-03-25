@@ -15,9 +15,9 @@ namespace HangfireService.Core.Service
 
         }
 
-        public IEnumerable<CheckData> GetTpDailySummary(int SummaryType, int TpId, DateTime BeginTime, DateTime EndTime)
+        public Task<IEnumerable<TpDailySummaryCheckData>> GetTpDailySummary(int SummaryType, int TpId, DateTime BeginTime, DateTime EndTime)
         {
-            return _mainDbClient.Query<CheckData>("Finance_Tp_DailySummary_Get", new { SummaryType, TpId, BeginTime, EndTime });
+            return _mainDbClient.QueryAsync<TpDailySummaryCheckData>("Finance_Tp_DailySummary_Get", new { SummaryType, TpId, BeginTime, EndTime });
         }
     }
 }
