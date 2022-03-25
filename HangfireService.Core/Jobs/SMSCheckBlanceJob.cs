@@ -17,7 +17,7 @@ using System.Diagnostics;
 
 namespace HangfireService.Core.Jobs
 {
-    public class SMSCheckBanceJob : BaseJob, IScheduledJob
+    public class SMSCheckBlanceJob : BaseJob, IScheduledJob
     {
         private readonly MainDBDataLayer _mainDBDataLayer;
 
@@ -28,7 +28,7 @@ namespace HangfireService.Core.Jobs
         private readonly Dictionary<string, SMSBlanceCheckOption> _smsConfig;
         private readonly Dictionary<string, string> _LetsTalkConfig;
 
-        public SMSCheckBanceJob(IServiceProvider provider) : base(provider)
+        public SMSCheckBlanceJob(IServiceProvider provider) : base(provider)
         {
             LogContext.PushProperty("ClassName", GetType().Name);
             _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
@@ -70,7 +70,7 @@ namespace HangfireService.Core.Jobs
                                 balance = balance,
                                 credit_balance = credit_balance
                             });
-                            _logger.LogError($"TPName:{smsOption.SMSTPName} Accountname : {smsOption.Accountname} balance : {balance} Minimumlimit : {smsOption.Minimumlimit}");
+                            _logger.LogError($"TPName : {smsOption.SMSTPName} Accountname : {smsOption.Accountname} balance : {balance} Minimumlimit : {smsOption.Minimumlimit}");
                             if ((int)Convert.ToDecimal(balance) < smsOption.Minimumlimit)
                             {
                                 var msg = MakeAlertMessage(smsOption, balance.ToString());
@@ -131,7 +131,7 @@ namespace HangfireService.Core.Jobs
                     var resultResp = JsonConvert.DeserializeObject<SKYLineSMSResult>(ContentResult);
                     if (resultResp.status == 0)
                     {
-                        _logger.LogError($"TPName:{smsOption.SMSTPName} Accountname : {smsOption.Accountname} balance : {resultResp.balance} Minimumlimit : {smsOption.Minimumlimit}");
+                        _logger.LogError($"TPName : {smsOption.SMSTPName} Accountname : {smsOption.Accountname} balance : {resultResp.balance} Minimumlimit : {smsOption.Minimumlimit}");
                         if ((int)Convert.ToDecimal(resultResp.balance) < smsOption.Minimumlimit)
                         {
                             var msg = MakeAlertMessage(smsOption, resultResp.balance);
@@ -161,10 +161,10 @@ namespace HangfireService.Core.Jobs
             string message =
                 $"* SMS Blance Alert * \r\n" +
                 $"* Time : {DateTime.UtcNow.AddHours(8).ToString("yyyy-MM-dd HH:mm:ss")} * \r\n" +
-                $"=============================\r\n" +
+                $"=======================\r\n" +
                 $"The balance of SMS is less than {smsOption.Minimumlimit}.\r\n" +
                 $"Please add value.\r\n" +
-                $"=============================\r\n" +
+                $"=======================\r\n" +
                 $"TPName : {smsOption.SMSTPName}\r\n" +
                 $"Accountname : {smsOption.Accountname}\r\n" +
                 $"Now Blance : {blance}\r\n"
@@ -194,7 +194,7 @@ namespace HangfireService.Core.Jobs
                     var resultResp = JsonConvert.DeserializeObject<LetsTalkSignResult>(result.Content.ReadAsStringAsync().Result);
                     if (resultResp.status == 1)
                     {
-                        _logger.LogError($"SandLesTalkMessage : {parameters}");
+                        _logger.LogError($"SandLesTalkMessage Message :\r\n{Message} parameters:{parameters}");
                         return true;
                     }
                     else
