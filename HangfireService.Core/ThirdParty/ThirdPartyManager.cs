@@ -1,6 +1,5 @@
 ﻿using HangfireService.Core.DataLayers;
 using HangfireService.Core.Models.DBs;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace HangfireService.Core.ThirdParty

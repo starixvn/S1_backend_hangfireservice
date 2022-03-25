@@ -2,7 +2,6 @@
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Extensions;
 using HangfireService.Core.Models.Enums;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -40,7 +39,19 @@ namespace HangfireService.Core.Service
             }
             return result;
         }
-       
+
+        public IEnumerable<Task<IEnumerable<T>>> QueryAsync<T>(DateTime beginTime, DateTime EndTime, string spName, object parameters)
+        {
+            var tasks = new List<Task<IEnumerable<T>>>();
+            foreach (var partitionKey in beginTime.GetPartitionRange(EndTime))
+            {
+                var p = new DynamicParameters(parameters);
+                p.Add("YYYYMM", partitionKey);
+                tasks.Add(_mainDbClient.QueryAsync<T>(spName, parameters: p));
+            }
+            return tasks;      
+        }
+
 
 
 

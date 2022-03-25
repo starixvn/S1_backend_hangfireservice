@@ -2,7 +2,6 @@
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.Models.ThirdParty.Saba;
 using HangfireService.Core.ThirdParty.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 

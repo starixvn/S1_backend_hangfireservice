@@ -2,7 +2,6 @@
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Extensions;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
 using Newtonsoft.Json;
@@ -50,39 +49,49 @@ namespace HangfireService.Core.Jobs
             {
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
                 var checkOption = JsonConvert.DeserializeObject<FinanceCheckOption>(JsonConvert.SerializeObject(jobOption.Parameters));
-                var checkList = await _reportDBDataLayer.GetTpBetRecordCheckData(checkOption.BeginTime, checkOption.EndTime);
+                var tpBetRecordList = _reportDBDataLayer.GetTpBetRecordCheckData(checkOption.BeginTime, checkOption.EndTime)
+                                .GroupBy(i => i.TpId).ToDictionary(i => i.Key, i => i.ToList());
 
                 var result = new StringBuilder();
-                foreach (var check in checkList.GroupBy(i => i.TpId))
+                foreach (var tpBetRecord in tpBetRecordList)
                 {
-                    if (!_tpHandler.TryGetValue(check.Key, out IFinanceTpHelper tpHelper))
+                    if (!_tpHandler.TryGetValue(tpBetRecord.Key, out IFinanceTpHelper tpHelper))
                     {
-                        _logger.LogInformation($"TpId:{check.Key} NotImplemented finance check");
+                        _logger.LogInformation($"TpId:{tpBetRecord.Key} NotImplemented finance check");
                         continue;
                     }
 
-                    if (tpHelper.CanCheckBettransData)
+                    var checkResult = new List<FinanceCheckResult>();
+
+                    var bettransList = await tpHelper.GetBettransCheckData(checkOption);
+                    if (bettransList.Any())
                     {
-                        var bettransResult = await tpHelper.CheckBettransData(checkOption, check);
-                        if (bettransResult.Any())
-                        {
-                            var msg = GetMessage(FinanceCheckType.BettransData, checkOption, bettransResult);
-                            _logger.LogError(msg);
-                            _telegramBotHelper.SendMessage(msg);
-                            result.AppendLine(msg);
-                        }
+                        var bettransResult = bettransList.Select(bettrans
+                            => bettrans.CheckData(FinanceCheckType.結算資料與交易資料檢查, tpBetRecord.Value.FirstOrDefault(tpBetRecord => tpBetRecord.CurrencyId == bettrans.CurrencyId)));
+                        checkResult.AddRange(bettransResult);
                     }
 
-                    if (tpHelper.CanCheckThirdPartyData)
+                    var tpDailyList = await tpHelper.GetTpDailySummaryCheckData(checkOption);
+                    if (tpDailyList.Any())
                     {
-                        var thirdPartyResult = await tpHelper.CheckThirdPartyData(checkOption, check);
-                        if (thirdPartyResult.Any())
-                        {
-                            var msg = GetMessage(FinanceCheckType.ThirdPartyData, checkOption, thirdPartyResult);
-                            _logger.LogError(msg);
-                            _telegramBotHelper.SendMessage(msg);
-                            result.AppendLine(msg);
-                        }
+                        var tpResult = tpDailyList.Select(tpDaily
+                            => tpDaily.CheckData(FinanceCheckType.結算資料與第三方匯總檢查, tpBetRecord.Value.FirstOrDefault(tpBetRecord => tpBetRecord.CurrencyId == tpDaily.CurrencyId)));
+                        checkResult.AddRange(tpResult);
+                    }
+
+                    if (bettransList.Any() && tpDailyList.Any())
+                    {
+                        var financeResult = bettransList.Select(bettrans
+                            => bettrans.CheckData(FinanceCheckType.交易資料與第三方匯總檢查, tpDailyList.FirstOrDefault(tp => tp.CurrencyId == bettrans.CurrencyId)));
+                        checkResult.AddRange(financeResult);
+                    }
+
+                    if (checkResult.Any())
+                    {
+                        var msg = GetMessage(tpBetRecord.Key, checkOption, checkResult);
+                        _logger.LogError(msg);
+                        _telegramBotHelper.SendMessage(msg);
+                        result.AppendLine(msg);
                     }
                 }
 
@@ -106,7 +115,7 @@ namespace HangfireService.Core.Jobs
             if (!_jobList.Any())
             {
                 return null;
-            }       
+            }
             var jobOption = _jobList.First(i => i.JobName == jobName);
             var date = DateTime.ParseExact($"{CheckDate}", "yyyy-MM-dd", null);
             var BeginTime = date.ToString("yyyy-MM-dd");
@@ -117,14 +126,21 @@ namespace HangfireService.Core.Jobs
             return ExecuteAsync($"Execute.{jobName}.({BeginTime}~{EndTime})", jobOption, context, cancellationToken).Result;
         }
 
-        private string GetMessage(FinanceCheckType checkType, FinanceCheckOption checkOption, IEnumerable<FinanceCheckResult> checkResults)
+        private string GetMessage(int TpId, FinanceCheckOption checkOption, IEnumerable<FinanceCheckResult> checkResults)
         {
             var result = new StringBuilder();
-            result.AppendLine($"[Check{checkType}：{checkOption.BeginTime:yyyy/MM/dd HH:mm} ~ {checkOption.EndTime:yyyy/MM/dd HH:mm}]");
-            foreach (var check in checkResults)
+            result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} 帳務檢查異常");
+            var group = checkResults.Where(i => i.ErrorList.Any()).GroupBy(i => i.FinanceCheckType);
+            foreach (var check in group)
             {
-                result.AppendLine($"TpId:{check.TpId} | CurrencyId:{check.CurrencyId}");
-                result.AppendLine($"{check.ErrorMessage}");
+                result.AppendLine($"\u3000{check.Key}:");
+                foreach (var item in check.OrderBy(i => i.CurrencyId))
+                {
+                    foreach (var error in item.ErrorList)
+                    {
+                        result.AppendLine($"\u3000\u3000 - {error}");
+                    }
+                }
             }
             return result.ToString();
         }

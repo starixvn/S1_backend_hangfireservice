@@ -89,7 +89,8 @@ namespace HangfireService.Extensions
             .AddTransient<WagerDBDataLayer>()
             .AddTransient<ReportDBDataLayer>()
             .AddSingleton<ThirdPartyManager>()
-            .AddSingleton<PartitionService>();
+            .AddSingleton<PartitionService>()
+            .AddSingleton<FincanceService>();
         }
 
         public static IServiceCollection RegisterScheduledJobs(this IServiceCollection services, IConfiguration configuration)

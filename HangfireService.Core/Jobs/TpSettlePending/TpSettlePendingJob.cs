@@ -9,7 +9,6 @@ using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Models.Options;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Serilog.Context;

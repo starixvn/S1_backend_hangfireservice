@@ -2,13 +2,13 @@
 {
     public class FinanceCheckOption
     {
-        public int SubtractDay { get; set; } = -1;
+        private const int subtractDay = -1;
 
         public DateTime BeginTime 
         {
             get
             {
-                return _beginTime ?? DateTime.Today.AddDays(SubtractDay);
+                return _beginTime ?? DateTime.Today.AddDays(subtractDay);
             }
             set 
             {
