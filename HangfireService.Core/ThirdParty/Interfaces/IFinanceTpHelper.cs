@@ -8,12 +8,8 @@ namespace HangfireService.Core.ThirdParty.Interfaces
     {
         int TpId { get; }
 
-        bool CanCheckBettrans => true;
+        Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption);
 
-        Task<IEnumerable<FinanceCheckResult>> CheckBettrans(FinanceCheckOption checkOption, IEnumerable<TpBetRecordCheck> tpBetRecordCheckList);
-
-        bool CanCheckTpDailySummary => true;
-
-        Task<IEnumerable<FinanceCheckResult>> CheckTpDailySummary(FinanceCheckOption checkOption, IEnumerable<TpBetRecordCheck> tpBetRecordCheckList);
+        Task<IEnumerable<TpDailySummaryCheckData>> GetTpDailySummaryCheckData(FinanceCheckOption checkOption);
     }
 }

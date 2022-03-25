@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
+using HangfireService.Core.Models.Finance;
 
 namespace HangfireService.Core.DataLayers
 {
@@ -48,9 +49,9 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.QueryAsync<TpSettlePendingModel>("Service_TpSettlePending_TpUnsettle_Get", parameters: new DynamicParameters(new { TpId, TpGameType, BeginTime, EndTime }), commandTimeout: 60);
         }
 
-        public Task<IEnumerable<TpBetRecordCheck>> GetTpBetRecordCheckData(DateTime BeginTime, DateTime EndTime)
+        public IEnumerable<TpBetRecordCheck> GetTpBetRecordCheckData(DateTime BeginTime, DateTime EndTime)
         {
-            return _dbClient.QueryAsync<TpBetRecordCheck>("Finance_TpBetRecord_Check_Get", parameters: new { BeginTime, EndTime }, commandTimeout: 60);
+            return _dbClient.Query<TpBetRecordCheck>("Finance_TpBetRecord_Check_Get", parameters: new { BeginTime, EndTime }, commandTimeout: 60);
         }
 
         public IEnumerable<TpCurrency> GetTpCurrency(int TpId)
