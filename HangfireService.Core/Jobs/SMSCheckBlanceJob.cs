@@ -17,7 +17,7 @@ using System.Diagnostics;
 
 namespace HangfireService.Core.Jobs
 {
-    public class SMSCheckBanceJob : BaseJob, IScheduledJob
+    public class SMSCheckBlanceJob : BaseJob, IScheduledJob
     {
         private readonly MainDBDataLayer _mainDBDataLayer;
 
@@ -28,7 +28,7 @@ namespace HangfireService.Core.Jobs
         private readonly Dictionary<string, SMSBlanceCheckOption> _smsConfig;
         private readonly Dictionary<string, string> _LetsTalkConfig;
 
-        public SMSCheckBanceJob(IServiceProvider provider) : base(provider)
+        public SMSCheckBlanceJob(IServiceProvider provider) : base(provider)
         {
             LogContext.PushProperty("ClassName", GetType().Name);
             _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
