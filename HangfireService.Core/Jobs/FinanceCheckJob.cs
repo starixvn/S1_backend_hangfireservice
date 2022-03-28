@@ -61,31 +61,9 @@ namespace HangfireService.Core.Jobs
                         continue;
                     }
 
-                    var checkResult = new List<FinanceCheckResult>();
-
-                    var bettransList = await tpHelper.GetBettransCheckData(checkOption);
-                    if (bettransList.Any())
-                    {
-                        var bettransResult = bettransList.Select(bettrans
-                            => bettrans.CheckData(FinanceCheckType.結算資料與交易資料檢查, tpBetRecord.Value.FirstOrDefault(tpBetRecord => tpBetRecord.CurrencyId == bettrans.CurrencyId)));
-                        checkResult.AddRange(bettransResult);
-                    }
-
-                    var tpDailyList = await tpHelper.GetTpDailySummaryCheckData(checkOption);
-                    if (tpDailyList.Any())
-                    {
-                        var tpResult = tpDailyList.Select(tpDaily
-                            => tpDaily.CheckData(FinanceCheckType.結算資料與第三方匯總檢查, tpBetRecord.Value.FirstOrDefault(tpBetRecord => tpBetRecord.CurrencyId == tpDaily.CurrencyId)));
-                        checkResult.AddRange(tpResult);
-                    }
-
-                    if (bettransList.Any() && tpDailyList.Any())
-                    {
-                        var financeResult = bettransList.Select(bettrans
-                            => bettrans.CheckData(FinanceCheckType.交易資料與第三方匯總檢查, tpDailyList.FirstOrDefault(tp => tp.CurrencyId == bettrans.CurrencyId)));
-                        checkResult.AddRange(financeResult);
-                    }
-
+                    var bettransList = tpHelper.GetBettransCheckData(checkOption);
+                    var tpDailyList = tpHelper.GetTpDailySummaryCheckData(checkOption);
+                    var checkResult = tpHelper.CheckData(checkOption,tpBetRecord.Value, await bettransList, await tpDailyList);
                     if (checkResult.Any())
                     {
                         var msg = GetMessage(tpBetRecord.Key, checkOption, checkResult);
@@ -136,7 +114,7 @@ namespace HangfireService.Core.Jobs
                 result.AppendLine($"\u3000{check.Key}：");
                 foreach (var item in check.OrderBy(i => i.CurrencyId))
                 {
-                    result.AppendLine($"\u3000\u3000*{item.CurrencyId}:");
+                    result.AppendLine($"\u3000\u3000CurrencyId:{item.CurrencyId} - ");
                     foreach (var error in item.ErrorList)
                     {
                         result.AppendLine($"\u3000\u3000\u3000 - {error}");

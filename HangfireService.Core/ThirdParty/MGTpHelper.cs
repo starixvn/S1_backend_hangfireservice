@@ -12,9 +12,6 @@ namespace HangfireService.Core.ThirdParty
     {
         public int TpId { get; } = 34;
 
-
-        public bool CanCheckTpDailySummary => true;
-
         private readonly ReportDBDataLayer _reportDbDataLayer;
         private readonly IEnumerable<TpCurrency> _tpCurrency;
         private readonly MySqlClient _dbClient;
@@ -43,7 +40,7 @@ namespace HangfireService.Core.ThirdParty
             //Slot
             tasks.Add(_dbClient.QueryAsync<BettransCheckData>("Finance_BettransRng_MG_Summary_Get", new { BeginTime, EndTime }));
             //Live Casino
-            tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransLC_MG_Summary_Get", new { BeginTime, EndTime }));
+            //tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransLC_MG_Summary_Get", new { BeginTime, EndTime }));
             
             Task.WhenAll(tasks);
 
@@ -74,6 +71,21 @@ namespace HangfireService.Core.ThirdParty
         public async Task<IEnumerable<TpDailySummaryCheckData>> GetTpDailySummaryCheckData(FinanceCheckOption checkOption)
         {
            return await _fincanceService.GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
+        }
+
+        public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, IEnumerable<TpBetRecordCheck> tpBetRecord, IEnumerable<BettransCheckData> bettransList, IEnumerable<TpDailySummaryCheckData> tpDailyList)
+        {
+            //排除MG活動金額
+            var freeGameReward = _fincanceService.GetTpDailySummary((int)SummaryType.TpRewardFreeGame, TpId, checkOption.BeginTime, checkOption.EndTime).Result;
+            var totalReward = _fincanceService.GetTpDailySummary((int)SummaryType.TpRewardTotalAmount, TpId, checkOption.BeginTime, checkOption.EndTime).Result;
+            foreach (var tpDaily in tpDailyList)
+            {
+                tpDaily.Stake -= freeGameReward.FirstOrDefault(i => i.CurrencyId == tpDaily.CurrencyId)?.Reward ?? 0m;
+                tpDaily.WinlostAmount -= totalReward.FirstOrDefault(i => i.CurrencyId == tpDaily.CurrencyId)?.Reward ?? 0m;
+            }
+
+            var checkResult = IFinanceTpHelper.CheckData(checkOption, tpBetRecord, bettransList,tpDailyList);
+            return checkResult;
         }
     }
 }

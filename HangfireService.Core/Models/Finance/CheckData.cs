@@ -40,11 +40,11 @@ namespace HangfireService.Core.Models.Finance
             
             if (stakeDiff != 0)
             {
-                result.Add($"Stake 差額:{stakeDiff}");
+                result.Add($"Stake 差額:{stakeDiff:f4}");
             }
             if (validBetDiff != 0)
             {
-                result.Add($"ValidBet 差額:{validBetDiff}.");
+                result.Add($"ValidBet 差額:{validBetDiff:f4}.");
             }
             if (winlostAmountDiff != 0)
             {
@@ -52,15 +52,15 @@ namespace HangfireService.Core.Models.Finance
             }
             if (revenueDiff != 0)
             {
-                result.Add($"Revenue 差額:{revenueDiff}.");
+                result.Add($"Revenue 差額:{revenueDiff:f4}.");
             }
             if (progressiveBetDiff != 0)
             {
-                result.Add($"ProgressiveBet 差額:{progressiveBetDiff}.");
+                result.Add($"ProgressiveBet 差額:{progressiveBetDiff:f4}.");
             }
             if (progressiveWinDiff != 0)
             {
-                result.Add($"ProgressiveWin 差額:{progressiveWinDiff}.");
+                result.Add($"ProgressiveWin 差額:{progressiveWinDiff:f4}.");
             }
 
             return new FinanceCheckResult(checkType, CurrencyId, result);
@@ -86,7 +86,7 @@ namespace HangfireService.Core.Models.Finance
             var payoutDiff = Payout - check.Payout;
             if (payoutDiff != 0)
             {
-                result.Add($"Payout 差額:{payoutDiff}.");
+                result.Add($"Payout 差額:{payoutDiff:f4}.");
                 if (baseCheck != null)
                 {
                     baseCheck.ErrorList.AddRange(result);
@@ -104,5 +104,7 @@ namespace HangfireService.Core.Models.Finance
     public class TpDailySummaryCheckData : TpBetRecordCheck
     {
         public decimal Payout { get; set; }
+
+        public decimal Reward { get; set; }
     }
 }
