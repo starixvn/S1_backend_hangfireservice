@@ -84,7 +84,28 @@ namespace HangfireService.Core.ThirdParty
                 tpDaily.WinlostAmount -= totalReward.FirstOrDefault(i => i.CurrencyId == tpDaily.CurrencyId)?.Reward ?? 0m;
             }
 
-            var checkResult = IFinanceTpHelper.CheckData(checkOption, tpBetRecord, bettransList,tpDailyList);
+            var checkResult = new List<FinanceCheckResult>();
+            if (bettransList.Any())
+            {
+                var bettransResult = bettransList.Select(bettrans
+                    => bettrans.CheckData(FinanceCheckType.結算資料與交易資料檢查, tpBetRecord.FirstOrDefault(tpBetRecord => tpBetRecord.CurrencyId == bettrans.CurrencyId)));
+                checkResult.AddRange(bettransResult);
+            }
+
+            if (tpDailyList.Any())
+            {
+                var tpResult = tpDailyList.Select(tpDaily
+                    => tpDaily.CheckData(FinanceCheckType.結算資料與第三方匯總檢查, tpBetRecord.FirstOrDefault(tpBetRecord => tpBetRecord.CurrencyId == tpDaily.CurrencyId)));
+                checkResult.AddRange(tpResult);
+            }
+
+            if (bettransList.Any() && tpDailyList.Any())
+            {
+                var financeResult = bettransList.Select(bettrans
+                    => bettrans.CheckData(FinanceCheckType.交易資料與第三方匯總檢查, tpDailyList.FirstOrDefault(tp => tp.CurrencyId == bettrans.CurrencyId)));
+                checkResult.AddRange(financeResult);
+            }
+
             return checkResult;
         }
     }

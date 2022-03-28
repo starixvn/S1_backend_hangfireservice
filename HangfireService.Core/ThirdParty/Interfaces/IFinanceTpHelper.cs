@@ -1,5 +1,4 @@
-﻿using HangfireService.Core.Models.DBs;
-using HangfireService.Core.Models.Enums;
+﻿using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
 using HangfireService.Core.Models.Options;
 
@@ -16,7 +15,7 @@ namespace HangfireService.Core.ThirdParty.Interfaces
         /// <summary>
         /// 預設共用的檢查方法
         /// </summary>
-        public static List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, IEnumerable<TpBetRecordCheck> tpBetRecord, IEnumerable<BettransCheckData> bettransList, IEnumerable<TpDailySummaryCheckData> tpDailyList)
+        public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, IEnumerable<TpBetRecordCheck> tpBetRecord, IEnumerable<BettransCheckData> bettransList, IEnumerable<TpDailySummaryCheckData> tpDailyList)
         {
             var checkResult = new List<FinanceCheckResult>();
 
