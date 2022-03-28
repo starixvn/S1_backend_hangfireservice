@@ -108,13 +108,13 @@ namespace HangfireService.Core.Jobs
         {
             var result = new StringBuilder();
             result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} 帳務檢查異常");
-            var group = checkResults.Where(i => i.ErrorList.Any()).GroupBy(i => i.FinanceCheckType);
+            var group = checkResults.Where(i => i.ErrorList.Any()).GroupBy(i => i.CurrencyId);
             foreach (var check in group)
             {
-                result.AppendLine($"\u3000{check.Key}：");
-                foreach (var item in check.OrderBy(i => i.CurrencyId))
+                result.AppendLine($"\u3000CurrencyId:{check.Key}"); 
+                foreach (var item in check.OrderBy(i => i.FinanceCheckType))
                 {
-                    result.AppendLine($"\u3000\u3000CurrencyId:{item.CurrencyId} - ");
+                    result.AppendLine($"\u3000\u3000{item.FinanceCheckType}");
                     foreach (var error in item.ErrorList)
                     {
                         result.AppendLine($"\u3000\u3000\u3000 - {error}");
