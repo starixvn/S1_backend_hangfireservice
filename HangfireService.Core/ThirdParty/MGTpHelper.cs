@@ -12,9 +12,6 @@ namespace HangfireService.Core.ThirdParty
     {
         public int TpId { get; } = 34;
 
-
-        public bool CanCheckTpDailySummary => true;
-
         private readonly ReportDBDataLayer _reportDbDataLayer;
         private readonly IEnumerable<TpCurrency> _tpCurrency;
         private readonly MySqlClient _dbClient;
@@ -43,7 +40,7 @@ namespace HangfireService.Core.ThirdParty
             //Slot
             tasks.Add(_dbClient.QueryAsync<BettransCheckData>("Finance_BettransRng_MG_Summary_Get", new { BeginTime, EndTime }));
             //Live Casino
-            tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransLC_MG_Summary_Get", new { BeginTime, EndTime }));
+            //tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransLC_MG_Summary_Get", new { BeginTime, EndTime }));
             
             Task.WhenAll(tasks);
 
@@ -74,6 +71,44 @@ namespace HangfireService.Core.ThirdParty
         public async Task<IEnumerable<TpDailySummaryCheckData>> GetTpDailySummaryCheckData(FinanceCheckOption checkOption)
         {
            return await _fincanceService.GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
+        }
+
+        public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, IEnumerable<TpBetRecordCheck> tpBetRecord, IEnumerable<BettransCheckData> bettransList, IEnumerable<TpDailySummaryCheckData> tpDailyList)
+        {
+            //排除MG活動金額
+            var freeGameReward = _fincanceService.GetTpDailySummary((int)SummaryType.TpRewardFreeGame, TpId, checkOption.BeginTime, checkOption.EndTime).Result;
+            var totalReward = _fincanceService.GetTpDailySummary((int)SummaryType.TpRewardTotalAmount, TpId, checkOption.BeginTime, checkOption.EndTime).Result;
+            foreach (var tpDaily in tpDailyList)
+            {
+                var freeGame = freeGameReward.FirstOrDefault(i => i.CurrencyId == tpDaily.CurrencyId)?.Reward ?? 0m;
+                tpDaily.Stake -= freeGame;
+                tpDaily.ValidBet -= freeGame;
+                tpDaily.WinlostAmount -= totalReward.FirstOrDefault(i => i.CurrencyId == tpDaily.CurrencyId)?.Reward ?? 0m;
+            }
+
+            var checkResult = new List<FinanceCheckResult>();
+            if (bettransList.Any())
+            {
+                var bettransResult = bettransList.Select(bettrans
+                    => bettrans.CheckData(FinanceCheckType.結算資料與交易資料檢查, tpBetRecord.FirstOrDefault(tpBetRecord => tpBetRecord.CurrencyId == bettrans.CurrencyId)));
+                checkResult.AddRange(bettransResult);
+            }
+
+            if (tpDailyList.Any())
+            {
+                var tpResult = tpDailyList.Select(tpDaily
+                    => tpDaily.CheckData(FinanceCheckType.結算資料與第三方匯總檢查, tpBetRecord.FirstOrDefault(tpBetRecord => tpBetRecord.CurrencyId == tpDaily.CurrencyId)));
+                checkResult.AddRange(tpResult);
+            }
+
+            if (bettransList.Any() && tpDailyList.Any())
+            {
+                var financeResult = bettransList.Select(bettrans
+                    => bettrans.CheckData(FinanceCheckType.交易資料與第三方匯總檢查, tpDailyList.FirstOrDefault(tp => tp.CurrencyId == bettrans.CurrencyId)));
+                checkResult.AddRange(financeResult);
+            }
+
+            return checkResult;
         }
     }
 }
