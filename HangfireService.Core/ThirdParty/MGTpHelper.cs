@@ -80,7 +80,9 @@ namespace HangfireService.Core.ThirdParty
             var totalReward = _fincanceService.GetTpDailySummary((int)SummaryType.TpRewardTotalAmount, TpId, checkOption.BeginTime, checkOption.EndTime).Result;
             foreach (var tpDaily in tpDailyList)
             {
-                tpDaily.Stake -= freeGameReward.FirstOrDefault(i => i.CurrencyId == tpDaily.CurrencyId)?.Reward ?? 0m;
+                var freeGame = freeGameReward.FirstOrDefault(i => i.CurrencyId == tpDaily.CurrencyId)?.Reward ?? 0m;
+                tpDaily.Stake -= freeGame;
+                tpDaily.ValidBet -= freeGame;
                 tpDaily.WinlostAmount -= totalReward.FirstOrDefault(i => i.CurrencyId == tpDaily.CurrencyId)?.Reward ?? 0m;
             }
 
