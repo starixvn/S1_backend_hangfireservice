@@ -5,6 +5,7 @@ using HangfireService.Core.Models.Finance;
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.Service;
 using HangfireService.Core.ThirdParty.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace HangfireService.Core.ThirdParty
 {
@@ -94,6 +95,13 @@ namespace HangfireService.Core.ThirdParty
                 bettrans.WinlostAmount -= cash;
             }
 
+            var test = new
+            {
+                tpBetRecord,
+                bettransList,
+                tpDailyList
+            };
+            _logger.LogError(ToJson(test));
 
             var checkResult = new List<FinanceCheckResult>();
             if (bettransList.Any())
