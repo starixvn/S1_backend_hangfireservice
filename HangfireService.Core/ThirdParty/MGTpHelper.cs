@@ -78,6 +78,8 @@ namespace HangfireService.Core.ThirdParty
             //排除MG活動金額
             var freeGameReward = _fincanceService.GetTpDailySummary((int)SummaryType.TpRewardFreeGame, TpId, checkOption.BeginTime, checkOption.EndTime).Result;
             var totalReward = _fincanceService.GetTpDailySummary((int)SummaryType.TpRewardTotalAmount, TpId, checkOption.BeginTime, checkOption.EndTime).Result;
+            var cashReward = _fincanceService.GetTpDailySummary((int)SummaryType.TpRewardCash, TpId, checkOption.BeginTime, checkOption.EndTime).Result;
+            
             foreach (var tpDaily in tpDailyList)
             {
                 var freeGame = freeGameReward.FirstOrDefault(i => i.CurrencyId == tpDaily.CurrencyId)?.Reward ?? 0m;
@@ -86,16 +88,16 @@ namespace HangfireService.Core.ThirdParty
                 tpDaily.WinlostAmount -= totalReward.FirstOrDefault(i => i.CurrencyId == tpDaily.CurrencyId)?.Reward ?? 0m;
             }
 
+            foreach (var bettrans in bettransList)
+            {
+                var cash = cashReward.FirstOrDefault(i => i.CurrencyId == bettrans.CurrencyId)?.Reward ?? 0m;
+                bettrans.WinlostAmount -= cash;
+            }
+
+
             var checkResult = new List<FinanceCheckResult>();
             if (bettransList.Any())
             {
-                var cashReward = _fincanceService.GetTpDailySummary((int)SummaryType.TpRewardCash, TpId, checkOption.BeginTime, checkOption.EndTime).Result;
-                foreach (var bettrans in bettransList)
-                {
-                    var cash = cashReward.FirstOrDefault(i => i.CurrencyId == bettrans.CurrencyId)?.Reward ?? 0m;
-                    bettrans.WinlostAmount -= cash;
-                }
-
                 var bettransResult = bettransList.Select(bettrans
                     => bettrans.CheckData(FinanceCheckType.結算資料與交易資料檢查, tpBetRecord.FirstOrDefault(tpBetRecord => tpBetRecord.CurrencyId == bettrans.CurrencyId)));
                 checkResult.AddRange(bettransResult);
