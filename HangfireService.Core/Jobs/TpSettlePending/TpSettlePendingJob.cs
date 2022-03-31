@@ -76,7 +76,7 @@ namespace HangfireService.Core.Jobs
                             {
                                 bettrans = await _wagerDBDataLayer.GetTpSettlePendingSlotByTpGameType(tpGameType.Type, begin, end);
                             }
-                            else if (tpGameType.Type <= 65 && (tpGameType.Type != 14 || tpGameType.Type != 13))
+                            else if (tpGameType.Type <= 65 && (tpGameType.Type != 14 || tpGameType.Type != 13 || tpGameType.Type != 17))
                             {
                                 bettrans = await _reportDBDataLayer.GetTpSettlePendingSlotByTpGameType(tpGameType.Type, begin, end);
                             }
