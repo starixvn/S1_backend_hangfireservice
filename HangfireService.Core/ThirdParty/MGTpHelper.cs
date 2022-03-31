@@ -81,13 +81,7 @@ namespace HangfireService.Core.ThirdParty
             var totalReward = _fincanceService.GetTpDailySummary((int)SummaryType.TpRewardTotalAmount, TpId, checkOption.BeginTime, checkOption.EndTime).Result;
             var cashReward = _fincanceService.GetTpDailySummary((int)SummaryType.TpRewardCash, TpId, checkOption.BeginTime, checkOption.EndTime).Result;
 
-            var test2 = new
-            {
-                freeGameReward = freeGameReward.Where(i => i.CurrencyId == 51),
-                totalReward = totalReward.Where(i => i.CurrencyId == 51),
-                cashReward = cashReward.Where(i => i.CurrencyId == 51)
-            };
-            _logger.LogError(ToJson(test2));
+            _logger.LogError($"tpDailyList:{ToJson(tpDailyList)}");
             foreach (var tpDaily in tpDailyList)
             {
                 var freeGame = freeGameReward.FirstOrDefault(i => i.CurrencyId == tpDaily.CurrencyId)?.Reward ?? 0m;
@@ -95,13 +89,7 @@ namespace HangfireService.Core.ThirdParty
                 tpDaily.ValidBet -= freeGame;
                 tpDaily.WinlostAmount -= totalReward.FirstOrDefault(i => i.CurrencyId == tpDaily.CurrencyId)?.Reward ?? 0m;
             }
-            _logger.LogError(ToJson(bettransList));
-            foreach (var bettrans in bettransList)
-            {
-                var cash = cashReward.FirstOrDefault(i => i.CurrencyId == bettrans.CurrencyId)?.Reward ?? 0m;
-                bettrans.WinlostAmount -= cash; 
-            }
-            _logger.LogError(ToJson(bettransList));
+            _logger.LogError($"adjusttpDailyList:{ToJson(tpDailyList)}");
 
             var test = new
             {
@@ -114,7 +102,15 @@ namespace HangfireService.Core.ThirdParty
             var checkResult = new List<FinanceCheckResult>();
             if (bettransList.Any())
             {
-                var bettransResult = bettransList.Select(bettrans
+                _logger.LogError($"bettransList:{ToJson(bettransList)}");
+                var adjustBettransList = new List<BettransCheckData>(bettransList);
+                foreach (var bettrans in adjustBettransList)
+                {
+                    var cash = cashReward.FirstOrDefault(i => i.CurrencyId == bettrans.CurrencyId)?.Reward ?? 0m;
+                    bettrans.WinlostAmount -= cash;
+                }
+                _logger.LogError($"adjustBettransList:{ToJson(adjustBettransList)}");
+                var bettransResult = adjustBettransList.Select(bettrans
                     => bettrans.CheckData(FinanceCheckType.結算資料與交易資料檢查, tpBetRecord.FirstOrDefault(tpBetRecord => tpBetRecord.CurrencyId == bettrans.CurrencyId)));
                 checkResult.AddRange(bettransResult);
             }
