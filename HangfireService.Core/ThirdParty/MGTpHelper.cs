@@ -80,7 +80,14 @@ namespace HangfireService.Core.ThirdParty
             var freeGameReward = _fincanceService.GetTpDailySummary((int)SummaryType.TpRewardFreeGame, TpId, checkOption.BeginTime, checkOption.EndTime).Result;
             var totalReward = _fincanceService.GetTpDailySummary((int)SummaryType.TpRewardTotalAmount, TpId, checkOption.BeginTime, checkOption.EndTime).Result;
             var cashReward = _fincanceService.GetTpDailySummary((int)SummaryType.TpRewardCash, TpId, checkOption.BeginTime, checkOption.EndTime).Result;
-            
+
+            var test2 = new
+            {
+                freeGameReward = freeGameReward.Where(i => i.CurrencyId == 51),
+                totalReward = totalReward.Where(i => i.CurrencyId == 51),
+                cashReward = cashReward.Where(i => i.CurrencyId == 51)
+            };
+            _logger.LogError(ToJson(test2));
             foreach (var tpDaily in tpDailyList)
             {
                 var freeGame = freeGameReward.FirstOrDefault(i => i.CurrencyId == tpDaily.CurrencyId)?.Reward ?? 0m;
@@ -88,18 +95,19 @@ namespace HangfireService.Core.ThirdParty
                 tpDaily.ValidBet -= freeGame;
                 tpDaily.WinlostAmount -= totalReward.FirstOrDefault(i => i.CurrencyId == tpDaily.CurrencyId)?.Reward ?? 0m;
             }
-
+            _logger.LogError(ToJson(bettransList));
             foreach (var bettrans in bettransList)
             {
                 var cash = cashReward.FirstOrDefault(i => i.CurrencyId == bettrans.CurrencyId)?.Reward ?? 0m;
-                bettrans.WinlostAmount -= cash;
+                bettrans.WinlostAmount -= cash; 
             }
+            _logger.LogError(ToJson(bettransList));
 
             var test = new
             {
-                tpBetRecord,
-                bettransList,
-                tpDailyList
+                tpBetRecord = tpBetRecord.Where(i=>i.CurrencyId == 51),
+                bettransList = bettransList.Where(i => i.CurrencyId == 51),
+                tpDailyList = tpDailyList.Where(i => i.CurrencyId == 51)
             };
             _logger.LogError(ToJson(test));
 
