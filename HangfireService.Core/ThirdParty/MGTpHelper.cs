@@ -89,13 +89,11 @@ namespace HangfireService.Core.ThirdParty
                 tpDaily.WinlostAmount -= totalReward.FirstOrDefault(i => i.CurrencyId == tpDaily.CurrencyId)?.Reward ?? 0m;
             }
 
-            _logger.LogError($"BettransList:{ToJson(bettransList)}");
             foreach (var bettrans in bettransList)
             {
                 var cash = cashReward.FirstOrDefault(i => i.CurrencyId == bettrans.CurrencyId)?.Reward ?? 0m;
                 bettrans.WinlostAmount -= cash;
             }
-            _logger.LogError($"adjustBettransList:{ToJson(bettransList)}");
 
             var checkResult = new List<FinanceCheckResult>();
             if (bettransList.Any())
