@@ -5,6 +5,7 @@ using HangfireService.Core.Models.Finance;
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.Service;
 using HangfireService.Core.ThirdParty.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace HangfireService.Core.ThirdParty
 {
@@ -73,13 +74,13 @@ namespace HangfireService.Core.ThirdParty
            return await _fincanceService.GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
         }
 
-        public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, IEnumerable<TpBetRecordCheck> tpBetRecord, IEnumerable<BettransCheckData> bettransList, IEnumerable<TpDailySummaryCheckData> tpDailyList)
+        public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, List<TpBetRecordCheck> tpBetRecord, List<BettransCheckData> bettransList, List<TpDailySummaryCheckData> tpDailyList)
         {
             //排除MG活動金額
             var freeGameReward = _fincanceService.GetTpDailySummary((int)SummaryType.TpRewardFreeGame, TpId, checkOption.BeginTime, checkOption.EndTime).Result;
             var totalReward = _fincanceService.GetTpDailySummary((int)SummaryType.TpRewardTotalAmount, TpId, checkOption.BeginTime, checkOption.EndTime).Result;
             var cashReward = _fincanceService.GetTpDailySummary((int)SummaryType.TpRewardCash, TpId, checkOption.BeginTime, checkOption.EndTime).Result;
-            
+
             foreach (var tpDaily in tpDailyList)
             {
                 var freeGame = freeGameReward.FirstOrDefault(i => i.CurrencyId == tpDaily.CurrencyId)?.Reward ?? 0m;
@@ -94,10 +95,9 @@ namespace HangfireService.Core.ThirdParty
                 bettrans.WinlostAmount -= cash;
             }
 
-
             var checkResult = new List<FinanceCheckResult>();
             if (bettransList.Any())
-            {
+            {       
                 var bettransResult = bettransList.Select(bettrans
                     => bettrans.CheckData(FinanceCheckType.結算資料與交易資料檢查, tpBetRecord.FirstOrDefault(tpBetRecord => tpBetRecord.CurrencyId == bettrans.CurrencyId)));
                 checkResult.AddRange(bettransResult);

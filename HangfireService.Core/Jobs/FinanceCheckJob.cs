@@ -61,9 +61,9 @@ namespace HangfireService.Core.Jobs
                         continue;
                     }
 
-                    var bettransList = tpHelper.GetBettransCheckData(checkOption);
-                    var tpDailyList = tpHelper.GetTpDailySummaryCheckData(checkOption);
-                    var checkResult = tpHelper.CheckData(checkOption,tpBetRecord.Value, await bettransList, await tpDailyList);
+                    var bettransList = await tpHelper.GetBettransCheckData(checkOption);
+                    var tpDailyList = await tpHelper.GetTpDailySummaryCheckData(checkOption);
+                    var checkResult = tpHelper.CheckData(checkOption,tpBetRecord.Value,  bettransList.ToList(), tpDailyList.ToList());
                     if (checkResult.Any())
                     {
                         var msg = GetMessage(tpBetRecord.Key, checkOption, checkResult);
