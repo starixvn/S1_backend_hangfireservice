@@ -51,7 +51,7 @@ namespace HangfireService.Core.DataLayers
 
         public IEnumerable<TpBetRecordCheck> GetTpBetRecordCheckData(DateTime BeginTime, DateTime EndTime)
         {
-            return _dbClient.Query<TpBetRecordCheck>("Finance_TpBetRecord_Check_Get", parameters: new { BeginTime, EndTime }, commandTimeout: 60);
+            return _dbClient.Query<TpBetRecordCheck>("Finance_TpBetRecord_Check_Get", parameters: new { BeginTime, EndTime }, commandTimeout: 120);
         }
 
         public IEnumerable<TpCurrency> GetTpCurrency(int TpId)
