@@ -15,7 +15,7 @@ namespace HangfireService.Core.ThirdParty.Interfaces
         /// <summary>
         /// 預設共用的檢查方法
         /// </summary>
-        public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, IEnumerable<TpBetRecordCheck> tpBetRecord, IEnumerable<BettransCheckData> bettransList, IEnumerable<TpDailySummaryCheckData> tpDailyList)
+        public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, List<TpBetRecordCheck> tpBetRecord, List<BettransCheckData> bettransList, List<TpDailySummaryCheckData> tpDailyList)
         {
             var checkResult = new List<FinanceCheckResult>();
 
