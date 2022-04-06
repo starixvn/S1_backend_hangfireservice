@@ -14,12 +14,7 @@ namespace HangfireService.Core.Models.Finance
 
         public decimal ValidBet { get; set; }
 
-        public decimal WinlostAmount 
-        {
-            get { return _winlostAmount; }
-            set { _winlostAmount = Math.Abs(value); } 
-        }
-        public decimal _winlostAmount { get; set; }
+        public decimal WinlostAmount { get; set; }
 
         public decimal Revenue { get; set; }
 
