@@ -86,7 +86,7 @@ namespace HangfireService.Core.ThirdParty
                 var freeGame = freeGameReward.FirstOrDefault(i => i.CurrencyId == tpDaily.CurrencyId)?.Reward ?? 0m;
                 tpDaily.Stake -= freeGame;
                 tpDaily.ValidBet -= freeGame;
-                tpDaily.WinlostAmount = (tpDaily.WinlostAmount * -1) + totalReward.FirstOrDefault(i => i.CurrencyId == tpDaily.CurrencyId)?.Reward ?? 0m;
+                tpDaily.WinlostAmount = (tpDaily.WinlostAmount * -1) + (totalReward.FirstOrDefault(i => i.CurrencyId == tpDaily.CurrencyId)?.Reward ?? 0m);
             }
 
             foreach (var bettrans in bettransList)
