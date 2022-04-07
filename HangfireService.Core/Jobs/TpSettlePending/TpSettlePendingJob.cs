@@ -72,11 +72,12 @@ namespace HangfireService.Core.Jobs
                     switch (categoryId)
                     {
                         case 2:
+                            var gameIds = new List<long> { 7, 11, 15, 29, 39, 53, 57, 64, 65 };
                             if (tpGameType.Type == 34 || tpGameType.Type == 46)
                             {
                                 bettrans = await _wagerDBDataLayer.GetTpSettlePendingSlotByTpGameType(tpGameType.Type, begin, end);
                             }
-                            else if (tpGameType.Type <= 65 && (tpGameType.Type != 14 || tpGameType.Type != 13 || tpGameType.Type != 17))
+                            else if (gameIds.Contains(tpGameType.Type))
                             {
                                 bettrans = await _reportDBDataLayer.GetTpSettlePendingSlotByTpGameType(tpGameType.Type, begin, end);
                             }
