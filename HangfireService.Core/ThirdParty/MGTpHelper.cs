@@ -86,13 +86,13 @@ namespace HangfireService.Core.ThirdParty
                 var freeGame = freeGameReward.FirstOrDefault(i => i.CurrencyId == tpDaily.CurrencyId)?.Reward ?? 0m;
                 tpDaily.Stake -= freeGame;
                 tpDaily.ValidBet -= freeGame;
-                tpDaily.WinlostAmount -= totalReward.FirstOrDefault(i => i.CurrencyId == tpDaily.CurrencyId)?.Reward ?? 0m;
+                tpDaily.WinlostAmount = (tpDaily.WinlostAmount * -1) + (totalReward.FirstOrDefault(i => i.CurrencyId == tpDaily.CurrencyId)?.Reward ?? 0m);
             }
 
             foreach (var bettrans in bettransList)
             {
                 var cash = cashReward.FirstOrDefault(i => i.CurrencyId == bettrans.CurrencyId)?.Reward ?? 0m;
-                bettrans.WinlostAmount -= cash;
+                bettrans.WinlostAmount += cash;
             }
 
             var checkResult = new List<FinanceCheckResult>();
@@ -117,6 +117,20 @@ namespace HangfireService.Core.ThirdParty
                 checkResult.AddRange(financeResult);
             }
 
+            if (checkResult.Any())
+            {
+                var data = new
+                {
+                    TpId,
+                    tpBetRecord,
+                    tpDailyList,
+                    bettransList,
+                    totalReward,
+                    freeGameReward,
+                    cashReward
+                };
+                _logger.LogError($"[{checkOption.BeginTime:yyyy-MM-dd}]:{ToJson(data)}");
+            }
             return checkResult;
         }
     }
