@@ -121,6 +121,7 @@ namespace HangfireService.Core.ThirdParty
             {
                 var data = new
                 {
+                    TpId,
                     tpBetRecord,
                     tpDailyList,
                     bettransList,
