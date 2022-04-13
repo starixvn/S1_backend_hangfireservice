@@ -107,8 +107,16 @@ namespace HangfireService.Core.Jobs
         private string GetMessage(int TpId, FinanceCheckOption checkOption, IEnumerable<FinanceCheckResult> checkResults)
         {
             var result = new StringBuilder();
+            var checkFilter = checkResults.Where(i => i.ErrorList.Any());
+            if (!checkFilter.Any())
+            {
+                result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} 帳務檢查正常");
+                return result.ToString();
+            }
+
+           
             result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} 帳務檢查異常");
-            var group = checkResults.Where(i => i.ErrorList.Any()).GroupBy(i => i.CurrencyId);
+            var group = checkFilter.GroupBy(i => i.CurrencyId);
             foreach (var check in group)
             {
                 result.AppendLine($"\u3000CurrencyId:{check.Key}"); 
