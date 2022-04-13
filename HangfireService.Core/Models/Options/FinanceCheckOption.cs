@@ -8,7 +8,7 @@
         {
             get
             {
-                return _beginTime ?? DateTime.Today.AddDays(subtractDay);
+                return _beginTime ?? DateTime.UtcNow.Date.AddDays(subtractDay);
             }
             set 
             {
@@ -20,7 +20,7 @@
         {
             get
             {
-                return _endTime ?? DateTime.Today;
+                return _endTime ?? DateTime.UtcNow.Date;
             }
             set
             {
