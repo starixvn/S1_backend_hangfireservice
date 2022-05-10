@@ -50,6 +50,7 @@ namespace HangfireService.Core.Jobs
                 var begin = DateTime.Today.AddDays(subtractDay).GetUnixTimeByDay();
                 var end = DateTime.Today.GetUnixTimeByDay();
                 var tpGameTypeData = _reportDBDataLayer.GetGameTypeByCategoryId(categoryId).Result;
+                var subMsg = "";
 
                 foreach (var tpGameType in tpGameTypeData)
                 {
@@ -68,11 +69,11 @@ namespace HangfireService.Core.Jobs
                     LogContext.PushProperty("Tp", tpGameType.TpId);
                     LogContext.PushProperty("GameType", tpGameType.TypeName);
                     var bettrans = Enumerable.Empty<TpSettlePendingModel>();
+                    var gameIds = new List<long> { 7, 8, 9, 10, 11, 15, 16, 18, 28, 29, 32, 37, 39, 45, 53, 57, 63, 64, 65 };
 
                     switch (categoryId)
                     {
                         case 2:
-                            var gameIds = new List<long> { 7, 11, 15, 29, 39, 53, 57, 64, 65 };
                             if (tpGameType.Type == 34 || tpGameType.Type == 46)
                             {
                                 bettrans = await _wagerDBDataLayer.GetTpSettlePendingSlotByTpGameType(tpGameType.Type, begin, end);
@@ -88,7 +89,18 @@ namespace HangfireService.Core.Jobs
                             }
                             break;
                         case 3:
-                            bettrans = (tpGameType.Type == 45 || tpGameType.Type == 48) ? await _wagerDBDataLayer.GetTpSettlePendingLiveCasinoByTpGameType(tpGameType.Type, begin, end) : await _reportDBDataLayer.GetTpSettlePendingLiveCasinoByTpGameType(tpGameType.Type, begin, end);
+                            if (tpGameType.Type == 45 || tpGameType.Type == 48)
+                            {
+                                bettrans = await _wagerDBDataLayer.GetTpSettlePendingLiveCasinoByTpGameType(tpGameType.Type, begin, end);
+                            }
+                            else if (gameIds.Contains(tpGameType.Type))
+                            {
+                                bettrans = await _reportDBDataLayer.GetTpSettlePendingLiveCasinoByTpGameType(tpGameType.Type, begin, end);
+                            }
+                            else
+                            {
+                                bettrans = await _reportDBDataLayer.GetTpSettlePendingTpUnsettleByTpGameType(tpGameType.TpId, tpGameType.Type, begin, end);
+                            }
                             break;
                         //case 4:
                         //    bettrans = await _reportDBDataLayer.GetTpSettlePendingFishByTpGameType(tpGameType.Type, begin, end);
@@ -104,7 +116,7 @@ namespace HangfireService.Core.Jobs
                             _logger.LogError($"遊戲: {tpGameType.TypeName}, CategoryName: {categoryName}, CategoryId 尚不支援: {categoryId}");
                             break;
                     }
-
+                    
                     if (bettrans.Any())
                     {
                         cnt += bettrans.Count();
@@ -120,16 +132,15 @@ namespace HangfireService.Core.Jobs
                         {
                             msgRow += $"\r\nTpUserName: {i.TpUserName}, TransId: {i.TransId}";
                         }
-
-                        _logger.LogError($"遊戲: {tpGameType.TypeName}, 未結帳筆數: {bettrans.Count()}");
-                        _logger.LogError(msgRow);
+                        subMsg += $"遊戲: {tpGameType.TypeName}, 未結帳筆數: {bettrans.Count()}\r\n{msgRow}\r\n";
+                        //_logger.LogError($"遊戲: {tpGameType.TypeName}, 未結帳筆數: {bettrans.Count()}\r\n{msgRow}");
                     }
                 }
 
                 var msg = $"[結帳檢查: {DateTime.Today:yyyy-MM-dd}] 未結帳總筆數: {cnt}\r\nCategoryName: {categoryName}, CategoryId: {categoryId}, 時間範圍: {begin} ~ {end}";
                 if (cnt != 0)
                 {
-                    _logger.LogError(msg);
+                    _logger.LogError($"{msg}\r\n{subMsg}");
                 }
                 else
                 {
