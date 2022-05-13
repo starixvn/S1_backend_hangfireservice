@@ -2,7 +2,6 @@
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.ThirdParty;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
 using Newtonsoft.Json;
@@ -13,7 +12,6 @@ using System.Net;
 using HangfireService.Core.Helpers;
 using HangfireService.Core.Models.Options;
 using Microsoft.Extensions.Configuration;
-using System.Diagnostics;
 
 namespace HangfireService.Core.Jobs
 {

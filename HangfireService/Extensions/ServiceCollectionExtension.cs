@@ -90,7 +90,8 @@ namespace HangfireService.Extensions
             .AddTransient<ReportDBDataLayer>()
             .AddSingleton<ThirdPartyManager>()
             .AddSingleton<PartitionService>()
-            .AddSingleton<FincanceService>();
+            .AddSingleton<FincanceService>()
+            .AddSingleton<TpMerchantBalanceCheckService>();
         }
 
         public static IServiceCollection RegisterScheduledJobs(this IServiceCollection services, IConfiguration configuration)
