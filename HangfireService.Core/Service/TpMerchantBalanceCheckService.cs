@@ -32,9 +32,9 @@ namespace HangfireService.Core.Service
             _logger = provider.GetRequiredService<ILogger<BaseJob>>();
             _tpIdMapToSiteName = new Dictionary<int, string>()
             {
-                { (int)SiteId.Nova88, "Nova88" },
-                { (int)SiteId.Goal123, "Goal123" },
-                { (int)SiteId.Bwing, "Bwing" },
+                { (int)SiteId.Nova88, "NOVA88" },
+                { (int)SiteId.Goal123, "GOAL123" },
+                { (int)SiteId.Bwing, "BWING" },
             };
         }
 
