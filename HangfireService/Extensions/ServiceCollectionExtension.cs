@@ -91,7 +91,7 @@ namespace HangfireService.Extensions
             .AddSingleton<ThirdPartyManager>()
             .AddSingleton<PartitionService>()
             .AddSingleton<FincanceService>()
-            .AddSingleton<TpMerchantBalanceCheckService>();
+            .AddSingleton<PtMerchantBalanceCheckService>();
         }
 
         public static IServiceCollection RegisterScheduledJobs(this IServiceCollection services, IConfiguration configuration)

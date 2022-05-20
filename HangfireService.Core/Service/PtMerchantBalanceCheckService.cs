@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 
 namespace HangfireService.Core.Service
 {
-    public class TpMerchantBalanceCheckService
+    public class PtMerchantBalanceCheckService
     {
         
         private readonly HttpHelper _httpHelper;
@@ -18,13 +18,13 @@ namespace HangfireService.Core.Service
         private readonly string _letsTalkGroupName;
         private readonly ILogger<BaseJob> _logger;
 
-        private readonly Dictionary<string, TpCheckMerchantBalanceOption> _tpCheckMerchantConfig;
+        private readonly Dictionary<string, PtCheckMerchantBalanceOption> _tpCheckMerchantConfig;
         private readonly Dictionary<int, string> _tpIdMapToSiteName;
 
-        public TpMerchantBalanceCheckService(IServiceProvider provider)
+        public PtMerchantBalanceCheckService(IServiceProvider provider)
         {
             var iConfiguration = provider.GetRequiredService<IConfiguration>();
-            _tpCheckMerchantConfig = iConfiguration.GetSection("TpCheckMerchantBalanceConfig").Get<Dictionary<string, TpCheckMerchantBalanceOption>>();
+            _tpCheckMerchantConfig = iConfiguration.GetSection("TpCheckMerchantBalanceConfig").Get<Dictionary<string, PtCheckMerchantBalanceOption>>();
             _commonServiceHost = iConfiguration.GetValue<string>("AiLabServiceHost:CommonServiceHost");
             _tpServiceHost = iConfiguration.GetValue<string>("AiLabServiceHost:TpServiceHost");
             _letsTalkGroupName = iConfiguration.GetValue<string>("LetsTalkConfig:LetsTalkGroupName");
@@ -53,7 +53,7 @@ namespace HangfireService.Core.Service
         /// </summary>
         /// <param name="config"></param>
         /// <returns></returns>
-        private async Task CheckMerchantBalance(TpCheckMerchantBalanceOption config)
+        private async Task CheckMerchantBalance(PtCheckMerchantBalanceOption config)
         {
             try
             {
@@ -77,7 +77,7 @@ namespace HangfireService.Core.Service
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.Message);
+                _logger.LogError(ex,ex.Message);
             }
             finally
             {
@@ -91,7 +91,7 @@ namespace HangfireService.Core.Service
         /// <param name="config"></param>
         /// <param name="merchantBalanceResponse"></param>
         /// <returns></returns>
-        private async Task SandLesTalkMessage(TpCheckMerchantBalanceOption config, MerchantBalanceResponse merchantBalanceResponse)
+        private async Task SandLesTalkMessage(PtCheckMerchantBalanceOption config, MerchantBalanceResponse merchantBalanceResponse)
         {
             try
             {
@@ -122,7 +122,7 @@ namespace HangfireService.Core.Service
         /// <param name="config"></param>
         /// <param name="merchantBalanceResponse"></param>
         /// <returns></returns>
-        private string GetAlertMessage(TpCheckMerchantBalanceOption config, MerchantBalanceResponse merchantBalanceResponse)
+        private string GetAlertMessage(PtCheckMerchantBalanceOption config, MerchantBalanceResponse merchantBalanceResponse)
         {
             var message =
                 $"* PlayTech Balance Alert * \r\n" +
