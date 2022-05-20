@@ -87,23 +87,16 @@ namespace HangfireService.Core.Jobs
             var sign = MakeSignString(account, passWord, dateTime);
             var url = $"{urlGetBalance}?account={account}&sign={sign}&datetime={dateTime}";
 
-            var data = new Dictionary<string, string>()
-                {
-                    {"account", account},
-                    {"sign", sign},
-                    {"datetime", dateTime},
-                };
-
             try
             {
                 using var result = await _httpHelper.HttpPost1Async(url, null, "", "application/json");
-                if (result.StatusCode != System.Net.HttpStatusCode.OK)
+                if (result.StatusCode != HttpStatusCode.OK)
                 {
                     _logger.LogError($"httpResponse error URL : {url}  StatusCode: {result.StatusCode}");
                     return false;
                 }
 
-                var contentResult = result.Content.ReadAsStringAsync().Result;
+                var contentResult = await result.Content.ReadAsStringAsync();
                 var resultResp = JsonConvert.DeserializeObject<SKYLineSMSResult>(contentResult);
                 if (resultResp.status != 0)
                 {

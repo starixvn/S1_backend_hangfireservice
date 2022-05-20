@@ -1,6 +1,6 @@
 ﻿namespace HangfireService.Core.Models.Options
 {
-    public class TpCheckMerchantBalanceOption
+    public class PtCheckMerchantBalanceOption
     {
         /// <summary>
         /// 第三方遊戲Id

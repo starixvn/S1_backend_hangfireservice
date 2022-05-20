@@ -7,20 +7,20 @@ using Microsoft.Extensions.Logging;
 
 namespace HangfireService.Core.Jobs
 {
-    public class TpMerchantBalanceCheckJob : BaseJob, IScheduledJob
+    public class PtMerchantBalanceCheckJob : BaseJob, IScheduledJob
     {
-        private readonly TpMerchantBalanceCheckService _tpMerchantBalanceCheckService;
+        private readonly PtMerchantBalanceCheckService _ptMerchantBalanceCheckService;
 
-        public TpMerchantBalanceCheckJob(IServiceProvider provider) : base(provider)
+        public PtMerchantBalanceCheckJob(IServiceProvider provider) : base(provider)
         {
-            _tpMerchantBalanceCheckService = provider.GetRequiredService<TpMerchantBalanceCheckService>();
+            _ptMerchantBalanceCheckService = provider.GetRequiredService<PtMerchantBalanceCheckService>();
         }
 
         public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
         {
             _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
 
-            await _tpMerchantBalanceCheckService.RunJobAsync();
+            await _ptMerchantBalanceCheckService.RunJobAsync();
 
             _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} End......");
             return true;
