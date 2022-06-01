@@ -33,12 +33,21 @@ namespace HangfireService.Core.ThirdParty
             var result = new List<bool>();
 
             //要注意第三方api可否接受Parallel，不支援可改用foreach
-            Parallel.ForEach(todoList.Where(i => i.GameType != 80),//排除LG 虛擬體育
+            Parallel.ForEach(todoList,
                 new ParallelOptions() { MaxDegreeOfParallelism = option.TaskCount },
                 todo =>
             {
                 try
                 {
+                    if (todo.GameType == 80)//LG虛擬體育目前無api，在ThirdPartyBetHistory處理細單，所以直接更新成功
+                    {
+                        var ignore = UpdateTpDetailTodo(new TpBetRecordDetail(todo)
+                        {
+                            IsSuccess = true
+                        }).Result;
+                        result.Add(ignore);
+                    }
+
                     var detail = GetBetDetail(todo).Result;
                     if (detail.IsSuccess)
                     {
