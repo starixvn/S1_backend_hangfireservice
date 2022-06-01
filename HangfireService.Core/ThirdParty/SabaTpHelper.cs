@@ -47,19 +47,21 @@ namespace HangfireService.Core.ThirdParty
                         }).Result;
                         result.Add(ignore);
                     }
-
-                    var detail = GetBetDetail(todo).Result;
-                    if (detail.IsSuccess)
-                    {
-                        //成功新增Detail
-                        var insert = AddTpBetRecordDetail(detail).Result;
-                        result.Add(insert);
-                    }
                     else
-                    {
-                        //失敗更新todo status
-                        var update = UpdateTpDetailTodo(detail).Result;
-                        result.Add(update);
+                    { 
+                        var detail = GetBetDetail(todo).Result;
+                        if (detail.IsSuccess)
+                        {
+                            //成功新增Detail
+                            var insert = AddTpBetRecordDetail(detail).Result;
+                            result.Add(insert);
+                        }
+                        else
+                        {
+                            //失敗更新todo status
+                            var update = UpdateTpDetailTodo(detail).Result;
+                            result.Add(update);
+                        }
                     }
                 }
                 catch (Exception e)
