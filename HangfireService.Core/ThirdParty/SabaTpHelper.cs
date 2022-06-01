@@ -33,7 +33,7 @@ namespace HangfireService.Core.ThirdParty
             var result = new List<bool>();
 
             //要注意第三方api可否接受Parallel，不支援可改用foreach
-            Parallel.ForEach(todoList,
+            Parallel.ForEach(todoList.Where(i => i.GameType != 80),//排除LG 虛擬體育
                 new ParallelOptions() { MaxDegreeOfParallelism = option.TaskCount },
                 todo =>
             {
