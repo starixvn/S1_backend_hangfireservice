@@ -39,18 +39,29 @@ namespace HangfireService.Core.ThirdParty
             {
                 try
                 {
-                    var detail = GetBetDetail(todo).Result;
-                    if (detail.IsSuccess)
+                    if (todo.GameType == 80)//LG虛擬體育目前無api，在ThirdPartyBetHistory處理細單，所以直接更新成功
                     {
-                        //成功新增Detail
-                        var insert = AddTpBetRecordDetail(detail).Result;
-                        result.Add(insert);
+                        var ignore = UpdateTpDetailTodo(new TpBetRecordDetail(todo)
+                        {
+                            IsSuccess = true
+                        }).Result;
+                        result.Add(ignore);
                     }
                     else
-                    {
-                        //失敗更新todo status
-                        var update = UpdateTpDetailTodo(detail).Result;
-                        result.Add(update);
+                    { 
+                        var detail = GetBetDetail(todo).Result;
+                        if (detail.IsSuccess)
+                        {
+                            //成功新增Detail
+                            var insert = AddTpBetRecordDetail(detail).Result;
+                            result.Add(insert);
+                        }
+                        else
+                        {
+                            //失敗更新todo status
+                            var update = UpdateTpDetailTodo(detail).Result;
+                            result.Add(update);
+                        }
                     }
                 }
                 catch (Exception e)
