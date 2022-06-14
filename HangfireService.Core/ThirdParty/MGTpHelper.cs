@@ -34,15 +34,16 @@ namespace HangfireService.Core.ThirdParty
 
         public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
         {
-            var BeginTime = checkOption.BeginTime.Ticks;
+            var BeginTime = checkOption.BeginTime.AddDays(-1).Ticks;
             var EndTime = checkOption.EndTime.Ticks;
+            var ReportAt = checkOption.BeginTime.Ticks;
             var tasks = new List<Task<IEnumerable<BettransCheckData>>>();
             
             //Slot
-            tasks.Add(_dbClient.QueryAsync<BettransCheckData>("Finance_BettransRng_MG_Summary_Get", new { BeginTime, EndTime }));
+            tasks.Add(_dbClient.QueryAsync<BettransCheckData>("Finance_BettransRng_MG_Summary_Get_V2", new { _BeginTime = BeginTime, _EndTime = EndTime, _ReportAt = ReportAt }));
             //Live Casino
-            //tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransLC_MG_Summary_Get", new { BeginTime, EndTime }));
-            
+            tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransLC_MG_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime, _ReportAt = ReportAt }));
+
             Task.WhenAll(tasks);
 
             var CheckData = new List<BettransCheckData>();
