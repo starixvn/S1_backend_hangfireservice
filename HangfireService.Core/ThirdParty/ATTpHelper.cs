@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HangfireService.Core.ThirdParty
 {
-    public class IconicTpHelper : BaseTpHelper, IFinanceTpHelper
+    public class ATTpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public int TpId => 24;
 
@@ -18,7 +18,7 @@ namespace HangfireService.Core.ThirdParty
         private readonly MySqlClient _wagerClient;
         private readonly FincanceService _fincanceService;
 
-        public IconicTpHelper(IServiceProvider provider) : base(provider)
+        public ATTpHelper(IServiceProvider provider) : base(provider)
         {
             _reportDbDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
 
