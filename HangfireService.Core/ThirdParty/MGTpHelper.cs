@@ -72,7 +72,15 @@ namespace HangfireService.Core.ThirdParty
 
         public async Task<IEnumerable<TpDailySummaryCheckData>> GetTpDailySummaryCheckData(FinanceCheckOption checkOption)
         {
-           return await _fincanceService.GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
+            var tpDailyList = await _fincanceService.GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
+            foreach (var tpDaily in tpDailyList)
+            {
+                var rate = _tpCurrency.First(c => c.CurrencyId == tpDaily.CurrencyId).ExchangeRate;
+                tpDaily.Stake *= rate;
+                tpDaily.ValidBet *= rate;
+                tpDaily.WinlostAmount = (tpDaily.WinlostAmount * -1) * rate;
+            }
+            return tpDailyList;
         }
 
         public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, List<TpBetRecordCheck> tpBetRecord, List<BettransCheckData> bettransList, List<TpDailySummaryCheckData> tpDailyList)

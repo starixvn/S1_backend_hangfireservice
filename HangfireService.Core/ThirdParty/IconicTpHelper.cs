@@ -68,15 +68,7 @@ namespace HangfireService.Core.ThirdParty
 
         public async Task<IEnumerable<TpDailySummaryCheckData>> GetTpDailySummaryCheckData(FinanceCheckOption checkOption)
         {
-            return await _fincanceService.GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
-        }
-
-        public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, List<TpBetRecordCheck> tpBetRecord, List<BettransCheckData> bettransList, List<TpDailySummaryCheckData> tpDailyList)
-        {
-            // 對方報表API為下注時間 需改用TpBetRecord.TransTime檢查
-            var tpBetRecordTransTimeData = _reportDbDataLayer.GetTpBetRecordCheckTransTimeDataByTpId(TpId, checkOption.BeginTime, checkOption.EndTime)
-                            .GroupBy(i => i.TpId).ToDictionary(i => i.Key, i => i.ToList()).Values;
-
+            var tpDailyList = await _fincanceService.GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
             foreach (var tpDaily in tpDailyList)
             {
                 var rate = _tpCurrency.First(c => c.CurrencyId == tpDaily.CurrencyId).ExchangeRate;
@@ -84,6 +76,13 @@ namespace HangfireService.Core.ThirdParty
                 tpDaily.ValidBet *= rate;
                 tpDaily.WinlostAmount = (tpDaily.WinlostAmount * -1) * rate;
             }
+            return tpDailyList;
+        }
+
+        public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, List<TpBetRecordCheck> tpBetRecord, List<BettransCheckData> bettransList, List<TpDailySummaryCheckData> tpDailyList)
+        {
+            // 對方報表API為下注時間 需改用TpBetRecord.TransTime檢查
+            tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckTransTimeDataByTpId(TpId, checkOption.BeginTime, checkOption.EndTime).ToList();
 
             var checkResult = new List<FinanceCheckResult>();
             if (bettransList.Any())
@@ -112,7 +111,7 @@ namespace HangfireService.Core.ThirdParty
                 var data = new
                 {
                     TpId,
-                    tpBetRecordTransTimeData,
+                    tpBetRecord,
                     tpDailyList,
                     bettransList,
                 };
