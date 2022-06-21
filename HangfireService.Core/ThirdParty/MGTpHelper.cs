@@ -38,7 +38,7 @@ namespace HangfireService.Core.ThirdParty
             var EndTime = checkOption.EndTime.Ticks;
             var ReportAt = checkOption.BeginTime.Ticks;
             var tasks = new List<Task<IEnumerable<BettransCheckData>>>();
-            
+
             //Slot
             tasks.Add(_dbClient.QueryAsync<BettransCheckData>("Finance_BettransRng_MG_Summary_Get_V2", new { _BeginTime = BeginTime, _EndTime = EndTime, _ReportAt = ReportAt }));
             //Live Casino
@@ -55,7 +55,7 @@ namespace HangfireService.Core.ThirdParty
             //使用TpCurrencyId組合Slot跟Live Casino資料
             return CheckData
                 .GroupBy(i => i.TpCurrencyId)
-                .Select( i => new BettransCheckData
+                .Select(i => new BettransCheckData
                 {
                     TpId = TpId,
                     TpCurrencyId = i.Key,
@@ -78,7 +78,12 @@ namespace HangfireService.Core.ThirdParty
                 var rate = _tpCurrency.First(c => c.CurrencyId == tpDaily.CurrencyId).ExchangeRate;
                 tpDaily.Stake *= rate;
                 tpDaily.ValidBet *= rate;
-                tpDaily.WinlostAmount = (tpDaily.WinlostAmount * -1) * rate;
+                tpDaily.WinlostAmount *= rate;
+                tpDaily.Revenue *= rate;
+                tpDaily.ProgressiveWin *= rate;
+                tpDaily.ProgressiveWin *= rate;
+                tpDaily.Payout *= rate;
+                tpDaily.Reward *= rate;
             }
             return tpDailyList;
         }
@@ -106,7 +111,7 @@ namespace HangfireService.Core.ThirdParty
 
             var checkResult = new List<FinanceCheckResult>();
             if (bettransList.Any())
-            {       
+            {
                 var bettransResult = bettransList.Select(bettrans
                     => bettrans.CheckData(FinanceCheckType.結算資料與交易資料檢查, tpBetRecord.FirstOrDefault(tpBetRecord => tpBetRecord.CurrencyId == bettrans.CurrencyId)));
                 checkResult.AddRange(bettransResult);
