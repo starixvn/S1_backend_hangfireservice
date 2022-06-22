@@ -27,19 +27,32 @@ namespace HangfireService.Core.ThirdParty
 
         public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
         {
-           var BeginTime = new DateTimeOffset(checkOption.BeginTime).ToUnixTimeSeconds();
-           var EndTime = new DateTimeOffset(checkOption.EndTime).ToUnixTimeSeconds();
-           var bettrans = await _wagerDbClient.QueryAsync<BettransCheckData>("Finance_TpWager9W_Summary_Get", new { BeginTime, EndTime });
-           foreach (var item in bettrans)
-           {
+            var BeginTime = new DateTimeOffset(checkOption.BeginTime).ToUnixTimeSeconds();
+            var EndTime = new DateTimeOffset(checkOption.EndTime).ToUnixTimeSeconds();
+            var bettrans = await _wagerDbClient.QueryAsync<BettransCheckData>("Finance_TpWager9W_Summary_Get", new { BeginTime, EndTime });
+            foreach (var item in bettrans)
+            {
                 item.CurrencyId = _tpCurrency.First(c => c.TpCurrencyId == item.TpCurrencyId).CurrencyId;
-           }
-           return bettrans;
+            }
+            return bettrans;
         }
 
         public async Task<IEnumerable<TpDailySummaryCheckData>> GetTpDailySummaryCheckData(FinanceCheckOption checkOption)
         {
-           return await _fincanceService.GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
+            var tpDailyList = await _fincanceService.GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
+            foreach (var tpDaily in tpDailyList)
+            {
+                var rate = _tpCurrency.First(c => c.CurrencyId == tpDaily.CurrencyId).ExchangeRate;
+                tpDaily.Stake *= rate;
+                tpDaily.ValidBet *= rate;
+                tpDaily.WinlostAmount *= rate;
+                tpDaily.Revenue *= rate;
+                tpDaily.ProgressiveWin *= rate;
+                tpDaily.ProgressiveWin *= rate;
+                tpDaily.Payout *= rate;
+                tpDaily.Reward *= rate;
+            }
+            return tpDailyList;
         }
 
         public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, List<TpBetRecordCheck> tpBetRecord, List<BettransCheckData> bettransList, List<TpDailySummaryCheckData> tpDailyList)
@@ -52,7 +65,7 @@ namespace HangfireService.Core.ThirdParty
 
             var checkResult = new List<FinanceCheckResult>();
             if (bettransList.Any())
-            {       
+            {
                 var bettransResult = bettransList.Select(bettrans
                     => bettrans.CheckData(FinanceCheckType.結算資料與交易資料檢查, tpBetRecord.FirstOrDefault(tpBetRecord => tpBetRecord.CurrencyId == bettrans.CurrencyId)));
                 checkResult.AddRange(bettransResult);
