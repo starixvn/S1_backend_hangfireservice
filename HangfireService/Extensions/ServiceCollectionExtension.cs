@@ -81,17 +81,18 @@ namespace HangfireService.Extensions
             }
 
             return services
-            .AddSingleton<HttpHelper>()
-            .AddSingleton<SecureHelper>()
-            .AddSingleton<ExcelHelper>()
-            .AddSingleton<TelegramBotHelper>()
-            .AddTransient<MainDBDataLayer>()
-            .AddTransient<WagerDBDataLayer>()
-            .AddTransient<ReportDBDataLayer>()
-            .AddSingleton<ThirdPartyManager>()
-            .AddSingleton<PartitionService>()
-            .AddSingleton<FincanceService>()
-            .AddSingleton<PtMerchantBalanceCheckService>();
+                .AddSingleton<HttpHelper>()
+                .AddSingleton<SecureHelper>()
+                .AddSingleton<ExcelHelper>()
+                .AddSingleton<TelegramBotHelper>()
+                .AddTransient<MainDBDataLayer>()
+                .AddTransient<WagerDBDataLayer>()
+                .AddTransient<ReportDBDataLayer>()
+                .AddSingleton<ThirdPartyManager>()
+                .AddSingleton<PartitionService>()
+                .AddSingleton<FincanceService>()
+                .AddSingleton<PtMerchantBalanceCheckService>()
+                .AddSingleton<WorldCupDepositDailySummaryService>();
         }
 
         public static IServiceCollection RegisterScheduledJobs(this IServiceCollection services, IConfiguration configuration)
