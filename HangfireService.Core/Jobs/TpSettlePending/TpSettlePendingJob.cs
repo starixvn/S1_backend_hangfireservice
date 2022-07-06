@@ -69,7 +69,7 @@ namespace HangfireService.Core.Jobs
                     LogContext.PushProperty("Tp", tpGameType.TpId);
                     LogContext.PushProperty("GameType", tpGameType.TypeName);
                     var bettrans = Enumerable.Empty<TpSettlePendingModel>();
-                    var gameIds = new List<long> { 7, 8, 9, 10, 11, 15, 16, 18, 28, 29, 32, 37, 39, 45, 53, 57, 63, 64, 65 };
+                    var gameIds = new List<long> { 7, 8, 9, 10, 11, 12, 15, 16, 18, 28, 29, 32, 37, 39, 44, 45, 53, 57, 63, 64, 65 };
 
                     switch (categoryId)
                     {
@@ -102,9 +102,16 @@ namespace HangfireService.Core.Jobs
                                 bettrans = await _reportDBDataLayer.GetTpSettlePendingTpUnsettleByTpGameType(tpGameType.TpId, tpGameType.Type, begin, end);
                             }
                             break;
-                        //case 4:
-                        //    bettrans = await _reportDBDataLayer.GetTpSettlePendingFishByTpGameType(tpGameType.Type, begin, end);
-                        //    break;
+                        case 4:
+                            if (gameIds.Contains(tpGameType.Type))
+                            {
+                                bettrans = await _reportDBDataLayer.GetTpSettlePendingFishByTpGameType(tpGameType.Type, begin, end);
+                            }
+                            else
+                            {
+                                bettrans = await _reportDBDataLayer.GetTpSettlePendingTpUnsettleByTpGameType(tpGameType.TpId, tpGameType.Type, begin, end);
+                            }
+                            break;
                         //case 6:
                         //    bettrans = await _reportDBDataLayer.GetTpSettlePendingLotteryByTpGameType(tpGameType.Type, begin, end);
                         //    break;
@@ -116,7 +123,7 @@ namespace HangfireService.Core.Jobs
                             _logger.LogError($"遊戲: {tpGameType.TypeName}, CategoryName: {categoryName}, CategoryId 尚不支援: {categoryId}");
                             break;
                     }
-                    
+
                     if (bettrans.Any())
                     {
                         cnt += bettrans.Count();
