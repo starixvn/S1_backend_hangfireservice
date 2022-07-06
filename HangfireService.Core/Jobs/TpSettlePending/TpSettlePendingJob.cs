@@ -69,10 +69,20 @@ namespace HangfireService.Core.Jobs
                     LogContext.PushProperty("Tp", tpGameType.TpId);
                     LogContext.PushProperty("GameType", tpGameType.TypeName);
                     var bettrans = Enumerable.Empty<TpSettlePendingModel>();
-                    var gameIds = new List<long> { 7, 8, 9, 10, 11, 12, 15, 16, 18, 28, 29, 32, 35, 36, 37, 39, 44, 45, 50, 53, 57, 63, 64, 65 };
+                    var gameIds = new List<long> { 7, 8, 9, 10, 11, 12, 15, 16, 18, 28, 29, 32, 35, 36, 37, 39, 44, 45, 49, 50, 53, 57, 63, 64, 65 };
 
                     switch (categoryId)
                     {
+                        case 1:
+                            if (gameIds.Contains(tpGameType.Type))
+                            {
+                                bettrans = await _reportDBDataLayer.GetTpSettlePendingSportByTpGameType(tpGameType.Type, begin, end);
+                            }
+                            else
+                            {
+                                bettrans = await _reportDBDataLayer.GetTpSettlePendingTpUnsettleByTpGameType(tpGameType.TpId, tpGameType.Type, begin, end);
+                            }
+                            break;
                         case 2:
                             if (tpGameType.Type == 34 || tpGameType.Type == 46)
                             {
