@@ -54,7 +54,7 @@ namespace HangfireService.Core.Jobs
 
                 foreach (var tpGameType in tpGameTypeData)
                 {
-                    if (tpGameType.TpId == 1)
+                    if (tpGameType.TpId == 1 || tpGameType.TpId == 41)
                     {
                         // 排除saba檢查
                         continue;
@@ -69,10 +69,20 @@ namespace HangfireService.Core.Jobs
                     LogContext.PushProperty("Tp", tpGameType.TpId);
                     LogContext.PushProperty("GameType", tpGameType.TypeName);
                     var bettrans = Enumerable.Empty<TpSettlePendingModel>();
-                    var gameIds = new List<long> { 7, 8, 9, 10, 11, 12, 15, 16, 18, 28, 29, 32, 37, 39, 44, 45, 53, 57, 63, 64, 65 };
+                    var gameIds = new List<long> { 7, 8, 9, 10, 11, 12, 15, 16, 18, 28, 29, 32, 35, 36, 37, 39, 44, 45, 49, 50, 53, 57, 63, 64, 65 };
 
                     switch (categoryId)
                     {
+                        case 1:
+                            if (gameIds.Contains(tpGameType.Type))
+                            {
+                                bettrans = await _reportDBDataLayer.GetTpSettlePendingSportByTpGameType(tpGameType.Type, begin, end);
+                            }
+                            else
+                            {
+                                bettrans = await _reportDBDataLayer.GetTpSettlePendingTpUnsettleByTpGameType(tpGameType.TpId, tpGameType.Type, begin, end);
+                            }
+                            break;
                         case 2:
                             if (tpGameType.Type == 34 || tpGameType.Type == 46)
                             {
@@ -112,12 +122,26 @@ namespace HangfireService.Core.Jobs
                                 bettrans = await _reportDBDataLayer.GetTpSettlePendingTpUnsettleByTpGameType(tpGameType.TpId, tpGameType.Type, begin, end);
                             }
                             break;
-                        //case 6:
-                        //    bettrans = await _reportDBDataLayer.GetTpSettlePendingLotteryByTpGameType(tpGameType.Type, begin, end);
-                        //    break;
-                        //case 8:
-                        //    bettrans = await _reportDBDataLayer.GetTpSettlePendingPokerByTpGameType(tpGameType.Type, begin, end);
-                        //    break;
+                        case 6:
+                            if (gameIds.Contains(tpGameType.Type))
+                            {
+                                bettrans = await _reportDBDataLayer.GetTpSettlePendingLotteryByTpGameType(tpGameType.Type, begin, end);
+                            }
+                            else
+                            {
+                                bettrans = await _reportDBDataLayer.GetTpSettlePendingTpUnsettleByTpGameType(tpGameType.TpId, tpGameType.Type, begin, end);
+                            }
+                            break;
+                        case 8:
+                            if (tpGameType.Type == 41 || tpGameType.Type == 42 || tpGameType.Type == 52 || tpGameType.Type == 60)
+                            {
+                                bettrans = await _wagerDBDataLayer.GetTpSettlePendingPokerByTpGameType(tpGameType.Type, begin, end);
+                            }
+                            else if (gameIds.Contains(tpGameType.Type))
+                            {
+                                bettrans = await _reportDBDataLayer.GetTpSettlePendingPokerByTpGameType(tpGameType.Type, begin, end);
+                            }
+                            break;
                         default:
                             cnt = -1;
                             _logger.LogError($"遊戲: {tpGameType.TypeName}, CategoryName: {categoryName}, CategoryId 尚不支援: {categoryId}");
