@@ -69,7 +69,7 @@ namespace HangfireService.Core.Jobs
                     LogContext.PushProperty("Tp", tpGameType.TpId);
                     LogContext.PushProperty("GameType", tpGameType.TypeName);
                     var bettrans = Enumerable.Empty<TpSettlePendingModel>();
-                    var gameIds = new List<long> { 7, 8, 9, 10, 11, 12, 15, 16, 18, 28, 29, 32, 35, 36, 37, 39, 44, 45, 49, 50, 53, 57, 63, 64, 65 };
+                    var gameIds = new List<long> { 7, 8, 9, 10, 11, 12, 15, 16, 18, 28, 29, 32, 35, 36, 37, 39, 44, 45, 49, 50, 52, 53, 57, 63, 64, 65 };
 
                     switch (categoryId)
                     {
@@ -123,6 +123,7 @@ namespace HangfireService.Core.Jobs
                             }
                             break;
                         case 6:
+                            end = DateTime.Today.AddDays(-1).GetUnixTimeByDay();
                             if (gameIds.Contains(tpGameType.Type))
                             {
                                 bettrans = await _reportDBDataLayer.GetTpSettlePendingLotteryByTpGameType(tpGameType.Type, begin, end);
@@ -133,7 +134,7 @@ namespace HangfireService.Core.Jobs
                             }
                             break;
                         case 8:
-                            if (tpGameType.Type == 41 || tpGameType.Type == 42 || tpGameType.Type == 52 || tpGameType.Type == 60)
+                            if (tpGameType.Type == 41 || tpGameType.Type == 42 || tpGameType.Type == 60)
                             {
                                 bettrans = await _wagerDBDataLayer.GetTpSettlePendingPokerByTpGameType(tpGameType.Type, begin, end);
                             }
