@@ -33,7 +33,7 @@ namespace HangfireService.Core.Jobs
         {
             _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
             var option = JsonConvert.DeserializeObject<WorldCupDepositDailySummaryOption>(JsonConvert.SerializeObject(jobOption.Parameters));
-            option.AccountDate = option.AccountDate ?? DateTime.Now.Date; // 如果沒有指定重跑日期，就是抓現在時間
+            option.AccountDate = option.AccountDate ?? DateTime.Now.AddHours(8).Date; //機器上是UTC + 0 ，所以要+8小時，如果沒有指定重跑日期，就是抓現在時間
             try
             {
                 await _worldCupDepositDailySummaryService.RunJobAsync(option);
