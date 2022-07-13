@@ -221,7 +221,7 @@ namespace HangfireService.Core.Service
             DepositAmountSettingDto amountSetting,
             IEnumerable<WorldCupMemberTicketInfoDto> userTickets)
         {
-            return custDepositInfo.DepositAmountTotal > amountSetting.Amount
+            return custDepositInfo.DepositAmountTotal >= amountSetting.Amount
                    && userTickets.All(r => r.TicketType != amountSetting.TicketType);
         }
 
