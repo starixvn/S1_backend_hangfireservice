@@ -27,5 +27,15 @@ namespace HangfireService.Core.DataLayers
         {
             return _dbClient.QueryAsync<TpSettlePendingModel>("Service_TpSettlePending_Poker_Wager_Get", parameters: new DynamicParameters(new { TpGameType, BeginTime, EndTime }), commandTimeout: 60);
         }
+
+        public Task<IEnumerable<TpWagerTimerModel>> GetTpWagerTimerList()
+        {
+            return _dbClient.QueryAsync<TpWagerTimerModel>("Service_TpWagerTimer_List_Get");
+        }
+
+        public Task<IEnumerable<TpWagerTimerModel>> GetTpWagerTimerReferenceList()
+        {
+            return _dbClient.QueryAsync<TpWagerTimerModel>("Service_TpWagerTimerReference_List_Get");
+        }
     }
 }
