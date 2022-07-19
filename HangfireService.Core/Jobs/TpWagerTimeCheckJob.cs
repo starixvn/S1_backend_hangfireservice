@@ -83,7 +83,6 @@ namespace HangfireService.Core.Jobs
                             break;
                         case 2:
                             // 重作抄單
-                            var hour3 = new List<int> { 20, 36 };
                             var hour4 = new List<int> { 24 };
                             var day2 = new List<int> { 22, 31 };
                             var day4 = new List<int> { 13, 28 };
@@ -144,6 +143,17 @@ namespace HangfireService.Core.Jobs
                                 checkList.Add(data);
                             }
                             break;
+                        case 6:
+                        case 7:
+                            if (data.TpId == 31)
+                            {
+                                // 落後2天
+                                if (delayDay >= 2)
+                                {
+                                    checkList.Add(data);
+                                }
+                            }
+                            break;
                         default:
                             _logger.LogError($"遊戲: {tpName}, Type 尚不支援: {data.Type}");
                             break;
@@ -163,20 +173,20 @@ namespace HangfireService.Core.Jobs
                     {
                         msgRow += $"\r\n遊戲: {i.TpName}, 資料: {i.Detail}";
                     }
-                    subMsg += $"{msgRow}\r\n請檢查，如遊戲維護中請忽略，詳細資訊請見Hangfire Log。";
+                    subMsg += $"{msgRow}\r\n請檢查，如有Type 1資料請優先檢查，如遊戲維護中請忽略，詳細資訊請見Hangfire Log。";
                 }
 
                 var msg = $"[抄單檢查: {now:yyyy-MM-dd HH:mm:ss}] 檢查異常筆數: {checkList.Count} \r\n{subMsg}";
                 if (checkList.Any())
                 {
                     _logger.LogError(msg);
+                    _telegramBotHelper.SendMessage(msg);
                 }
                 else
                 {
                     _logger.LogInformation(msg);
                 }
 
-                _telegramBotHelper.SendMessage(msg);
                 return msg;
             }
             catch (Exception ex)
