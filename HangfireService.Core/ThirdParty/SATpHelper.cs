@@ -36,7 +36,12 @@ namespace HangfireService.Core.ThirdParty
             var bettrans = await _wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerSA_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
             foreach (var item in bettrans)
             {
+                var rate = _tpCurrency.First(c => c.CurrencyId == item.CurrencyId).ExchangeRate;
                 item.TpId = TpId;
+                item.Stake *= rate;
+                item.ValidBet *= rate;
+                item.Payout *= rate;
+                item.WinlostAmount *= rate;
             }
             return bettrans;
         }
