@@ -1,12 +1,16 @@
 ﻿using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
 using HangfireService.Core.Models.Options;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace HangfireService.Core.ThirdParty.Interfaces
 {
     public interface IFinanceTpHelper
     {
         int TpId { get; }
+
+        ILogger<BaseTpHelper> _logger { get; set; }
 
         Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption);
 
@@ -38,6 +42,18 @@ namespace HangfireService.Core.ThirdParty.Interfaces
                 var financeResult = bettransList.Select(bettrans
                     => bettrans.CheckData(FinanceCheckType.交易資料與第三方匯總檢查, tpDailyList.FirstOrDefault(tp => tp.CurrencyId == bettrans.CurrencyId)));
                 checkResult.AddRange(financeResult);
+            }
+
+            if (checkResult.Any())
+            {
+                var data = new
+                {
+                    TpId,
+                    tpBetRecord,
+                    tpDailyList,
+                    bettransList,
+                };
+                _logger.LogError($"[{checkOption.BeginTime:yyyy-MM-dd}]:{JsonConvert.SerializeObject(data)}");
             }
 
             return checkResult;

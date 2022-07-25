@@ -12,7 +12,7 @@ namespace HangfireService.Core.ThirdParty
 {
     public class BaseTpHelper
     {
-        protected readonly ILogger<BaseTpHelper> _logger;
+        public ILogger<BaseTpHelper> _logger { get; set; }
 
         protected readonly HttpHelper _httpHelper;
 

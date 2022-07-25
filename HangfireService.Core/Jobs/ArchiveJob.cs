@@ -182,7 +182,7 @@ namespace HangfireService.Core.Jobs
             }
         }
 
-        private static bool IsProcessing(string jobName, string jobId, out string? lastjobId)
+        private static bool IsProcessing(string jobName, string jobId, out string lastjobId)
         {
             if (_JobStateList.TryGetValue(jobName, out lastjobId))
             {

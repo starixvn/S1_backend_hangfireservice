@@ -12,7 +12,6 @@ namespace HangfireService.Core.ThirdParty
     public class ATTpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public int TpId => 24;
-
         private readonly ReportDBDataLayer _reportDbDataLayer;
         private readonly IEnumerable<TpCurrency> _tpCurrency;
         private readonly MySqlClient _wagerClient;
@@ -33,14 +32,15 @@ namespace HangfireService.Core.ThirdParty
         {
             var BeginTime = checkOption.BeginTime;
             var EndTime = checkOption.EndTime;
-            var tasks = new List<Task<IEnumerable<BettransCheckData>>>();
+            var tasks = new List<Task<IEnumerable<BettransCheckData>>>
+            {
+                // Slot (source wager)
+                _wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerRng_AT_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }),
+                // Fish (source wager)
+                _wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerFish_AT_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime })
+            };
 
-            // Slot (source wager)
-            tasks.Add(_wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerRng_AT_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }));
-            // Fish (source wager)
-            tasks.Add(_wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerFish_AT_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }));
-
-            Task.WhenAll(tasks);
+            await Task.WhenAll(tasks);
 
             var CheckData = new List<BettransCheckData>();
             foreach (var item in tasks)

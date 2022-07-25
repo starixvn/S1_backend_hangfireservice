@@ -26,7 +26,7 @@ namespace HangfireService.Core.Jobs
 
         private readonly Dictionary<int, IFinanceTpHelper> _tpHandler = new();
 
-        private static List<JobOption>? _jobList;
+        private static List<JobOption> _jobList;
 
         private readonly TelegramBotHelper _telegramBotHelper;
 
@@ -87,8 +87,8 @@ namespace HangfireService.Core.Jobs
         public object Run(
             PerformContext? context = null,
             IJobCancellationToken? cancellationToken = null,
-            [DisplayData("JobName", ConvertType = typeof(JobList))] string? jobName = null,
-            [DisplayData("CheckDate", ConvertType = typeof(CheckDateList))] string? CheckDate = null)
+            [DisplayData("JobName", ConvertType = typeof(JobList))] string jobName = null,
+            [DisplayData("CheckDate", ConvertType = typeof(CheckDateList))] string CheckDate = null)
         {
             if (!_jobList.Any())
             {
