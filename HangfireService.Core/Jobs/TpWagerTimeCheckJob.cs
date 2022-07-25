@@ -14,7 +14,7 @@ using System.ComponentModel;
 
 namespace HangfireService.Core.Jobs
 {
-    [ManagementPage("TpWagerTimeCheckJob", queue: "tpwager")]
+    [ManagementPage("TpWagerTimeCheckJob", queue: "check")]
     public class TpWagerTimeCheckJob : BaseJob, IScheduledJob
     {
         private readonly ReportDBDataLayer _reportDBDataLayer;
