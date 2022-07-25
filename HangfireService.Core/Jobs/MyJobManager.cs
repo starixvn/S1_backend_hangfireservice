@@ -9,14 +9,14 @@ namespace HangfireService.Core.Jobs
 {
     public static class MyJobManager
     {
-        private static IReadOnlyDictionary<string, List<JobOption>>? _jobGroups;
+        private static IReadOnlyDictionary<string, List<JobOption>> _jobGroups;
 
         public static void SettingJob(IConfiguration configuration)
         {
             _jobGroups = configuration.GetSection("ScheduledJob").Get<Dictionary<string, List<JobOption>>>();
         }
 
-        public static IReadOnlyDictionary<string, List<JobOption>>? GetJobGroups()
+        public static IReadOnlyDictionary<string, List<JobOption>> GetJobGroups()
         {
             return _jobGroups;
         }

@@ -34,7 +34,7 @@ namespace HangfireService.Core.Jobs
         private readonly string _awsSecretKey;
 
         private readonly BaseTpHelper _baseTpHelper;
-        private static List<JobOption>? _reportJobList;
+        private static List<JobOption> _reportJobList;
 
         public LicenseReportJob(IServiceProvider provider) : base(provider)
         {
@@ -158,12 +158,12 @@ namespace HangfireService.Core.Jobs
 
         private class JobList : IInputDataList
         {
-            public Dictionary<string, string>? GetData()
+            public Dictionary<string, string> GetData()
             {
                 return _reportJobList?.ToDictionary(f => f.JobName, f => f.JobName);
             }
 
-            public string? GetDefaultValue()
+            public string GetDefaultValue()
             {
                 return null;
             }
@@ -172,10 +172,10 @@ namespace HangfireService.Core.Jobs
         [Job]
         [DisplayName("Run {2} by ManagementPage")]
         public object Run(
-            PerformContext? context = null,
-            IJobCancellationToken? cancellationToken = null,
+            PerformContext context = null,
+            IJobCancellationToken cancellationToken = null,
             [DisplayData("JobName", ConvertType = typeof(JobList))]
-            string? jobName = null)
+            string jobName = null)
         {
             if (!_reportJobList.Any())
             {

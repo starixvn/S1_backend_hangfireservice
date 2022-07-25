@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace HangfireService.Core.Jobs
 {
@@ -9,6 +10,14 @@ namespace HangfireService.Core.Jobs
         public BaseJob(IServiceProvider provider)
         {
             _logger = provider.GetRequiredService<ILogger<BaseJob>>();
+        }
+
+        protected string ToJson(object t)
+        {
+            return JsonConvert.SerializeObject(t, new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore
+            });
         }
     }
 }

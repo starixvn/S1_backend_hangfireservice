@@ -21,7 +21,7 @@ namespace HangfireService.Core.Jobs
         private readonly WagerDBDataLayer _wagerDBDataLayer;
 
         private readonly TelegramBotHelper _telegramBotHelper;
-        private static List<JobOption>? _jobList;
+        private static List<JobOption> _jobList;
 
         public TpWagerTimeCheckJob(IServiceProvider provider) : base(provider)
         {
@@ -164,7 +164,7 @@ namespace HangfireService.Core.Jobs
                     var result = checkList.GroupBy(g => g.TpId).Select(s => new
                     {
                         TpId = s.Key,
-                        TpName = tpListData.Where(i => i.TpId == s.Key).First().TpName,
+                        TpName = tpListData.First(i => i.TpId == s.Key).TpName,
                         Detail = JsonConvert.SerializeObject(s),
                     });
 
@@ -198,12 +198,12 @@ namespace HangfireService.Core.Jobs
 
         private class TpWagerTimeCheckJobList : IInputDataList
         {
-            public Dictionary<string, string>? GetData()
+            public Dictionary<string, string> GetData()
             {
                 return _jobList?.ToDictionary(f => f.JobName, f => f.JobName);
             }
 
-            public string? GetDefaultValue()
+            public string GetDefaultValue()
             {
                 return null;
             }
@@ -212,10 +212,10 @@ namespace HangfireService.Core.Jobs
         [Job]
         [DisplayName("Run {2} by ManagementPage")]
         public object Run(
-            PerformContext? context = null,
-            IJobCancellationToken? cancellationToken = null,
+            PerformContext context = null,
+            IJobCancellationToken cancellationToken = null,
             [DisplayData("JobName", ConvertType = typeof(TpWagerTimeCheckJobList))]
-            string? jobName = null)
+            string jobName = null)
         {
             if (!_jobList.Any())
             {
