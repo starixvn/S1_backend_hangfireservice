@@ -19,7 +19,7 @@ using HangfireService.Core.Models.Finance;
 
 namespace HangfireService.Core.Jobs
 {
-    [ManagementPage("FinanceCheckJob", queue: "Finance")]
+    [ManagementPage("FinanceCheckJob", queue: "check")]
     public class FinanceCheckJob : BaseJob, IScheduledJob
     {
         private readonly ReportDBDataLayer _reportDBDataLayer;
