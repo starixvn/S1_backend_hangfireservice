@@ -102,8 +102,8 @@ namespace HangfireService.Core.ThirdParty
             foreach (var currencyId in _tpCurrency.Select(i => i.CurrencyId))
             {
                 var timeZone = _currencyTimeZoneList[currencyId];
-                var Begin = checkOption.BeginTime.ToOffset(timeZone).DateTime;
-                var End = checkOption.EndTime.ToOffset(timeZone).DateTime;
+                var Begin = DateTimeOffset.FromUnixTimeSeconds(checkOption.BeginTime.ToOffset(timeZone).ToUnixTimeSeconds()).DateTime;
+                var End = DateTimeOffset.FromUnixTimeSeconds(checkOption.EndTime.ToOffset(timeZone).ToUnixTimeSeconds()).DateTime;
                 // 取代原始資料
                 tpBetRecord.RemoveAll(s => s.CurrencyId == currencyId);
                 tpBetRecord.AddRange(_reportDbDataLayer.GetTpBetRecordCheckCurrencyIdByTpId(TpId, currencyId, Begin, End).ToList());
