@@ -1,4 +1,5 @@
 ﻿using HangfireService.Core.DataLayers;
+using HangfireService.Core.Extensions;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
@@ -29,6 +30,10 @@ namespace HangfireService.Core.ThirdParty
             _fincanceService = provider.GetRequiredService<FincanceService>();
 
             _currencyTimeZoneList = provider.GetRequiredService<IEnumerable<CurrencyOption>>().ToDictionary(d => d.CurrencyId, d => d.TimeZone);
+            //修正PT IDR時區
+            _currencyTimeZoneList.Remove(15);
+            _currencyTimeZoneList.Add(15, "+08:00");
+
         }
 
         public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
@@ -40,8 +45,9 @@ namespace HangfireService.Core.ThirdParty
             foreach (var item in _tpCurrency)
             {
                 // 依各幣別轉換時間
-                var Begin = GetReportTimeByCurrency(BeginTime, item.CurrencyId);
-                var End = GetReportTimeByCurrency(EndTime, item.CurrencyId);
+                var timeZone = _currencyTimeZoneList[item.CurrencyId];
+                var Begin = BeginTime.ToOffset(timeZone).ToUnixTimeSeconds();
+                var End = EndTime.ToOffset(timeZone).ToUnixTimeSeconds();
 
                 tasks.Add(_wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerRng_PT_Summary_Get", new { _BeginTime = Begin, _EndTime = End, _TpCurrencyId = item.TpCurrencyId }));
                 tasks.Add(_wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerLC_PT_Summary_Get", new { _BeginTime = Begin, _EndTime = End, _TpCurrencyId = item.TpCurrencyId }));
@@ -95,8 +101,9 @@ namespace HangfireService.Core.ThirdParty
             // 取得各幣別時間資料
             foreach (var currencyId in _tpCurrency.Select(i => i.CurrencyId))
             {
-                var Begin = DateTimeOffset.FromUnixTimeSeconds(GetReportTimeByCurrency(checkOption.BeginTime, currencyId)).DateTime;
-                var End = DateTimeOffset.FromUnixTimeSeconds(GetReportTimeByCurrency(checkOption.EndTime, currencyId)).DateTime;
+                var timeZone = _currencyTimeZoneList[currencyId];
+                var Begin = checkOption.BeginTime.ToOffset(timeZone).DateTime;
+                var End = checkOption.EndTime.ToOffset(timeZone).DateTime;
                 // 取代原始資料
                 tpBetRecord.RemoveAll(s => s.CurrencyId == currencyId);
                 tpBetRecord.AddRange(_reportDbDataLayer.GetTpBetRecordCheckCurrencyIdByTpId(TpId, currencyId, Begin, End).ToList());
@@ -144,12 +151,6 @@ namespace HangfireService.Core.ThirdParty
                 _logger.LogError($"[{checkOption.BeginTime:yyyy-MM-dd}]:{ToJson(data)}");
             }
             return checkResult;
-        }
-
-        private long GetReportTimeByCurrency(DateTime time, int currencyId)
-        {
-            var getCurrencyTimeZone = _currencyTimeZoneList[currencyId];
-            return DateTimeOffset.Parse(time.ToString() + getCurrencyTimeZone).ToUnixTimeSeconds();
         }
     }
 }
