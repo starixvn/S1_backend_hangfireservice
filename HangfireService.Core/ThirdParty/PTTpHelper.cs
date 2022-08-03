@@ -16,15 +16,7 @@ namespace HangfireService.Core.ThirdParty
         private readonly IEnumerable<TpCurrency> _tpCurrency;
         private readonly MySqlClient _wagerClient;
         private readonly FincanceService _fincanceService;
-        private readonly Dictionary<string, string> _currencyTimeZoneList = new Dictionary<string, string>() {
-            {"MYR", "08:00"},
-            {"USD", "00:00"},
-            {"THB", "07:00"},
-            {"CNY", "08:00"},
-            {"IDR", "08:00"},
-            {"INR", "05:30"},
-            {"VND", "07:00"}
-        };
+        private readonly Dictionary<int, string> _currencyTimeZoneList;
 
         public PTTpHelper(IServiceProvider provider) : base(provider)
         {
@@ -35,6 +27,8 @@ namespace HangfireService.Core.ThirdParty
             _wagerClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Wager);
 
             _fincanceService = provider.GetRequiredService<FincanceService>();
+
+            _currencyTimeZoneList = provider.GetRequiredService<IEnumerable<CurrencyOption>>().ToDictionary(d => d.CurrencyId, d => d.TimeZone);
         }
 
         public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
@@ -46,8 +40,8 @@ namespace HangfireService.Core.ThirdParty
             foreach (var item in _tpCurrency)
             {
                 // 依各幣別轉換時間
-                var Begin = GetReportTimeByCurrency(BeginTime, item.TpCurrencyId);
-                var End = GetReportTimeByCurrency(EndTime, item.TpCurrencyId);
+                var Begin = GetReportTimeByCurrency(BeginTime, item.CurrencyId);
+                var End = GetReportTimeByCurrency(EndTime, item.CurrencyId);
 
                 tasks.Add(_wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerRng_PT_Summary_Get", new { _BeginTime = Begin, _EndTime = End, _TpCurrencyId = item.TpCurrencyId }));
                 tasks.Add(_wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerLC_PT_Summary_Get", new { _BeginTime = Begin, _EndTime = End, _TpCurrencyId = item.TpCurrencyId }));
@@ -99,13 +93,13 @@ namespace HangfireService.Core.ThirdParty
         public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, List<TpBetRecordCheck> tpBetRecord, List<BettransCheckData> bettransList, List<TpDailySummaryCheckData> tpDailyList)
         {
             // 取得各幣別時間資料
-            foreach (var item in _tpCurrency)
+            foreach (var currencyId in _tpCurrency.Select(i => i.CurrencyId))
             {
-                var Begin = DateTimeOffset.FromUnixTimeSeconds(GetReportTimeByCurrency(checkOption.BeginTime, item.TpCurrencyId)).DateTime;
-                var End = DateTimeOffset.FromUnixTimeSeconds(GetReportTimeByCurrency(checkOption.EndTime, item.TpCurrencyId)).DateTime;
+                var Begin = DateTimeOffset.FromUnixTimeSeconds(GetReportTimeByCurrency(checkOption.BeginTime, currencyId)).DateTime;
+                var End = DateTimeOffset.FromUnixTimeSeconds(GetReportTimeByCurrency(checkOption.EndTime, currencyId)).DateTime;
                 // 取代原始資料
-                tpBetRecord.RemoveAll(s => s.CurrencyId == item.CurrencyId);
-                tpBetRecord.AddRange(_reportDbDataLayer.GetTpBetRecordCheckCurrencyIdByTpId(TpId, item.CurrencyId, Begin, End).ToList());
+                tpBetRecord.RemoveAll(s => s.CurrencyId == currencyId);
+                tpBetRecord.AddRange(_reportDbDataLayer.GetTpBetRecordCheckCurrencyIdByTpId(TpId, currencyId, Begin, End).ToList());
             }
 
             // 調整為tpbetrecord計算公式
@@ -152,14 +146,10 @@ namespace HangfireService.Core.ThirdParty
             return checkResult;
         }
 
-        private long GetReportTimeByCurrency(DateTime time, string currency)
+        private long GetReportTimeByCurrency(DateTime time, int currencyId)
         {
-            var getCurrencyTimeZone = _currencyTimeZoneList[currency];
-            string[] CurrencyTimeZoneList = getCurrencyTimeZone.Split(":");
-            var timezoneHour = Convert.ToInt32(CurrencyTimeZoneList[0]);
-            var timezoneMinute = Convert.ToInt32(CurrencyTimeZoneList[1]);
-
-            return new DateTimeOffset(new DateTimeOffset(time, TimeSpan.Zero).DateTime, new TimeSpan(timezoneHour, timezoneMinute, 0)).ToUnixTimeSeconds();
+            var getCurrencyTimeZone = _currencyTimeZoneList[currencyId];
+            return DateTimeOffset.Parse(time.ToString() + getCurrencyTimeZone).ToUnixTimeSeconds();
         }
     }
 }
