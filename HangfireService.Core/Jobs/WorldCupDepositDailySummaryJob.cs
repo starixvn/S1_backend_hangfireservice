@@ -48,7 +48,7 @@ namespace HangfireService.Core.Jobs
             
             _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} End......");
             await _worldCupDepositDailySummaryService.InsertJobLog(jobName, WorldCupJobStatus.Success, option);
-            return $"true，Date：{option.AccountDate}{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}";
+            return $"true，Date：{option.AccountDate}";
         }
 
         /// <summary>
