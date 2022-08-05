@@ -8,6 +8,7 @@ using HangfireService.Core.Jobs;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Jobs;
+using HangfireService.Core.Models.Options;
 using HangfireService.Core.Service;
 using HangfireService.Core.ThirdParty;
 using HangfireService.Core.ThirdParty.Interfaces;
@@ -92,7 +93,8 @@ namespace HangfireService.Extensions
                 .AddSingleton<PartitionService>()
                 .AddSingleton<FincanceService>()
                 .AddSingleton<PtMerchantBalanceCheckService>()
-                .AddSingleton<WorldCupDepositDailySummaryService>();
+                .AddSingleton<WorldCupDepositDailySummaryService>()
+                .AddSingleton<ConfigService>();
         }
 
         public static IServiceCollection RegisterScheduledJobs(this IServiceCollection services, IConfiguration configuration)
@@ -128,6 +130,20 @@ namespace HangfireService.Extensions
             }
 
             return services;
+        }
+
+        public static IServiceCollection AddOptionListByDB<T>(this IServiceCollection services, string sql, object parameters = null)
+        {
+            var provider = services.BuildServiceProvider();
+            var configService = provider.GetRequiredService<ConfigService>();
+            var option = configService.Query<T>(sql, parameters);
+            services.AddSingleton(typeof(IEnumerable<T>), p => option);
+            return services;
+        }
+
+        public static IServiceCollection AddOption(this IServiceCollection services)
+        {
+            return services.AddOptionListByDB<CurrencyOption>("Common_Currency_Get");
         }
     }
 }
