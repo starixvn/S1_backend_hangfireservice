@@ -19,5 +19,10 @@ namespace HangfireService.Core.Service
         {
             return _mainDbClient.QueryAsync<TpDailySummaryCheckData>("Finance_Tp_DailySummary_Get", new { SummaryType, TpId, BeginTime, EndTime });
         }
+
+        public int SetFinanceTpDailySummary(IEnumerable<FincanceDailySummary> dailySummary)
+        {
+            return _mainDbClient.Execute("Finance_Tp_DailySummary_Set", dailySummary);
+        }
     }
 }
