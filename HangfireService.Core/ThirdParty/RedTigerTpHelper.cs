@@ -33,7 +33,7 @@ namespace HangfireService.Core.ThirdParty
             // bettrans 已派彩後的取消注單我們無法得知取消狀態，且資料時間可能會有跨天的問題
             var BeginTime = (long)(checkOption.BeginTime.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
             var EndTime = (long)(checkOption.EndTime.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
-            var bettrans = await _dbClient.QueryAsync<BettransCheckData>("Finance_BettransRng_RedTiger_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
+            var bettrans = await _dbClient.QueryAsync<BettransCheckData>("Finance_BettransRng_RedTiger_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120);
             foreach (var item in bettrans)
             {
                 item.TpId = TpId;
