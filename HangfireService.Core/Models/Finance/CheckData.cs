@@ -22,6 +22,8 @@ namespace HangfireService.Core.Models.Finance
 
         public decimal ProgressiveWin { get; set; }
 
+        public string TpCurrencyId { get; set; }
+
         public FinanceCheckResult CheckData(FinanceCheckType checkType, TpBetRecordCheck? check)
         {
             var result = new List<string>();
