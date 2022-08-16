@@ -47,7 +47,7 @@ namespace HangfireService.Core.ThirdParty
                 // 依各幣別轉換時間
                 var timeZone = _currencyTimeZoneList[item.CurrencyId];
                 var Begin = BeginTime.ToOffset(timeZone).ToUnixTimeSeconds();
-                var End = EndTime.ToOffset(timeZone).ToUnixTimeSeconds();
+                var End = EndTime.ToOffset(timeZone).ToUnixTimeSeconds() - 1; // 測試不含最後一秒
 
                 tasks.Add(_wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerRng_PT_Summary_Get", new { _BeginTime = Begin, _EndTime = End, _TpCurrencyId = item.TpCurrencyId }));
                 tasks.Add(_wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerLC_PT_Summary_Get", new { _BeginTime = Begin, _EndTime = End, _TpCurrencyId = item.TpCurrencyId }));
