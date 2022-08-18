@@ -68,7 +68,6 @@ namespace HangfireService.Core.ThirdParty
         {
             // 對方報表API為下注時間 需改用TpBetRecord.TransTime檢查
             tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckTransTimeDataByTpId(TpId, checkOption.BeginTime.AddHours(utcTime), checkOption.EndTime.AddHours(utcTime)).ToList();
-
             var checkResult = new List<FinanceCheckResult>();
             if (bettransList.Any())
             {

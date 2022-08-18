@@ -53,13 +53,11 @@ namespace HangfireService.Core.ThirdParty
             var tpDailyList = await _fincanceService.GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
             foreach (var tpDaily in tpDailyList)
             {
-                var rate = _tpCurrency.First(c => c.TpCurrencyId == tpDaily.TpCurrencyId).ExchangeRate;
+                var rate = _tpCurrency.First(c => c.CurrencyId == tpDaily.CurrencyId).ExchangeRate;
                 tpDaily.Stake *= rate;
                 tpDaily.ValidBet *= rate;
-                tpDaily.WinlostAmount *= rate;
                 tpDaily.Payout *= rate;
-                tpDaily.TpId = TpId;
-                tpDaily.CurrencyId = _tpCurrency.First(c => c.TpCurrencyId == tpDaily.TpCurrencyId).CurrencyId;
+                tpDaily.WinlostAmount *= rate;
             }
             return tpDailyList;
         }
@@ -68,11 +66,14 @@ namespace HangfireService.Core.ThirdParty
         {
             // 改用下注時間檢查
             tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckTransTimeDataByTpId(TpId, checkOption.BeginTime, checkOption.EndTime).ToList();
-
-            // 交易資料 ValidBet 設為 結算資料 ValidBet，因交易資料無法計算出ValidBet
             foreach (var tpBettransData in bettransList)
             {
-                tpBettransData.ValidBet = tpBetRecord.First(x => x.CurrencyId == tpBettransData.CurrencyId).ValidBet;
+                bool inTpBetData = tpBetRecord.Any(x => x.CurrencyId == tpBettransData.CurrencyId);
+                if (!inTpBetData && tpBettransData.Stake == 0m)
+                {
+                    continue;
+                }
+                tpBettransData.ValidBet = tpBetRecord.FirstOrDefault(x => x.CurrencyId == tpBettransData.CurrencyId)?.ValidBet ?? 0m;
             }
 
             var checkResult = new List<FinanceCheckResult>();
