@@ -37,9 +37,9 @@ namespace HangfireService.Core.ThirdParty
 
             var tasks = new List<Task<IEnumerable<BettransCheckData>>>
             {
-                _dbClient.QueryAsync<BettransCheckData>("Finance_BettransLT_One789_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }),
-                _dbClient.QueryAsync<BettransCheckData>("Finance_BettransLT_One789_789_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }),
-                _dbClient.QueryAsync<BettransCheckData>("Finance_BettransLC_One789_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime })
+                _dbClient.QueryAsync<BettransCheckData>("Finance_BettransLT_One789_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120),
+                _dbClient.QueryAsync<BettransCheckData>("Finance_BettransLT_One789_789_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120),
+                _dbClient.QueryAsync<BettransCheckData>("Finance_BettransLC_One789_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120)
             };
 
             await Task.WhenAll(tasks);
