@@ -1,4 +1,5 @@
 ﻿using HangfireService.Core.DataLayers;
+using HangfireService.Core.Extensions;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
@@ -29,8 +30,8 @@ namespace HangfireService.Core.ThirdParty
 
         public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
         {
-            var BeginTime = (checkOption.BeginTime.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
-            var EndTime = (checkOption.EndTime.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+            var BeginTime = checkOption.BeginTime.GetUnixTimeByDay();
+            var EndTime = checkOption.EndTime.GetUnixTimeByDay();
 
             var tasks = new List<Task<IEnumerable<BettransCheckData>>>();
             tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransRng_AP_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120));
