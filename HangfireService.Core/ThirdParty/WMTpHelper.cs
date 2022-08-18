@@ -49,31 +49,18 @@ namespace HangfireService.Core.ThirdParty
 
         public async Task<IEnumerable<TpDailySummaryCheckData>> GetTpDailySummaryCheckData(FinanceCheckOption checkOption)
         {
+            // WM無報表API 資料為Wager總計
             var tpDailyList = await _fincanceService.GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
-
-            if (!tpDailyList.Any())
+            foreach (var tpDaily in tpDailyList)
             {
-                // WM無報表API 改取Wager總計存放使用
-                var BeginTime = checkOption.BeginTime.GetUnixTimeByDay();
-                var EndTime = checkOption.EndTime.GetUnixTimeByDay();
-                tpDailyList = await _wagerClient.QueryAsync<TpDailySummaryCheckData>("Finance_TpWagerWM_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
-                if (tpDailyList.Any())
-                {
-                    foreach (var tpDaily in tpDailyList)
-                    {
-                        var rate = _tpCurrency.First(c => c.TpCurrencyId == tpDaily.TpCurrencyId).ExchangeRate;
-                        tpDaily.Stake *= rate;
-                        tpDaily.ValidBet *= rate;
-                        tpDaily.WinlostAmount *= rate;
-                        tpDaily.Payout *= rate;
-                        tpDaily.TpId = TpId;
-                        tpDaily.CurrencyId = _tpCurrency.First(c => c.TpCurrencyId == tpDaily.TpCurrencyId).CurrencyId;
-                    }
-                    // 存放至TpDailySummary
-                    SetTpDailySummaryCheckDataByTpId(checkOption.BeginTime, tpDailyList);
-                }
+                var rate = _tpCurrency.First(c => c.TpCurrencyId == tpDaily.TpCurrencyId).ExchangeRate;
+                tpDaily.Stake *= rate;
+                tpDaily.ValidBet *= rate;
+                tpDaily.WinlostAmount *= rate;
+                tpDaily.Payout *= rate;
+                tpDaily.TpId = TpId;
+                tpDaily.CurrencyId = _tpCurrency.First(c => c.TpCurrencyId == tpDaily.TpCurrencyId).CurrencyId;
             }
-
             return tpDailyList;
         }
 
@@ -122,27 +109,6 @@ namespace HangfireService.Core.ThirdParty
                 _logger.LogError($"[{checkOption.BeginTime:yyyy-MM-dd}]:{ToJson(data)}");
             }
             return checkResult;
-        }
-
-
-        private int SetTpDailySummaryCheckDataByTpId(DateTime SummaryDate, IEnumerable<TpDailySummaryCheckData> tpDailyList)
-        {
-            var dailyData = new List<FincanceDailySummary>();
-            foreach (var item in tpDailyList)
-            {
-                dailyData.Add(new FincanceDailySummary()
-                {
-                    SummaryType = SummaryType.TpBetRecord,
-                    SummaryDate = SummaryDate,
-                    TpId = TpId,
-                    CurrencyId = item.CurrencyId,
-                    Stake = item.Stake,
-                    ValidBet = item.ValidBet,
-                    Payout = item.Payout,
-                    WinlostAmount = item.WinlostAmount
-                });
-            }
-            return _fincanceService.SetFinanceTpDailySummary(dailyData);
         }
     }
 }
