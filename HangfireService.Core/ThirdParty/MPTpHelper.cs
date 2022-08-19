@@ -32,7 +32,7 @@ namespace HangfireService.Core.ThirdParty
 
         public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
         {
-            // MP Bettrans無法取得正確金額 改取Wager資料
+            // MP Bettransgg時間無法取得正確金額 改取Wager資料
             var BeginTime = checkOption.BeginTime.GetUnixTimeByDay();
             var EndTime = checkOption.EndTime.GetUnixTimeByDay() - 1;
             var bettrans = await _wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerPK_MP_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
@@ -42,7 +42,7 @@ namespace HangfireService.Core.ThirdParty
                 item.TpId = TpId;
                 item.Stake *= rate;
                 item.ValidBet *= rate;
-                item.Payout *= rate;
+                item.Payout = 0;
                 item.WinlostAmount *= rate;
                 item.Revenue *= rate;
             }
@@ -55,11 +55,11 @@ namespace HangfireService.Core.ThirdParty
             foreach (var tpDaily in tpDailyList)
             {
                 var rate = _tpCurrency.First(c => c.CurrencyId == tpDaily.CurrencyId).ExchangeRate;
-                tpDaily.Stake *= rate;
-                tpDaily.ValidBet *= rate;
-                tpDaily.Payout *= rate;
-                tpDaily.WinlostAmount *= rate;
-                tpDaily.Revenue *= rate;
+                tpDaily.Stake = 0;
+                tpDaily.ValidBet = tpDaily.ValidBet / 100 * rate;
+                tpDaily.Payout = 0;
+                tpDaily.WinlostAmount = tpDaily.WinlostAmount / 100 * rate;
+                tpDaily.Revenue = 0;
             }
             return tpDailyList;
         }
