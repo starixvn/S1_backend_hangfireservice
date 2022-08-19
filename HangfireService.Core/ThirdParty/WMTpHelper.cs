@@ -66,6 +66,7 @@ namespace HangfireService.Core.ThirdParty
         {
             // 改用下注時間檢查
             tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckTransTimeDataByTpId(TpId, checkOption.BeginTime, checkOption.EndTime).ToList();
+            // 交易資料 ValidBet 設為 結算資料 ValidBet，因交易資料無法計算出ValidBet
             foreach (var tpBettransData in bettransList)
             {
                 bool inTpBetData = tpBetRecord.Any(x => x.CurrencyId == tpBettransData.CurrencyId);
