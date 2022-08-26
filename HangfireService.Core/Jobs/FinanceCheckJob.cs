@@ -13,7 +13,6 @@ using HangfireService.Core.Models.Options;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using HangfireService.Core.Helpers;
-using HangfireService.Core.Models.Enums;
 using System.Text;
 using HangfireService.Core.Models.Finance;
 
@@ -34,7 +33,7 @@ namespace HangfireService.Core.Jobs
         {
             LogContext.PushProperty("ClassName", GetType().Name);
             _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
-            MyJobManager.GetJobGroups()?.TryGetValue("Finance", out _jobList);
+            MyJobManager.GetJobGroups()?.TryGetValue("Check", out _jobList);
             _telegramBotHelper = provider.GetRequiredService<TelegramBotHelper>();
             foreach (var tp in provider.GetServices<IFinanceTpHelper>())
             {
@@ -135,7 +134,8 @@ namespace HangfireService.Core.Jobs
         {
             public Dictionary<string, string>? GetData()
             {
-                return _jobList?.ToDictionary(f => f.JobName, f => f.JobName);
+                return _jobList?.Where(i => i.JobName.Contains("Finance.TpBetRecord.Check"))
+                    .ToDictionary(f => f.JobName, f => f.JobName);
             }
             public string? GetDefaultValue()
             {
