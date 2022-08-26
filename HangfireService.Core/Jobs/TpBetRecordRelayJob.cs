@@ -11,6 +11,7 @@ using Hangfire.Dashboard.Management.Metadata;
 using HangfireService.Core.Models.Options;
 using Hangfire.Dashboard.Management.Support;
 using HangfireService.Core.Extensions;
+using HangfireService.Core.Helpers;
 
 namespace HangfireService.Core.Jobs
 {
@@ -19,12 +20,14 @@ namespace HangfireService.Core.Jobs
     {
         private readonly MainDBDataLayer _mainDBDataLayer;
         private static List<JobOption> _jobList;
+        private readonly TelegramBotHelper _telegramBotHelper;
 
         public TpBetRecordRelayJob(IServiceProvider provider) : base(provider)
         {
             LogContext.PushProperty("ClassName", GetType().Name);
             MyJobManager.GetJobGroups()?.TryGetValue("Report", out _jobList);
             _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
+            _telegramBotHelper = provider.GetRequiredService<TelegramBotHelper>();
         }
 
         [DisplayName("{0}")]
@@ -51,6 +54,7 @@ namespace HangfireService.Core.Jobs
                 BackgroundJob.Schedule(
                     () => ExecuteAsync(jobName, jobOption, null, null),
                     TimeSpan.FromMinutes(5));
+                _telegramBotHelper.SendMessage($"{jobName} 執行發生錯誤，五分鐘後重試。");
                 return JsonConvert.SerializeObject(ex);
             }
 
