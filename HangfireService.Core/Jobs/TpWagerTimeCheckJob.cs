@@ -29,7 +29,7 @@ namespace HangfireService.Core.Jobs
             _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
             _wagerDBDataLayer = provider.GetRequiredService<WagerDBDataLayer>();
             _telegramBotHelper = provider.GetRequiredService<TelegramBotHelper>();
-            MyJobManager.GetJobGroups()?.TryGetValue("TpWager", out _jobList);
+            MyJobManager.GetJobGroups()?.TryGetValue("Check", out _jobList);
         }
 
         [DisplayName("{0}")]
@@ -200,7 +200,8 @@ namespace HangfireService.Core.Jobs
         {
             public Dictionary<string, string> GetData()
             {
-                return _jobList?.ToDictionary(f => f.JobName, f => f.JobName);
+                return _jobList?.Where(i => i.JobName.Contains("TpWager.Time.Check"))
+                    .ToDictionary(f => f.JobName, f => f.JobName);
             }
 
             public string GetDefaultValue()
