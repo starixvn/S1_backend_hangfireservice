@@ -38,6 +38,8 @@ namespace HangfireService.Core.ThirdParty
             var BeginTime = checkOption.BeginTime.GetUnixTimeByDay();
             var EndTime = checkOption.EndTime.GetUnixTimeByDay();
 
+            // bettrans 資料時間可能會有跨天的問題
+            // 因使用transtime檢查會使tpbetrecord 下注跨天計算有問題，暫時調整為settletime比對確保tpbetrecord與wager金額相符，但會造成bettrans跨天計算有問題，後續如有bettrans & 第三方不符，請先手動檢查bettrans & wager (bettime)下注時間撈取總計檢查
             var bettrans = await _dbClient.QueryAsync<BettransCheckData>("Finance_BettransLC_WM_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
             foreach (var item in bettrans)
             {
@@ -64,8 +66,6 @@ namespace HangfireService.Core.ThirdParty
 
         public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, List<TpBetRecordCheck> tpBetRecord, List<BettransCheckData> bettransList, List<TpDailySummaryCheckData> tpDailyList)
         {
-            // 改用下注時間檢查
-            tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckTransTimeDataByTpId(TpId, checkOption.BeginTime, checkOption.EndTime).ToList();
             // 交易資料 ValidBet 設為 結算資料 ValidBet，因交易資料無法計算出ValidBet
             foreach (var tpBettransData in bettransList)
             {
