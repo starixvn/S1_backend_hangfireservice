@@ -39,7 +39,7 @@ namespace HangfireService.Core.ThirdParty
             {
                 _dbClient.QueryAsync<BettransCheckData>("Finance_BettransLT_One789_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120),
                 _dbClient.QueryAsync<BettransCheckData>("Finance_BettransLT_One789_789_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120),
-                _dbClient.QueryAsync<BettransCheckData>("Finance_BettransLC_One789_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120)
+                _dbClient.QueryAsync<BettransCheckData>("Finance_BettransLC_One789_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 180)
             };
 
             await Task.WhenAll(tasks);
