@@ -108,14 +108,20 @@ namespace HangfireService.Core.Jobs
         {
             var result = new StringBuilder();
             var checkFilter = checkResults.Where(i => i.ErrorList.Any());
+            string specialMsg = "";
+            if (TpId == 30)
+            {
+                specialMsg = "(GameType: 50)";
+            }
+
             if (!checkFilter.Any())
             {
-                result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} 帳務檢查正常");
+                result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} 帳務檢查正常 {specialMsg}");
                 return result.ToString();
             }
 
            
-            result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} 帳務檢查異常");
+            result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} 帳務檢查異常  {specialMsg}");
             var group = checkFilter.GroupBy(i => i.CurrencyId);
             foreach (var check in group)
             {
