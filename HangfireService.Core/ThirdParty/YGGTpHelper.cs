@@ -60,5 +60,46 @@ namespace HangfireService.Core.ThirdParty
             }
             return tpDailyList;
         }
+
+        public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, List<TpBetRecordCheck> tpBetRecord, List<BettransCheckData> bettransList, List<TpDailySummaryCheckData> tpDailyList)
+        {
+            // 改用TpBetRecord.TransTime檢查
+            tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckTransTimeDataByTpId(TpId, checkOption.BeginTime, checkOption.EndTime).ToList();
+
+            var checkResult = new List<FinanceCheckResult>();
+            if (bettransList.Any())
+            {
+                var bettransResult = bettransList.Select(bettrans
+                    => bettrans.CheckData(FinanceCheckType.結算資料與交易資料檢查, tpBetRecord.FirstOrDefault(tpBetRecordTransTimeData => tpBetRecordTransTimeData.CurrencyId == bettrans.CurrencyId)));
+                checkResult.AddRange(bettransResult);
+            }
+
+            if (tpDailyList.Any())
+            {
+                var tpResult = tpDailyList.Select(tpDaily
+                    => tpDaily.CheckData(FinanceCheckType.結算資料與第三方匯總檢查, tpBetRecord.FirstOrDefault(tpBetRecordTransTimeData => tpBetRecordTransTimeData.CurrencyId == tpDaily.CurrencyId)));
+                checkResult.AddRange(tpResult);
+            }
+
+            if (bettransList.Any() && tpDailyList.Any())
+            {
+                var financeResult = bettransList.Select(bettrans
+                    => bettrans.CheckData(FinanceCheckType.交易資料與第三方匯總檢查, tpDailyList.FirstOrDefault(tp => tp.CurrencyId == bettrans.CurrencyId)));
+                checkResult.AddRange(financeResult);
+            }
+
+            if (checkResult.Any())
+            {
+                var data = new
+                {
+                    TpId,
+                    tpBetRecord,
+                    tpDailyList,
+                    bettransList,
+                };
+                _logger.LogError($"[{checkOption.BeginTime:yyyy-MM-dd}]:{ToJson(data)}");
+            }
+            return checkResult;
+        }
     }
 }
