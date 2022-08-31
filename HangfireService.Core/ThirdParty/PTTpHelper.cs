@@ -33,6 +33,9 @@ namespace HangfireService.Core.ThirdParty
             //修正PT IDR時區
             _currencyTimeZoneList.Remove(15);
             _currencyTimeZoneList.Add(15, "+08:00");
+            //因INR報表時間為 00:30:00 ~ 00:30:00 時區增加半小時(原+05:30)
+            _currencyTimeZoneList.Remove(61);
+            _currencyTimeZoneList.Add(61, "+06:00");
 
         }
 

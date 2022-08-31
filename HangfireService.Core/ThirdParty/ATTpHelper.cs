@@ -32,7 +32,7 @@ namespace HangfireService.Core.ThirdParty
         public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
         {
             var BeginTime = checkOption.BeginTime.GetUnixTimeByDay();
-            var EndTime = checkOption.EndTime.GetUnixTimeByDay();
+            var EndTime = checkOption.EndTime.GetUnixTimeByDay() - 1;
             var tasks = new List<Task<IEnumerable<BettransCheckData>>>
             {
                 // Slot (source wager)
