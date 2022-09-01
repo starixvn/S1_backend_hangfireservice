@@ -18,6 +18,8 @@ namespace HangfireService.Core.ThirdParty
         private readonly MySqlClient _wagerClient;
         private readonly FincanceService _fincanceService;
         private readonly Dictionary<int, string> _currencyTimeZoneList;
+        //因INR報表時間為 00:30:00 ~ 00:30:00 時區增加半小時(原+05:30)
+        private readonly string _specialEndTimeZoneOfINR = "+06:00";
 
         public PTTpHelper(IServiceProvider provider) : base(provider)
         {
@@ -33,10 +35,6 @@ namespace HangfireService.Core.ThirdParty
             //修正PT IDR時區
             _currencyTimeZoneList.Remove(15);
             _currencyTimeZoneList.Add(15, "+08:00");
-            //因INR報表時間為 00:30:00 ~ 00:30:00 時區增加半小時(原+05:30)
-            _currencyTimeZoneList.Remove(61);
-            _currencyTimeZoneList.Add(61, "+06:00");
-
         }
 
         public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
@@ -49,8 +47,9 @@ namespace HangfireService.Core.ThirdParty
             {
                 // 依各幣別轉換時間
                 var timeZone = _currencyTimeZoneList[item.CurrencyId];
+                var endTimeZone = (item.CurrencyId == 61) ? _specialEndTimeZoneOfINR : timeZone;
                 var Begin = BeginTime.ToOffset(timeZone).ToUnixTimeSeconds();
-                var End = EndTime.ToOffset(timeZone).ToUnixTimeSeconds() - 1; // 測試不含最後一秒
+                var End = EndTime.ToOffset(endTimeZone).ToUnixTimeSeconds() - 1; // 測試不含最後一秒
 
                 tasks.Add(_wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerRng_PT_Summary_Get", new { _BeginTime = Begin, _EndTime = End, _TpCurrencyId = item.TpCurrencyId }));
                 tasks.Add(_wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerLC_PT_Summary_Get", new { _BeginTime = Begin, _EndTime = End, _TpCurrencyId = item.TpCurrencyId }));
@@ -105,8 +104,9 @@ namespace HangfireService.Core.ThirdParty
             foreach (var currencyId in _tpCurrency.Select(i => i.CurrencyId))
             {
                 var timeZone = _currencyTimeZoneList[currencyId];
+                var endTimeZone = (currencyId == 61) ? _specialEndTimeZoneOfINR : timeZone;
                 var Begin = DateTimeOffset.FromUnixTimeSeconds(checkOption.BeginTime.ToOffset(timeZone).ToUnixTimeSeconds()).DateTime;
-                var End = DateTimeOffset.FromUnixTimeSeconds(checkOption.EndTime.ToOffset(timeZone).ToUnixTimeSeconds()).DateTime;
+                var End = DateTimeOffset.FromUnixTimeSeconds(checkOption.EndTime.ToOffset(endTimeZone).ToUnixTimeSeconds()).DateTime;
                 // 取代原始資料
                 tpBetRecord.RemoveAll(s => s.CurrencyId == currencyId);
                 tpBetRecord.AddRange(_reportDbDataLayer.GetTpBetRecordCheckCurrencyIdByTpId(TpId, currencyId, Begin, End).ToList());
