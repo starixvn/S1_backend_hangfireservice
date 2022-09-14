@@ -30,7 +30,7 @@ namespace HangfireService.Core.ThirdParty
 
             _tpCurrency = _reportDbDataLayer.GetTpCurrency(TpId);
 
-            _dbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Report);
+            _dbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Wager);
 
             _fincanceService = provider.GetRequiredService<FincanceService>();
         }
