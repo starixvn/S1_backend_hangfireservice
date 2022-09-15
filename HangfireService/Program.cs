@@ -1,5 +1,6 @@
 using Hangfire;
 using HangfireService.Core.Jobs;
+using HangfireService.Core.Models.Options;
 using HangfireService.Extensions;
 using HangfireService.Extensions.ActionFilters;
 using Serilog;
@@ -29,7 +30,8 @@ builder.Services
     .RegisterServices(builder.Configuration)
     .AddHangfireService(builder.Configuration)
     .RegisterScheduledJobs(builder.Configuration)
-    .RegisterTpHelper();
+    .RegisterTpHelper()
+    .AddOption();
 
 var app = builder.Build();
 

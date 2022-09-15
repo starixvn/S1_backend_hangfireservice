@@ -13,7 +13,6 @@ using HangfireService.Core.Models.Options;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using HangfireService.Core.Helpers;
-using HangfireService.Core.Models.Enums;
 using System.Text;
 using HangfireService.Core.Models.Finance;
 
@@ -34,7 +33,7 @@ namespace HangfireService.Core.Jobs
         {
             LogContext.PushProperty("ClassName", GetType().Name);
             _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
-            MyJobManager.GetJobGroups()?.TryGetValue("Finance", out _jobList);
+            MyJobManager.GetJobGroups()?.TryGetValue("Check", out _jobList);
             _telegramBotHelper = provider.GetRequiredService<TelegramBotHelper>();
             foreach (var tp in provider.GetServices<IFinanceTpHelper>())
             {
@@ -108,14 +107,20 @@ namespace HangfireService.Core.Jobs
         {
             var result = new StringBuilder();
             var checkFilter = checkResults.Where(i => i.ErrorList.Any());
+            string specialMsg = "";
+            if (TpId == 30)
+            {
+                specialMsg = "(GameType: 50)";
+            }
+
             if (!checkFilter.Any())
             {
-                result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} 帳務檢查正常");
+                result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} 帳務檢查正常 {specialMsg}");
                 return result.ToString();
             }
 
            
-            result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} 帳務檢查異常");
+            result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} 帳務檢查異常  {specialMsg}");
             var group = checkFilter.GroupBy(i => i.CurrencyId);
             foreach (var check in group)
             {
@@ -135,7 +140,8 @@ namespace HangfireService.Core.Jobs
         {
             public Dictionary<string, string>? GetData()
             {
-                return _jobList?.ToDictionary(f => f.JobName, f => f.JobName);
+                return _jobList?.Where(i => i.JobName.Contains("Finance.TpBetRecord.Check"))
+                    .ToDictionary(f => f.JobName, f => f.JobName);
             }
             public string? GetDefaultValue()
             {

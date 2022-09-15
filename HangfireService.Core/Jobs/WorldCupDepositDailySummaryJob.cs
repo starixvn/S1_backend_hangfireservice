@@ -45,6 +45,7 @@ namespace HangfireService.Core.Jobs
                 return false;
             }
 
+            
             _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} End......");
             await _worldCupDepositDailySummaryService.InsertJobLog(jobName, WorldCupJobStatus.Success, option);
             return $"true，Date：{option.AccountDate}";
