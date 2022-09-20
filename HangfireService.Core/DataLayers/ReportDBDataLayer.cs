@@ -98,5 +98,10 @@ namespace HangfireService.Core.DataLayers
         {
             return _dbClient.Query<TpCurrency>("Service_TpCurrency_Get", parameters: new { TpId });
         }
+        
+        public Task<IEnumerable<Banner>> GetBanner()
+        {
+            return _dbClient.QueryAsync<Banner>("Service_BannerExpired_Get");
+        }
     }
 }
