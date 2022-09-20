@@ -84,7 +84,7 @@ namespace HangfireService.Core.Jobs
                             }
                             break;
                         case 2:
-                            if (tpGameType.Type == 34 || tpGameType.Type == 46)
+                            if (tpGameType.Type == 34 || tpGameType.Type == 46 || tpGameType.Type == 86)
                             {
                                 bettrans = await _wagerDBDataLayer.GetTpSettlePendingSlotByTpGameType(tpGameType.Type, begin, end);
                             }
