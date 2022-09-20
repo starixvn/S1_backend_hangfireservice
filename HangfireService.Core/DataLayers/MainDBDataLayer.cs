@@ -222,6 +222,16 @@ namespace HangfireService.Core.DataLayers
                 _status = (byte)status
             });
         }
+        
+        public async Task<int> ExpiredBanner(string bannerName, int siteId, int currencyId)
+        {
+            return await _dbClient.ExecuteAsync("Service_BannerExpired_Set", new
+            {
+                _BannerName = bannerName,
+                _SiteId = siteId,
+                _CurrencyId = currencyId
+            });
+        }
     }
 }
 
