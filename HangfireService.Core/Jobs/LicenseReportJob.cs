@@ -98,11 +98,17 @@ namespace HangfireService.Core.Jobs
                     }
                 }
 
+                if (jobResult.UploadFail > 0)
+                {
+                    BackgroundJob.Schedule(() => ExecuteAsync(jobName, jobOption, null, null), TimeSpan.FromMinutes(5));
+                }
+
                 return JsonConvert.SerializeObject(jobResult);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "LicenseReportJob");
+                BackgroundJob.Schedule(() => ExecuteAsync(jobName, jobOption, null, null), TimeSpan.FromMinutes(5));
                 return JsonConvert.SerializeObject(ex);
             }
 
@@ -162,7 +168,8 @@ namespace HangfireService.Core.Jobs
         {
             public Dictionary<string, string> GetData()
             {
-                return _reportJobList?.ToDictionary(f => f.JobName, f => f.JobName);
+                return _reportJobList?.Where(i => i.JobName.Contains("LicenseReport"))
+                    .ToDictionary(f => f.JobName, f => f.JobName);
             }
 
             public string GetDefaultValue()
