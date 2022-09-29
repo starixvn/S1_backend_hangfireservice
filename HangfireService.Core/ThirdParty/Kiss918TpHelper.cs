@@ -35,8 +35,6 @@ namespace HangfireService.Core.ThirdParty
             _fincanceService = provider.GetRequiredService<FincanceService>();
         }
 
-        public ILogger<BaseTpHelper> _logger { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-
         public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
         {
             var BeginTime = (long)(checkOption.BeginTime.AddHours(utcTime).Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
