@@ -39,7 +39,7 @@ namespace HangfireService.Core.ThirdParty
             var tasks = new List<Task<IEnumerable<BettransCheckData>>>
             {
                 //Slot
-                _dbClient.QueryAsync<BettransCheckData>("Finance_BettransRng_MG_Summary_Get_V3", new { _BeginTime = BeginTime, _EndTime = EndTime })
+                _dbClient.QueryAsync<BettransCheckData>("Finance_BettransRng_MG_Summary_Get_V3", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120)
             };
             //Live Casino
             tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransLC_MG_Summary_Get_V2", new { _BeginTime = BeginTime, _EndTime = EndTime }));
