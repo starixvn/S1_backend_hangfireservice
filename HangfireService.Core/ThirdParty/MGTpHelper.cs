@@ -106,7 +106,7 @@ namespace HangfireService.Core.ThirdParty
             foreach (var bettrans in bettransList)
             {
                 var cash = cashReward.FirstOrDefault(i => i.CurrencyId == bettrans.CurrencyId)?.Reward ?? 0m;
-                bettrans.WinlostAmount += cash;
+                bettrans.Payout -= cash;
             }
 
             var checkResult = new List<FinanceCheckResult>();
