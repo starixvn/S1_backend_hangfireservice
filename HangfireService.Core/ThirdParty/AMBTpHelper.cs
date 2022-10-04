@@ -64,7 +64,7 @@ namespace HangfireService.Core.ThirdParty
                     ValidBet = i.Sum(i => i.ValidBet),
                     Payout = i.Sum(i => i.Stake + i.WinlostAmount),
                     WinlostAmount = i.Sum(i => i.WinlostAmount),
-                    Revenue = 0,
+                    Revenue = i.Sum(i => i.Revenue),
                     ProgressiveBet = 0,
                     ProgressiveWin = 0,
                 });
