@@ -4,13 +4,13 @@
     {
         public int SubtractDay { get; set; }
 
-        public DateTime BeginTime 
+        public DateTime BeginTime
         {
             get
             {
                 return _beginTime ?? DateTime.UtcNow.Date.AddDays(SubtractDay);
             }
-            set 
+            set
             {
                 _beginTime = value;
             }
@@ -20,7 +20,7 @@
         {
             get
             {
-                return _endTime ?? DateTime.UtcNow.Date.AddDays(SubtractDay+1);
+                return _endTime ?? DateTime.UtcNow.Date.AddDays(SubtractDay + 1);
             }
             set
             {

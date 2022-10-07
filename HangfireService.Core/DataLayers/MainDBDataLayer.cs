@@ -16,6 +16,18 @@ namespace HangfireService.Core.DataLayers
             _dbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Main);
         }
 
+        public MySqlConnection GetMySqlConnection()
+        {
+            return _dbClient.GetMySqlConnection();
+        }
+
+        public async Task<int> ResetTpUnsettle()
+        {
+            return await _dbClient.ExecuteAsync("Service_TpUnsettle_Reset");
+        }
+
+        #region TpDetail
+
         public Task<IEnumerable<TpDetailTodo>> GetTpDetailTodoListByStatus(int Status)
         {
             return _dbClient.QueryAsync<TpDetailTodo>("Service_TpDetailTodo_Get_V1", parameters: new DynamicParameters(new { Status }));
@@ -43,6 +55,10 @@ namespace HangfireService.Core.DataLayers
             return await _dbClient.ExecuteAsync("Service_TpDetailTodo_Reset");
         }
 
+        #endregion
+
+        #region Archive
+       
         public int DeleteArchive(string sp, dynamic parameters, IDbTransaction trans)
         {
             return _dbClient.Execute(sp, trans, parameters);
@@ -57,15 +73,9 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.QueryFirst<int>(sp, trans, parameters);
         }
 
-        public MySqlConnection GetMySqlConnection()
-        {
-            return _dbClient.GetMySqlConnection();
-        }
+        #endregion
 
-        public async Task<int> ResetTpUnsettle()
-        {
-            return await _dbClient.ExecuteAsync("Service_TpUnsettle_Reset");
-        }
+        #region WorldCup
 
         /// <summary>
         /// 取得世界盃充值，投票設定時間
@@ -221,6 +231,28 @@ namespace HangfireService.Core.DataLayers
                 _AccountDate = accountData.AddDays(-1),
                 _status = (byte)status
             });
+        }
+        #endregion
+
+        public int SetTpBetRecordRelayData(DateTime date, int timeoutSeconds)
+        {
+            var parameters = new
+            {
+                StartTime = date,
+                EndTime = date.AddDays(1),
+            };
+            return _dbClient.QueryFirst<int>("Relay_TpBetRecord_Set_V3", parameters, commandTimeout: timeoutSeconds);
+        }
+        
+        public async Task<int> ExpiredBanner(string bannerName, int siteId, int currencyId)
+        {
+            return await _dbClient.ExecuteAsync("Service_BannerExpired_Set", new
+            {
+                _BannerName = bannerName,
+                _SiteId = siteId,
+                _CurrencyId = currencyId
+            });
+
         }
     }
 }

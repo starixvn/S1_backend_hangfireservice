@@ -1,4 +1,5 @@
 ﻿using HangfireService.Core.DataLayers;
+using HangfireService.Core.Extensions;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
@@ -51,7 +52,7 @@ namespace HangfireService.Core.ThirdParty
 
         public async Task<IEnumerable<TpDailySummaryCheckData>> GetTpDailySummaryCheckData(FinanceCheckOption checkOption)
         {
-            var tpDailyList = await _fincanceService.GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime.AddHours(utcTime), checkOption.BeginTime.AddHours(utcTime));
+            var tpDailyList = await _fincanceService.GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
             foreach (var tpDaily in tpDailyList)
             {
                 var rate = _tpCurrency.First(c => c.CurrencyId == tpDaily.CurrencyId).ExchangeRate;
@@ -67,6 +68,12 @@ namespace HangfireService.Core.ThirdParty
         {
             // 對方報表API為下注時間 需改用TpBetRecord.TransTime檢查
             tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckTransTimeDataByTpId(TpId, checkOption.BeginTime.AddHours(utcTime), checkOption.EndTime.AddHours(utcTime)).ToList();
+
+            // 第三方資料 ValidBet 設為 結算資料 ValidBet，因第三方資料無法計算出ValidBet
+            foreach (var tpDailyData in tpDailyList)
+            {
+                tpDailyData.ValidBet = tpBetRecord.First(x => x.CurrencyId == tpDailyData.CurrencyId).ValidBet;
+            }
 
             var checkResult = new List<FinanceCheckResult>();
             if (bettransList.Any())

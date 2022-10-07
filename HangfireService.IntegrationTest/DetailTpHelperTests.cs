@@ -13,15 +13,15 @@ using NUnit.Framework;
 
 namespace HangfireService.IntegrationTest
 {
-    public class TpHelperTests
+    public class DetailTpHelperTests
     {
         private readonly IServiceProvider _provider;
 
-        private IDetailTpHelper? _tpHelper;
+        private IDetailTpHelper _tpHelper;
 
         private readonly MySqlClient _dbClient;
 
-        public TpHelperTests()
+        public DetailTpHelperTests()
         {
             var builder = WebApplication.CreateBuilder( new WebApplicationOptions() 
             { 

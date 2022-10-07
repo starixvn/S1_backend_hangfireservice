@@ -1,4 +1,5 @@
 ﻿using HangfireService.Core.DataLayers;
+using HangfireService.Core.Extensions;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
@@ -30,8 +31,8 @@ namespace HangfireService.Core.ThirdParty
 
         public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
         {
-            var BeginTime = checkOption.BeginTime;
-            var EndTime = checkOption.EndTime;
+            var BeginTime = checkOption.BeginTime.GetUnixTimeByDay();
+            var EndTime = checkOption.EndTime.GetUnixTimeByDay() - 1;
             var tasks = new List<Task<IEnumerable<BettransCheckData>>>
             {
                 // Slot (source wager)
@@ -56,10 +57,10 @@ namespace HangfireService.Core.ThirdParty
                     TpId = TpId,
                     TpCurrencyId = i.Key,
                     CurrencyId = _tpCurrency.First(c => c.TpCurrencyId == i.Key).CurrencyId,
-                    Stake = i.Sum(i => i.Stake),
-                    ValidBet = i.Sum(i => i.ValidBet),
-                    Payout = i.Sum(i => i.Payout),
-                    WinlostAmount = i.Sum(i => i.WinlostAmount),
+                    Stake = i.Sum(i => i.Stake) * _tpCurrency.First(c => c.TpCurrencyId == i.Key).ExchangeRate,
+                    ValidBet = i.Sum(i => i.ValidBet) * _tpCurrency.First(c => c.TpCurrencyId == i.Key).ExchangeRate,
+                    Payout = i.Sum(i => i.Stake + i.WinlostAmount) * _tpCurrency.First(c => c.TpCurrencyId == i.Key).ExchangeRate,
+                    WinlostAmount = i.Sum(i => i.WinlostAmount) * _tpCurrency.First(c => c.TpCurrencyId == i.Key).ExchangeRate,
                     Revenue = 0,
                     ProgressiveBet = 0,
                     ProgressiveWin = 0,
@@ -75,6 +76,7 @@ namespace HangfireService.Core.ThirdParty
                 tpDaily.Stake *= rate;
                 tpDaily.ValidBet *= rate;
                 tpDaily.WinlostAmount = (tpDaily.WinlostAmount * -1) * rate;
+                tpDaily.Payout *= rate;
             }
             return tpDailyList;
         }

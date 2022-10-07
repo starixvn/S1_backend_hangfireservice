@@ -34,16 +34,15 @@ namespace HangfireService.Core.ThirdParty
 
         public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
         {
-            var BeginTime = checkOption.BeginTime.AddDays(-1).Ticks;
+            var BeginTime = checkOption.BeginTime.Ticks;
             var EndTime = checkOption.EndTime.Ticks;
-            var ReportAt = checkOption.BeginTime.Ticks;
             var tasks = new List<Task<IEnumerable<BettransCheckData>>>
             {
                 //Slot
-                _dbClient.QueryAsync<BettransCheckData>("Finance_BettransRng_MG_Summary_Get_V2", new { _BeginTime = BeginTime, _EndTime = EndTime, _ReportAt = ReportAt })
+                _dbClient.QueryAsync<BettransCheckData>("Finance_BettransRng_MG_Summary_Get_V3", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120)
             };
             //Live Casino
-            tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransLC_MG_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime, _ReportAt = ReportAt }));
+            tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransLC_MG_Summary_Get_V2", new { _BeginTime = BeginTime, _EndTime = EndTime }));
 
             await Task.WhenAll(tasks);
 
@@ -107,7 +106,7 @@ namespace HangfireService.Core.ThirdParty
             foreach (var bettrans in bettransList)
             {
                 var cash = cashReward.FirstOrDefault(i => i.CurrencyId == bettrans.CurrencyId)?.Reward ?? 0m;
-                bettrans.WinlostAmount += cash;
+                bettrans.Payout -= cash;
             }
 
             var checkResult = new List<FinanceCheckResult>();
