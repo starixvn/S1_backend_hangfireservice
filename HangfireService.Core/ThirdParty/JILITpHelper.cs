@@ -1,4 +1,5 @@
 ﻿using HangfireService.Core.DataLayers;
+using HangfireService.Core.Extensions;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
@@ -6,11 +7,6 @@ using HangfireService.Core.Models.Options;
 using HangfireService.Core.Service;
 using HangfireService.Core.ThirdParty.Interfaces;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HangfireService.Core.ThirdParty
 {
@@ -21,7 +17,9 @@ namespace HangfireService.Core.ThirdParty
         private readonly ReportDBDataLayer _reportDbDataLayer;
         private readonly IEnumerable<TpCurrency> _tpCurrency;
         private readonly MySqlClient _dbClient;
+        private readonly PartitionService _partitionService;
         private readonly FincanceService _fincanceService;
+
         public JILITpHelper(IServiceProvider provider) : base(provider)
         {
             _reportDbDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
@@ -30,19 +28,39 @@ namespace HangfireService.Core.ThirdParty
 
             _dbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Report);
 
+            _partitionService = provider.GetRequiredService<PartitionService>();
+
             _fincanceService = provider.GetRequiredService<FincanceService>();
         }
 
         public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
         {
-            var BeginTime = (long)(checkOption.BeginTime.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
-            var EndTime = (long)(checkOption.EndTime.Subtract(new DateTime(1970, 1, 1))).TotalSeconds -1;
-            var bettrans = await _dbClient.QueryAsync<BettransCheckData>("Finance_BettransRng_JILI_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
-            foreach (var item in bettrans)
+            var BeginTime = checkOption.BeginTime.GetUnixTimeByDay();
+            var EndTime = checkOption.EndTime.GetUnixTimeByDay() - 1;
+            var tasks = new List<Task<IEnumerable<BettransCheckData>>>();
+            tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransRng_JILI_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }));
+            await Task.WhenAll(tasks);
+
+            var CheckData = new List<BettransCheckData>();
+            foreach (var item in tasks)
             {
-                item.TpId = TpId;
+                CheckData.AddRange(item.Result);
             }
-            return bettrans;
+
+            return CheckData
+                .GroupBy(i => i.CurrencyId)
+                .Select(i => new BettransCheckData
+                {
+                    TpId = TpId,
+                    CurrencyId = _tpCurrency.First(c => c.CurrencyId == i.Key).CurrencyId,
+                    Stake = i.Sum(i => i.Stake),
+                    ValidBet = i.Sum(i => i.ValidBet),
+                    Payout = i.Sum(i => i.Payout),
+                    WinlostAmount = i.Sum(i => i.WinlostAmount),
+                    Revenue = 0,
+                    ProgressiveBet = 0,
+                    ProgressiveWin = 0,
+                });
         }
 
         public async Task<IEnumerable<TpDailySummaryCheckData>> GetTpDailySummaryCheckData(FinanceCheckOption checkOption)

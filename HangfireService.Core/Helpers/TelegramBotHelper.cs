@@ -31,6 +31,9 @@ namespace HangfireService.Core.Helpers
                 return;
             }
 
+            // telegrm not allow more than 30 messages per second, not be able to send more than 20 messages per minute to the same group
+            Thread.Sleep(6000);
+
             var url = $"{_telegram["Url"]}/bot{_telegram["Token"]}/sendMessage";
             var param = new
             {
