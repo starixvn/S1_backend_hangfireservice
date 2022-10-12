@@ -10,5 +10,6 @@ namespace HangfireService.Core.Models.Options
     {
         public int CurrencyId { get; set; }
         public string TimeZone { get; set; }
+        public string IsoCode { get; set; }
     }
 }
