@@ -265,6 +265,12 @@ namespace HangfireService.Core.DataLayers
             };
             return _dbClient.Execute("Service_TpBettingMonitorSetting_Set", parameters);
         }
+        
+        public IEnumerable<TpMaintain> GetTpMaintainList(int siteId)
+        {
+            return _dbClient.Query<TpMaintain>("TpMaintain_Get", new DynamicParameters(new { SiteId = siteId }));
+        }
+        
     }
 }
 
