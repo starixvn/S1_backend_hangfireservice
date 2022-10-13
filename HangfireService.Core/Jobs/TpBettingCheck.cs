@@ -41,7 +41,7 @@ namespace HangfireService.Core.Jobs
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
 
                 var monitorDatas = _reportDbDataLayer.GetTpBettingCheck();
-
+                
                 foreach (var data in monitorDatas)
                 {
                     var lastBetting = _reportDbDataLayer.GetLastBettingTime(data.SiteId,data.CurrencyId,data.TpId,data.GameType);
@@ -50,10 +50,19 @@ namespace HangfireService.Core.Jobs
                     if (checkTime > lastBetting.LastBettingTime 
                         && lastBetting.LastBettingTime != new DateTime())
                     {
-                        var result = await SandLesTalkMessage(data, lastBetting.LastBettingTime);
-                        if (result)
+                        var maintain = _mainDbDataLayer.GetTpMaintainList(data.SiteId)
+                            .Where(item => item.MaintainCheck(DateTime.UtcNow))
+                            .Where(x => x.SiteId == data.SiteId
+                                && x.TpId == data.TpId
+                                && x.TpGameType == data.GameType);
+
+                        if (!maintain.Any())
                         {
-                            _mainDbDataLayer.SetLastBettingTime(data.SiteId,data.CurrencyId,data.TpId,data.GameType);
+                            var result = await SandLesTalkMessage(data, lastBetting.LastBettingTime);
+                            if (result)
+                            {
+                                _mainDbDataLayer.SetLastBettingTime(data.SiteId,data.CurrencyId,data.TpId,data.GameType);
+                            }
                         }
                     }
                 }
@@ -98,7 +107,7 @@ namespace HangfireService.Core.Jobs
                     $"* Betting Monitor Alert * \r\n" +
                     $"* Time : {DateTime.UtcNow.AddHours(8):yyyy-MM-dd HH:mm:ss} * \r\n" +
                     $"=======================\r\n" +
-                    $"Product : {model.TpName}\r\n" +
+                    $"Product : {model.TypeName}\r\n" +
                     $"Currency : {model.Currency}\r\n" +
                     $"Duration : {model.Frequency} Minutes\r\n" +
                     $"Last Ticket Time : {lastBettingTime.AddHours(8):yyyy-MM-dd HH:mm:ss} (GMT+8) \r\n" 
