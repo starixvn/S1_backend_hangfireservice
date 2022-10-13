@@ -1,4 +1,5 @@
 ﻿.vs
+.idea
 HangfireService.Core/bin
 HangfireService.Core/obj
 HangfireService/bin
