@@ -103,5 +103,15 @@ namespace HangfireService.Core.DataLayers
         {
             return _dbClient.QueryAsync<Banner>("Service_BannerExpired_Get");
         }
+        
+        public IEnumerable<TpBettingCheckModel> GetTpBettingCheck()
+        {
+            return _dbClient.Query<TpBettingCheckModel>("Service_TpBettingMonitor_Get");
+        }
+        
+        public TpLastBetting GetLastBettingTime(int siteId, int currencyId, int tpId , int gameType)
+        {
+            return _dbClient.Query<TpLastBetting>("Service_TpLastBetting_Get", parameters: new { _SiteId = siteId, _CurrencyId = currencyId, _TpId = tpId, _GameType = gameType }).FirstOrDefault();
+        }
     }
 }
