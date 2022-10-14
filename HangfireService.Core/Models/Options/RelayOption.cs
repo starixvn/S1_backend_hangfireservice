@@ -38,7 +38,7 @@
 
         private (DateTime StartTime, DateTime EndTime) GetTimeRange()
         {
-            if (ExecuteType == ExecuteType.LastDays)
+            if (ExecuteType == ExecuteType.Days)
             {
                 return (DateTime.UtcNow.Date.AddDays(Subtract), DateTime.UtcNow.Date);
             }
@@ -51,7 +51,7 @@
 
     public enum ExecuteType
     {
-        LastDays = 1,
-        LastHours = 2
+        Days,
+        Hours
     }
 }

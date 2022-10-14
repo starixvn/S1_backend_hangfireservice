@@ -39,7 +39,7 @@ namespace HangfireService.Core.Jobs
                 var option = JsonConvert.DeserializeObject<RelayOption>(JsonConvert.SerializeObject(jobOption.Parameters));
                 var result = 0;
 
-                if (option.ExecuteType == ExecuteType.LastDays)
+                if (option.ExecuteType == ExecuteType.Days)
                 {
                     var date = option.StartTime;
                     while (date <= option.EndTime)
