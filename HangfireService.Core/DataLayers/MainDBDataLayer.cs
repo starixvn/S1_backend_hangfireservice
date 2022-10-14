@@ -234,14 +234,9 @@ namespace HangfireService.Core.DataLayers
         }
         #endregion
 
-        public int SetTpBetRecordRelayData(DateTime date, int timeoutSeconds)
-        {
-            var parameters = new
-            {
-                StartTime = date,
-                EndTime = date.AddDays(1),
-            };
-            return _dbClient.QueryFirst<int>("Relay_TpBetRecord_Set_V3", parameters, commandTimeout: timeoutSeconds);
+        public int ExcuteRelayData(string sp, object parameters, int timeoutSeconds)
+        {        
+            return _dbClient.QueryFirst<int>(sp, parameters, commandTimeout: timeoutSeconds);
         }
     }
 }
