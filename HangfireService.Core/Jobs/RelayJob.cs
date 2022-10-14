@@ -15,17 +15,17 @@ using HangfireService.Core.Helpers;
 
 namespace HangfireService.Core.Jobs
 {
-    [ManagementPage("TpBetRecordRelayJob", queue: "report")]
-    public class TpBetRecordRelayJob : BaseJob, IScheduledJob
+    [ManagementPage("RelayJob", queue: "relay")]
+    public class RelayJob : BaseJob, IScheduledJob
     {
         private readonly MainDBDataLayer _mainDBDataLayer;
         private static List<JobOption> _jobList;
         private readonly TelegramBotHelper _telegramBotHelper;
 
-        public TpBetRecordRelayJob(IServiceProvider provider) : base(provider)
+        public RelayJob(IServiceProvider provider) : base(provider)
         {
             LogContext.PushProperty("ClassName", GetType().Name);
-            MyJobManager.GetJobGroups()?.TryGetValue("Report", out _jobList);
+            MyJobManager.GetJobGroups()?.TryGetValue("Relay", out _jobList);
             _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
             _telegramBotHelper = provider.GetRequiredService<TelegramBotHelper>();
         }
@@ -36,17 +36,29 @@ namespace HangfireService.Core.Jobs
             try
             {
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
-                var option = JsonConvert.DeserializeObject<TpBetRecordRelayOption>(JsonConvert.SerializeObject(jobOption.Parameters));
+                var option = JsonConvert.DeserializeObject<RelayOption>(JsonConvert.SerializeObject(jobOption.Parameters));
                 var result = 0;
-                var date = option.BeginDate;
 
-                while (date <= option.EndDate)
+                if (option.ExecuteType == ExecuteType.LastDays)
                 {
-                    result += _mainDBDataLayer.SetTpBetRecordRelayData(date, option.TimeoutSeconds);
-                    date = date.AddDays(1);
+                    var date = option.StartTime;
+                    while (date <= option.EndTime)
+                    {
+                        var parameters = new
+                        {
+                            StartTime = date,
+                            EndTime = date.AddDays(1),
+                        };
+                        result += _mainDBDataLayer.ExcuteRelayData(option.ExecuteSP, parameters, option.TimeoutSeconds);
+                        date = date.AddDays(1);
+                    }
                 }
-
-                return $"{jobName}.({option.BeginDate:yyyy-MM-dd} ~ {option.EndDate:yyyy-MM-dd}) success count: {result}";
+                else
+                {
+                    result = _mainDBDataLayer.ExcuteRelayData(option.ExecuteSP, option, option.TimeoutSeconds);
+                }
+                
+                return $"{jobName}.({option.StartTime:yyyy-MM-dd HH:mm} ~ {option.EndTime:yyyy-MM-dd HH:mm}) success count: {result}";
             }
             catch (Exception ex)
             {
@@ -57,7 +69,6 @@ namespace HangfireService.Core.Jobs
                 _telegramBotHelper.SendMessage($"{jobName} 執行發生錯誤，五分鐘後重試。");
                 return JsonConvert.SerializeObject(ex);
             }
-
         }
 
         [Job]
@@ -74,22 +85,22 @@ namespace HangfireService.Core.Jobs
             }
             var jobOption = _jobList.First(i => i.JobName == jobName);
             var date = DateTime.ParseExact($"{redoBeginDate}", "yyyy-MM-dd", null);
-            var BeginDate = date.ToString("yyyy-MM-dd");
-            var EndDate = DateTime.UtcNow.Date.AddDays(-1).ToString("yyyy-MM-dd");
-            jobOption.Parameters.Update("BeginDate", BeginDate);
-            jobOption.Parameters.Update("EndDate", EndDate);
+            var StartTime = date.ToString("yyyy-MM-dd");
+            var EndTime = DateTime.UtcNow.Date.ToString("yyyy-MM-dd");
+            jobOption.Parameters.Update("StartTime", StartTime);
+            jobOption.Parameters.Update("EndDate", EndTime);
 
-            return ExecuteAsync($"Execute.{jobName}.({BeginDate} ~ {EndDate})", jobOption, context, cancellationToken).Result;
+            return ExecuteAsync($"Execute.{jobName}.({StartTime} ~ {EndTime})", jobOption, context, cancellationToken).Result;
         }
 
         private class JobList : IInputDataList
         {
             public Dictionary<string, string> GetData()
             {
-                return _jobList?.Where(i => i.JobName.Contains("TpBetRecordRelay"))
+                return _jobList?.Where(i => i.JobName.Contains("Relay-LastDays"))
                     .ToDictionary(f => f.JobName, f => f.JobName);
             }
-            public string? GetDefaultValue()
+            public string GetDefaultValue()
             {
                 return null;
             }
@@ -110,7 +121,7 @@ namespace HangfireService.Core.Jobs
                 return result.OrderByDescending(i => i).ToDictionary(f => f, f => f);
             }
 
-            public string? GetDefaultValue()
+            public string GetDefaultValue()
             {
                 return null;
             }
