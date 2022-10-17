@@ -41,7 +41,7 @@ namespace HangfireService.Core.Jobs
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
 
                 var monitorDatas = _reportDbDataLayer.GetTpBettingCheck();
-                var lastBetting = _reportDbDataLayer.GetLastBettingTime(DateTime.UtcNow.AddMinutes(-10) , DateTime.UtcNow);
+                var lastBetting = _reportDbDataLayer.GetLastBettingTime(DateTime.UtcNow.AddMinutes(-100000) , DateTime.UtcNow);
 
                 foreach (var data in monitorDatas)
                 {
@@ -49,17 +49,17 @@ namespace HangfireService.Core.Jobs
                                                                       && x.CurrencyId == data.CurrencyId
                                                                       && x.TpId == data.TpId
                                                                       && x.GameType == data.GameType);
-                    
-                    _mainDbDataLayer.SetLastBettingTime(data.SiteId,data.CurrencyId,data.TpId,data.GameType,lastBetData?.LastBettingTime);
-                    
                     if (lastBetData != null)
                     {
                         data.LastBettingTime = lastBetData.LastBettingTime;
+                        _mainDbDataLayer.SetLastBettingTime(data.SiteId,data.CurrencyId,data.TpId,data.GameType,lastBetData.LastBettingTime,false);
                     }
 
                     var checkTime = DateTime.UtcNow.AddMinutes(data.Frequency * -1);
                     if (checkTime > data.LastExecuteTime && checkTime > data.LastBettingTime)
                     {
+                        _mainDbDataLayer.SetLastBettingTime(data.SiteId,data.CurrencyId,data.TpId,data.GameType,null,true);
+                        
                         var maintain = _mainDbDataLayer.GetTpMaintainList(data.SiteId)
                             .Where(item => item.MaintainCheck(DateTime.UtcNow))
                             .Where(x => x.SiteId == data.SiteId
