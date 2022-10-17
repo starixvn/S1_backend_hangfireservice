@@ -244,14 +244,15 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.QueryFirst<int>("Relay_TpBetRecord_Set_V3", parameters, commandTimeout: timeoutSeconds);
         }
         
-        public int SetLastBettingTime(int siteId, int currencyId, int tpId , int gameType)
+        public int SetLastBettingTime(int siteId, int currencyId, int tpId , int gameType , DateTime? lastBettingTime)
         {
             var parameters = new
             {
                 _SiteId = siteId,
                 _CurrencyId = currencyId,
                 _TpId = tpId,
-                _GameType = gameType
+                _GameType = gameType,
+                _LastBettingTime = lastBettingTime
             };
             return _dbClient.Execute("Service_TpBettingMonitorSetting_Set", parameters);
         }

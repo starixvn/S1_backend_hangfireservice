@@ -12,10 +12,16 @@ public class TpBettingCheckModel
     public int CurrencyId { set; get; }
     public string Currency { set; get; }
     public int Frequency { set; get; }
+    public DateTime LastBettingTime { set; get; }
+    public DateTime LastExecuteTime { set; get; }
 }
 
 public class TpLastBetting
 {
+    public int SiteId { set; get; }
+    public int CurrencyId { set; get; }
+    public int TpId { set; get; }
+    public int GameType { set; get; }
     public DateTime LastBettingTime { set; get; }
 }
 
