@@ -41,28 +41,34 @@ namespace HangfireService.Core.Jobs
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
 
                 var monitorDatas = _reportDbDataLayer.GetTpBettingCheck();
-                
+                var lastBetting = _reportDbDataLayer.GetLastBettingTime(DateTime.UtcNow.AddMinutes(-10) , DateTime.UtcNow);
+
                 foreach (var data in monitorDatas)
                 {
-                    var lastBetting = _reportDbDataLayer.GetLastBettingTime(data.SiteId,data.CurrencyId,data.TpId,data.GameType);
+                    var lastBetData = lastBetting.FirstOrDefault(x => x.SiteId == data.SiteId
+                                                                      && x.CurrencyId == data.CurrencyId
+                                                                      && x.TpId == data.TpId
+                                                                      && x.GameType == data.GameType);
+                    
+                    _mainDbDataLayer.SetLastBettingTime(data.SiteId,data.CurrencyId,data.TpId,data.GameType,lastBetData?.LastBettingTime);
+                    
+                    if (lastBetData != null)
+                    {
+                        data.LastBettingTime = lastBetData.LastBettingTime;
+                    }
 
                     var checkTime = DateTime.UtcNow.AddMinutes(data.Frequency * -1);
-                    if (checkTime > lastBetting.LastBettingTime 
-                        && lastBetting.LastBettingTime != new DateTime())
+                    if (checkTime > data.LastExecuteTime && checkTime > data.LastBettingTime)
                     {
                         var maintain = _mainDbDataLayer.GetTpMaintainList(data.SiteId)
                             .Where(item => item.MaintainCheck(DateTime.UtcNow))
                             .Where(x => x.SiteId == data.SiteId
-                                && x.TpId == data.TpId
-                                && x.TpGameType == data.GameType);
-
+                                        && x.TpId == data.TpId
+                                        && x.TpGameType == data.GameType);
+                        
                         if (!maintain.Any())
                         {
-                            var result = await SandLesTalkMessage(data, lastBetting.LastBettingTime);
-                            if (result)
-                            {
-                                _mainDbDataLayer.SetLastBettingTime(data.SiteId,data.CurrencyId,data.TpId,data.GameType);
-                            }
+                            await SandLesTalkMessage(data, data.LastBettingTime);
                         }
                     }
                 }
