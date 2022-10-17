@@ -234,9 +234,9 @@ namespace HangfireService.Core.DataLayers
         }
         #endregion
 
-        public int ExcuteRelayData(string sp, object parameters, int timeoutSeconds)
+        public int InsertRelayData(string sp, object parameters, IDbTransaction trans)
         {        
-            return _dbClient.QueryFirst<int>(sp, parameters, commandTimeout: timeoutSeconds);
+            return _dbClient.Execute(sp, trans, parameters);
         }
     }
 }

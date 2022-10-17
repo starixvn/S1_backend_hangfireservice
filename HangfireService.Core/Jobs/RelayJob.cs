@@ -19,6 +19,7 @@ namespace HangfireService.Core.Jobs
     public class RelayJob : BaseJob, IScheduledJob
     {
         private readonly MainDBDataLayer _mainDBDataLayer;
+        private readonly ReportDBDataLayer _reportDBDataLayer;
         private static List<JobOption> _jobList;
         private readonly TelegramBotHelper _telegramBotHelper;
 
@@ -27,6 +28,7 @@ namespace HangfireService.Core.Jobs
             LogContext.PushProperty("ClassName", GetType().Name);
             MyJobManager.GetJobGroups()?.TryGetValue("Relay", out _jobList);
             _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
+            _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
             _telegramBotHelper = provider.GetRequiredService<TelegramBotHelper>();
         }
 
@@ -49,13 +51,26 @@ namespace HangfireService.Core.Jobs
                             StartTime = date,
                             EndTime = date.AddDays(1),
                         };
-                        result += _mainDBDataLayer.ExcuteRelayData(option.ExecuteSP, parameters, option.TimeoutSeconds);
+                        var data = _reportDBDataLayer.GetRelayData(option.GetSP, parameters, option.TimeoutSeconds);
+                        
+                        using var conn = _mainDBDataLayer.GetMySqlConnection();
+                        conn.Open();
+                        var trans = conn.BeginTransaction();
+                        result += _mainDBDataLayer.InsertRelayData(option.InsertSP,data, trans);
+                        trans.Commit();
+                        
                         date = date.AddDays(1);
                     }
                 }
                 else
                 {
-                    result = _mainDBDataLayer.ExcuteRelayData(option.ExecuteSP, option, option.TimeoutSeconds);
+                    var data = _reportDBDataLayer.GetRelayData(option.GetSP, option, option.TimeoutSeconds);
+                    
+                    using var conn = _mainDBDataLayer.GetMySqlConnection();
+                    conn.Open();
+                    var trans = conn.BeginTransaction();
+                    result = _mainDBDataLayer.InsertRelayData(option.InsertSP, data, trans);
+                    trans.Commit();
                 }
                 
                 return $"{jobName}.({option.StartTime:yyyy-MM-dd HH:mm} ~ {option.EndTime:yyyy-MM-dd HH:mm}) success count: {result}";
@@ -97,7 +112,7 @@ namespace HangfireService.Core.Jobs
         {
             public Dictionary<string, string> GetData()
             {
-                return _jobList?.Where(i => i.JobName.Contains("Relay-LastDays"))
+                return _jobList?.Where(i => i.JobName.Contains("Relay-Days"))
                     .ToDictionary(f => f.JobName, f => f.JobName);
             }
             public string GetDefaultValue()
@@ -110,10 +125,10 @@ namespace HangfireService.Core.Jobs
         {
             public Dictionary<string, string> GetData()
             {
-                var yesterday = DateTime.UtcNow.Date.AddDays(-1);
-                var begin = yesterday.AddDays(-10);
+                var today = DateTime.UtcNow.Date;
+                var begin = today.AddDays(-10);
                 var result = new List<string>();
-                while (begin <= yesterday)
+                while (begin <= today)
                 {
                     result.Add(begin.ToString("yyyy-MM-dd"));
                     begin = begin.AddDays(1);
