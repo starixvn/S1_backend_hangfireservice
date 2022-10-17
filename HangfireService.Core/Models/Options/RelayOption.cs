@@ -2,8 +2,8 @@
 {
     public class RelayOption
     {
-        public string ExecuteSP { get; set; }
-
+        public string GetSP { get; set; }
+        public string InsertSP { get; set; }
         public ExecuteType ExecuteType { get; set; }
         public int Subtract { get; set; } = 0;
         public int TimeoutSeconds { get; set; } = 300;
