@@ -43,36 +43,20 @@ namespace HangfireService.Core.Jobs
 
                 if (option.ExecuteType == ExecuteType.Days)
                 {
+                    //逐日進行
                     var date = option.StartTime;
                     while (date <= option.EndTime)
                     {
-                        var parameters = new
-                        {
-                            StartTime = date,
-                            EndTime = date.AddDays(1),
-                        };
-                        var data = _reportDBDataLayer.GetRelayData(option.GetSP, parameters, option.TimeoutSeconds);
-                        
-                        using var conn = _mainDBDataLayer.GetMySqlConnection();
-                        conn.Open();
-                        var trans = conn.BeginTransaction();
-                        result += _mainDBDataLayer.InsertRelayData(option.InsertSP,data, trans);
-                        trans.Commit();
-                        
+                        _logger.LogInformation($"{jobName} ExcuteRelay Date:{date::yyyy-MM-dd}");
+                        result += await ExcuteRelay(option, date, date.AddDays(1));
                         date = date.AddDays(1);
                     }
                 }
                 else
                 {
-                    var data = _reportDBDataLayer.GetRelayData(option.GetSP, option, option.TimeoutSeconds);
-                    
-                    using var conn = _mainDBDataLayer.GetMySqlConnection();
-                    conn.Open();
-                    var trans = conn.BeginTransaction();
-                    result = _mainDBDataLayer.InsertRelayData(option.InsertSP, data, trans);
-                    trans.Commit();
+                    result += await ExcuteRelay(option, option.StartTime, option.EndTime);
                 }
-                
+
                 return $"{jobName}.({option.StartTime:yyyy-MM-dd HH:mm} ~ {option.EndTime:yyyy-MM-dd HH:mm}) success count: {result}";
             }
             catch (Exception ex)
@@ -86,25 +70,87 @@ namespace HangfireService.Core.Jobs
             }
         }
 
+
+        private async Task<int> ExcuteRelay(RelayOption option, DateTime StartTime, DateTime EndTime)
+        {
+            var result = 0;
+            var StartIndex = 0;
+            var PageSize = option.LiminNum;
+
+            var parameters = new
+            {
+                StartTime,
+                EndTime,
+                StartIndex,
+                PageSize,
+            };
+            var relayData = _reportDBDataLayer.GetRelayData(option.GetSP, parameters, option.TimeoutSeconds);       
+            var forContinue = relayData.Count() == PageSize;
+
+            using var conn = _mainDBDataLayer.GetMySqlConnection();
+            conn.Open();
+            var trans = conn.BeginTransaction();
+            if (relayData.Any())
+            {
+                //清除舊資料
+                _mainDBDataLayer.DeleteRelayData(option.DeleteSP, parameters, trans);
+                
+                //寫入資料
+                result += _mainDBDataLayer.InsertRelayData(option.InsertSP, relayData, trans);
+            }
+
+            //處理分頁資料
+            while (forContinue)
+            {
+                StartIndex += PageSize;
+                relayData = _reportDBDataLayer.GetRelayData(option.GetSP, new
+                {
+                    StartTime,
+                    EndTime,
+                    StartIndex,
+                    PageSize,
+                }, option.TimeoutSeconds);
+                forContinue = relayData.Count() == PageSize;
+                
+                //寫入分頁其餘資料
+                result += _mainDBDataLayer.InsertRelayData(option.InsertSP, relayData, trans);                                      
+            }
+
+            if (result > 0)
+            {
+                trans.Commit();
+            }
+            else
+            {
+                trans.Dispose();
+            }
+
+            return result;
+        }
+
         [Job]
         [DisplayName("Run {2} by ManagementPage")]
         public object Run(
             PerformContext context = null,
             IJobCancellationToken cancellationToken = null,
             [DisplayData("JobName", ConvertType = typeof(JobList))] string jobName = null,
-            [DisplayData("RedoBeginDate", ConvertType = typeof(RedoBeginDate))] string redoBeginDate = null)
+            [DisplayData("BeginDate", placeholderText: "yyyy-MM-dd")] string beginDate = null,
+            [DisplayData("EndDate", placeholderText: "yyyy-MM-dd")] string endDate = null,
+            [DisplayData("LiminNum", defaultValue:"2000")]string liminNum = "2000")
         {
             if (!_jobList.Any())
             {
                 return null;
             }
             var jobOption = _jobList.First(i => i.JobName == jobName);
-            var date = DateTime.ParseExact($"{redoBeginDate}", "yyyy-MM-dd", null);
-            var StartTime = date.ToString("yyyy-MM-dd");
-            var EndTime = DateTime.UtcNow.Date.ToString("yyyy-MM-dd");
+            var start = DateTime.ParseExact($"{beginDate}", "yyyy-MM-dd", null);
+            var end = DateTime.ParseExact($"{endDate}", "yyyy-MM-dd", null);
+            var StartTime = start.ToString("yyyy-MM-dd");
+            var EndTime = end.ToString("yyyy-MM-dd");
+
             jobOption.Parameters.Update("StartTime", StartTime);
             jobOption.Parameters.Update("EndDate", EndTime);
-
+            jobOption.Parameters.Update("LiminNum", liminNum);
             return ExecuteAsync($"Execute.{jobName}.({StartTime} ~ {EndTime})", jobOption, context, cancellationToken).Result;
         }
 
@@ -115,27 +161,6 @@ namespace HangfireService.Core.Jobs
                 return _jobList?.Where(i => i.JobName.Contains("Relay-Days"))
                     .ToDictionary(f => f.JobName, f => f.JobName);
             }
-            public string GetDefaultValue()
-            {
-                return null;
-            }
-        }
-
-        private class RedoBeginDate : IInputDataList
-        {
-            public Dictionary<string, string> GetData()
-            {
-                var today = DateTime.UtcNow.Date;
-                var begin = today.AddDays(-10);
-                var result = new List<string>();
-                while (begin <= today)
-                {
-                    result.Add(begin.ToString("yyyy-MM-dd"));
-                    begin = begin.AddDays(1);
-                }
-                return result.OrderByDescending(i => i).ToDictionary(f => f, f => f);
-            }
-
             public string GetDefaultValue()
             {
                 return null;

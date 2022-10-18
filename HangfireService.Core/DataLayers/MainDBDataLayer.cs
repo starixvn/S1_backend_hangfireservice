@@ -268,6 +268,11 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Query<TpMaintain>("TpMaintain_Get", new DynamicParameters(new { SiteId = siteId }));
         }
         
+
+        public int DeleteRelayData(string sp, object parameters, IDbTransaction trans)
+        {
+            return _dbClient.Execute(sp, trans, parameters);
+        }
     }
 }
 
