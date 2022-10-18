@@ -130,6 +130,7 @@ namespace HangfireService.Core.Jobs
 
         [Job]
         [DisplayName("Run {2} by ManagementPage")]
+        [AutomaticRetry(Attempts = 0, OnAttemptsExceeded = AttemptsExceededAction.Delete)]
         public object Run(
             PerformContext context = null,
             IJobCancellationToken cancellationToken = null,
@@ -145,9 +146,20 @@ namespace HangfireService.Core.Jobs
             var jobOption = _jobList.First(i => i.JobName == jobName);
             var start = DateTime.ParseExact($"{beginDate}", "yyyy-MM-dd", null);
             var end = DateTime.ParseExact($"{endDate}", "yyyy-MM-dd", null);
+
+
+            //TpBetRecord only 14day
+            if (jobName.Contains("TpBetRecordRelay") )
+            {
+                var last14 = DateTime.UtcNow.Date.AddDays(-14);
+                if (start < last14 || end < last14)
+                {
+                    throw new InvalidOperationException("TpBetRecordRelay date more then 14 day.");
+                }
+            }
+
             var StartTime = start.ToString("yyyy-MM-dd");
             var EndTime = end.ToString("yyyy-MM-dd");
-
             jobOption.Parameters.Update("StartTime", StartTime);
             jobOption.Parameters.Update("EndDate", EndTime);
             jobOption.Parameters.Update("LiminNum", liminNum);
