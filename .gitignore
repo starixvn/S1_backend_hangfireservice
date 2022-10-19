@@ -8,3 +8,7 @@ HangfireService/Properties/PublishProfiles
 *.user
 HangfireService.IntegrationTest/bin
 HangfireService.IntegrationTest/obj
+
+# JetBrains Rider
+.idea/
+*.sln.iml
