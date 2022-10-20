@@ -40,14 +40,14 @@ namespace HangfireService.Core.Service
             return result;
         }
 
-        public IEnumerable<Task<IEnumerable<T>>> QueryAsync<T>(DateTime beginTime, DateTime EndTime, string spName, object parameters)
+        public IEnumerable<Task<IEnumerable<T>>> QueryAsync<T>(DateTime beginTime, DateTime EndTime, string spName, object parameters, int? commandTimeout = null)
         {
             var tasks = new List<Task<IEnumerable<T>>>();
             foreach (var partitionKey in beginTime.GetPartitionRange(EndTime))
             {
                 var p = new DynamicParameters(parameters);
                 p.Add("YYYYMM", partitionKey);
-                tasks.Add(_mainDbClient.QueryAsync<T>(spName, parameters: p));
+                tasks.Add(_mainDbClient.QueryAsync<T>(spName, parameters: p, commandTimeout: commandTimeout));
             }
             return tasks;      
         }

@@ -14,6 +14,7 @@ using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Jobs;
+using HangfireService.Core.Models.Options;
 using HangfireService.Core.ThirdParty;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -35,6 +36,7 @@ namespace HangfireService.Core.Jobs
 
         private readonly BaseTpHelper _baseTpHelper;
         private static List<JobOption> _reportJobList;
+        private readonly Dictionary<string, LicenseReportOptions> _config;
 
         public LicenseReportJob(IServiceProvider provider) : base(provider)
         {
@@ -49,6 +51,7 @@ namespace HangfireService.Core.Jobs
             _awsKey = configuration.GetValue<string>("ProxyHost");
             _awsKey = configuration.GetValue<string>("AWSKey");
             _awsSecretKey = configuration.GetValue<string>("AwsSecretKey");
+            _config = configuration.GetSection("LicenseReportConfig").Get<Dictionary<string, LicenseReportOptions>>();
         }
 
         [DisplayName("{0}")]
@@ -58,16 +61,15 @@ namespace HangfireService.Core.Jobs
             {
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
 
-                var uploadUrl = jobOption.Parameters.FirstOrDefault().Value?.ToString();
                 var date = GetLastDayOfMonth(DateTime.UtcNow.AddHours(8).AddMonths(-1));
                 var jobResult = new JobResult();
-                foreach (var site in Enum.GetValues<SiteId>())
+                foreach (var config in _config)
                 {
-                    var data = _reportDbDataLayer.GetBalanceForLicense((int)site, date);
+                    var data = _reportDbDataLayer.GetBalanceForLicense((int)SiteId.Nova88, date,
+                        JsonConvert.SerializeObject(config.Value.CurrencyId));
                     var stream = _excelHelper.Export(data, "1qaz#EDC2wsx$RFV");
-                    var name = $"{date.Year}{date.Month}-{(int)site}";
-
-
+                    var name = $"{date.Year}{date.Month.ToString("00")}_{config.Key}";
+                    
                     var s3Result = UploadS3FileAsync(new MemoryStream(stream), $"{name}.csv");
                     if (s3Result.Result)
                     {
@@ -77,8 +79,8 @@ namespace HangfireService.Core.Jobs
                     {
                         jobResult.UploadS3Fail++;
                     }
-                    
-                    var result = await _baseTpHelper.HttpPostAsync(uploadUrl, stream, name, "text/csv");
+
+                    var result = await _baseTpHelper.HttpPostAsync(config.Value.UploadUrl, stream, name, "text/csv");
                     await using var s = await result.Content.ReadAsStreamAsync();
                     using var sr = new StreamReader(s);
                     using JsonReader reader = new JsonTextReader(sr);
@@ -96,11 +98,17 @@ namespace HangfireService.Core.Jobs
                     }
                 }
 
+                if (jobResult.UploadFail > 0)
+                {
+                    BackgroundJob.Schedule(() => ExecuteAsync(jobName, jobOption, null, null), TimeSpan.FromMinutes(5));
+                }
+
                 return JsonConvert.SerializeObject(jobResult);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "LicenseReportJob");
+                BackgroundJob.Schedule(() => ExecuteAsync(jobName, jobOption, null, null), TimeSpan.FromMinutes(5));
                 return JsonConvert.SerializeObject(ex);
             }
 
@@ -160,7 +168,8 @@ namespace HangfireService.Core.Jobs
         {
             public Dictionary<string, string> GetData()
             {
-                return _reportJobList?.ToDictionary(f => f.JobName, f => f.JobName);
+                return _reportJobList?.Where(i => i.JobName.Contains("LicenseReport"))
+                    .ToDictionary(f => f.JobName, f => f.JobName);
             }
 
             public string GetDefaultValue()

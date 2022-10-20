@@ -1,4 +1,5 @@
 ﻿using HangfireService.Core.DataLayers;
+using HangfireService.Core.Extensions;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
@@ -31,8 +32,8 @@ namespace HangfireService.Core.ThirdParty
         public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
         {
             // bettrans 已派彩後的取消注單我們無法得知取消狀態，故使用wager核對
-            var BeginTime = (long)(checkOption.BeginTime.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
-            var EndTime = (long)(checkOption.EndTime.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+            var BeginTime = checkOption.BeginTime.GetUnixTimeByDay();
+            var EndTime = checkOption.EndTime.GetUnixTimeByDay() - 1;
             var bettrans = await _wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerLC_EVO_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
             foreach (var item in bettrans)
             {
