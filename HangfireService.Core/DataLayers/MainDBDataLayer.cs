@@ -243,6 +243,11 @@ namespace HangfireService.Core.DataLayers
             };
             return _dbClient.QueryFirst<int>("Relay_TpBetRecord_Set_V3", parameters, commandTimeout: timeoutSeconds);
         }
+
+        public int SetOTPStatus(OTPCheckResult result)
+        {
+            return _dbClient.Execute("Service_OTPLog_Set", result);
+        }
     }
 }
 

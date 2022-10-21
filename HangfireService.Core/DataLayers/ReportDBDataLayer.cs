@@ -93,5 +93,15 @@ namespace HangfireService.Core.DataLayers
         {
             return _dbClient.Query<TpCurrency>("Service_TpCurrency_Get", parameters: new { TpId });
         }
+
+        public IEnumerable<OTPCheck> GetOTPCheckList()
+        {
+            return _dbClient.Query<OTPCheck>("Service_OTPLog_Check");
+        }
+
+        public Customer GetCustInfo(int CustId)
+        {
+            return _dbClient.QueryFirst<Customer>("Customer_Get", parameters: new { CustId });
+        }
     }
 }
