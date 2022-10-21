@@ -17,16 +17,16 @@ namespace HangfireService.Core.Jobs
     [ManagementPage("BonusSummaryJob", queue: "relay")]
     public class BonusSummaryJob : BaseJob, IScheduledJob
     {
-        private readonly MainDBDataLayer _mainDBDataLayer;
-        private readonly ReportDBDataLayer _reportDBDataLayer;
+        private readonly MainDBDataLayer _mainDbDataLayer;
+        private readonly ReportDBDataLayer _reportDbDataLayer;
         private static List<JobOption> _jobList;
 
         public BonusSummaryJob(IServiceProvider provider) : base(provider)
         {
             LogContext.PushProperty("ClassName", GetType().Name);
             MyJobManager.GetJobGroups()?.TryGetValue("Relay", out _jobList);
-            _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
-            _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
+            _mainDbDataLayer = provider.GetRequiredService<MainDBDataLayer>();
+            _reportDbDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
         }
 
         [DisplayName("{0}")]
@@ -36,9 +36,13 @@ namespace HangfireService.Core.Jobs
             {
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
                 var option = JsonConvert.DeserializeObject<BonusSummaryOption>(JsonConvert.SerializeObject(jobOption.Parameters));
+                var workerTime = GetWorkerTime(option);
+                var result = false;
+                
                 switch (option.PromotionType)
                 {
                     case PromotionType.Promotion:
+                        result = await _mainDbDataLayer.BonusSummaryPromotionSet(workerTime.Item1, workerTime.Item2) >= 0;
                         break;
                     case PromotionType.Rebate:
                         break;
@@ -50,7 +54,7 @@ namespace HangfireService.Core.Jobs
                        break;
                 }
 
-                return true;
+                return result;
             }
             catch (Exception ex)
             {
@@ -96,6 +100,22 @@ namespace HangfireService.Core.Jobs
             jobOption.Parameters.Update("StartTime", startTime);
             jobOption.Parameters.Update("EndDate", endTime);
             return ExecuteAsync($"Execute.{jobName}.({startTime} ~ {endTime})", jobOption, context, cancellationToken).Result;
+        }
+
+        private ( DateTime ,DateTime ) GetWorkerTime( BonusSummaryOption option)
+        {
+            DateTime startTime;
+            if (option.StartTime == null || option.EndDate == null)
+            {
+                startTime = _reportDbDataLayer.GetBonusSummaryTimer((int)option.PromotionType).StartTime;
+            }
+            else
+            {
+                startTime = option.StartTime.Value;
+            }
+            startTime = startTime.AddMinutes(-5);
+
+            return (startTime, DateTime.Now);
         }
     }
 }
