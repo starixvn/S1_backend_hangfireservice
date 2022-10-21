@@ -36,13 +36,17 @@ namespace HangfireService.Core.Jobs
             {
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
                 var option = JsonConvert.DeserializeObject<BonusSummaryOption>(JsonConvert.SerializeObject(jobOption.Parameters));
-                var workerTime = GetWorkerTime(option);
+                var workerTime = GetWorkerTime(option , out var isAutoRun);
                 var result = false;
+
+                await using var conn = _mainDbDataLayer.GetMySqlConnection();
+                conn.Open();
+                var trans = await conn.BeginTransactionAsync();
                 
                 switch (option.PromotionType)
                 {
                     case PromotionType.Promotion:
-                        result = await _mainDbDataLayer.BonusSummaryPromotionSet(workerTime.Item1, workerTime.Item2) >= 0;
+                        result = _mainDbDataLayer.BonusSummaryPromotionSet(workerTime.Item1, workerTime.Item2 ,trans ) >= 0;
                         break;
                     case PromotionType.Rebate:
                         break;
@@ -54,6 +58,18 @@ namespace HangfireService.Core.Jobs
                        break;
                 }
 
+                if (result && isAutoRun) 
+                    result = _mainDbDataLayer.SetBonusSummaryTimer((int) option.PromotionType, workerTime.Item2 ,trans) >= 0;
+
+                if (result)
+                {
+                    trans.Commit();
+                }
+                else
+                {
+                    await trans.DisposeAsync();
+                }
+                
                 return result;
             }
             catch (Exception ex)
@@ -102,20 +118,24 @@ namespace HangfireService.Core.Jobs
             return ExecuteAsync($"Execute.{jobName}.({startTime} ~ {endTime})", jobOption, context, cancellationToken).Result;
         }
 
-        private ( DateTime ,DateTime ) GetWorkerTime( BonusSummaryOption option)
+        private ( DateTime ,DateTime ) GetWorkerTime( BonusSummaryOption option , out bool isAutoRun)
         {
             DateTime startTime;
-            if (option.StartTime == null || option.EndDate == null)
+            var endTime = DateTime.Now;
+            if (!option.StartTime.HasValue || !option.EndDate.HasValue)
             {
                 startTime = _reportDbDataLayer.GetBonusSummaryTimer((int)option.PromotionType).StartTime;
+                isAutoRun = true;
             }
             else
             {
                 startTime = option.StartTime.Value;
+                endTime = option.EndDate.Value;
+                isAutoRun = false;
             }
             startTime = startTime.AddMinutes(-5);
 
-            return (startTime, DateTime.Now);
+            return (startTime, endTime);
         }
     }
 }

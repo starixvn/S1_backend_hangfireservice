@@ -236,9 +236,14 @@ namespace HangfireService.Core.DataLayers
 
         #region BonusSummary
 
-        public async Task<int> BonusSummaryPromotionSet(DateTime startTime , DateTime endTime)
+        public int BonusSummaryPromotionSet(DateTime startTime , DateTime endTime , IDbTransaction trans)
         {
-            return await _dbClient.ExecuteAsync("Service_BonusSummaryForPromotion_Set", parameters: new DynamicParameters(new { _StartTime = startTime, _EndTime = endTime }));
+            return _dbClient.Execute("Service_BonusSummaryForPromotion_Set", trans , parameters: new DynamicParameters(new { _StartTime = startTime, _EndTime = endTime }));
+        }
+        
+        public int SetBonusSummaryTimer(int type , DateTime time, IDbTransaction trans)
+        {
+            return _dbClient.Execute("Service_BonusSummaryTimer_Set", trans , parameters: new { _Type = type , _Time = time});
         }
 
         #endregion
