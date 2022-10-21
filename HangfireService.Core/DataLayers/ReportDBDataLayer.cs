@@ -117,6 +117,7 @@ namespace HangfireService.Core.DataLayers
         public BonusSummaryTimer GetBonusSummaryTimer(int type)
         {
             return _dbClient.Query<BonusSummaryTimer>("Service_BonusSummaryTimer_Get", parameters: new { _Type = type }).FirstOrDefault();
+        }
 
         public IEnumerable<OTPCheck> GetOTPCheckList()
         {
