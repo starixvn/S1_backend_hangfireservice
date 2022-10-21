@@ -114,5 +114,9 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Query(sp, parameters: parameters, commandTimeout: timeoutSeconds);
         }
 
+        public BonusSummaryTimer GetBonusSummaryTimer(int type)
+        {
+            return _dbClient.Query<BonusSummaryTimer>("Service_BonusSummaryTimer_Get", parameters: new { _Type = type }).FirstOrDefault();
+        }
     }
 }

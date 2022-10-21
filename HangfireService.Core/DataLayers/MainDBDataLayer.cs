@@ -234,6 +234,15 @@ namespace HangfireService.Core.DataLayers
         }
         #endregion
 
+        #region BonusSummary
+
+        public async Task<int> BonusSummaryPromotionSet(DateTime startTime , DateTime endTime)
+        {
+            return await _dbClient.ExecuteAsync("Service_BonusSummaryForPromotion_Set", parameters: new DynamicParameters(new { _StartTime = startTime, _EndTime = endTime }));
+        }
+
+        #endregion
+        
         public int InsertRelayData(string sp, object parameters, IDbTransaction trans)
         {        
             return _dbClient.Execute(sp, trans, parameters);
