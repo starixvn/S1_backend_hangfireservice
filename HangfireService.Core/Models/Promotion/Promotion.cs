@@ -36,4 +36,24 @@ namespace HangfireService.Core.Models.Promotion
         public decimal Amount { get; set; }
         public DateTime CreateTime { get; set; }
     }
+    public class ReferralLogDto
+    {
+        public int SiteId { get; set; }
+        public int CustId { get; set; }
+        public int CurrencyId { get; set; }
+        public string UserName { get; set; }
+        public decimal Amount { get; set; }
+        public DateTime CreateTime { get; set; }
+    }
+
+    public class AdjustmentInfoDto
+    {
+        public int Id { get; set; }
+        public int SiteId { get; set; }
+        public int CustId { get; set; }
+        public int CurrencyId { get; set; }
+        public string UserName { get; set; }
+        public decimal Amount { get; set; }
+        public DateTime CreateTime { get; set; }
+    }
 }

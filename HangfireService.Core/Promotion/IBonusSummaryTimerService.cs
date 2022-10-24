@@ -7,5 +7,6 @@ namespace HangfireService.Core.Promotion
         Task<int> GetWorkerId(int type);
         BonusSummaryTimer GetBonusSummaryTimer(int type);
         Task<int> SetWorkerId(int type, string memo, int id);
+        int SetBonusSummaryTimer(int type, DateTime time);
     }
 }

@@ -1,3 +1,4 @@
+using System.Data;
 using Dapper;
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Models.DBs;
@@ -9,7 +10,6 @@ namespace HangfireService.Core.Promotion
     {
         private readonly MySqlClient _reportDb;
         private readonly MySqlClient _mainDb;
-        
 
         public BonusSummaryTimerService(IEnumerable<MySqlClient> sqlClients)
         {
@@ -30,6 +30,11 @@ namespace HangfireService.Core.Promotion
         public BonusSummaryTimer GetBonusSummaryTimer(int type)
         {
             return _reportDb.QueryFirst<BonusSummaryTimer>("Service_BonusSummaryTimer_Get", new { _Type = type });
+        }
+
+        public int SetBonusSummaryTimer(int type, DateTime time)
+        {
+            return _mainDb.Execute("Service_BonusSummaryTimer_Set" , new { _Type = type , _Time = time});
         }
     }
 }

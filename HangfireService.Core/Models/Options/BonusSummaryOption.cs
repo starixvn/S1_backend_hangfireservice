@@ -22,7 +22,9 @@ public enum WorkerType
     PrizeDraw = 3,
     VerificationReward = 4,
     Referral = 10,
-    VipUpgrade = 14
+    ReferralFreeCredit = 11,
+    VipUpgrade = 14,
+    Other = 15
 }
 
 public enum TimerType
