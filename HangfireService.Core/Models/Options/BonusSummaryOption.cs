@@ -21,10 +21,27 @@ public enum WorkerType
     Rebate = 2,
     PrizeDraw = 3,
     VerificationReward = 4,
+    Referral = 5,
+    ReferralFreeCredit = 6,
+    VipUpgrade = 7,
+    Other = 8
+}
+
+public enum BonusType
+{
+    WelcomeBonus = 1,
+    ReDeposit = 2,
+    FreeBet = 3,
+    Rebate = 6,
+    CashBack = 7,
+    ManualBonus = 8,
+    RetentionFreeBet = 9,
     Referral = 10,
-    ReferralFreeCredit = 11,
+    VerificationReward = 11,
+    PrizeDraw = 12,
+    Other = 13,
     VipUpgrade = 14,
-    Other = 15
+    ReferralFreeCredit = 15
 }
 
 public enum TimerType
