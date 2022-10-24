@@ -13,6 +13,7 @@ using HangfireService.Core.Service;
 using HangfireService.Core.ThirdParty;
 using HangfireService.Core.ThirdParty.Interfaces;
 using System.Net;
+using HangfireService.Core.Promotion;
 
 namespace HangfireService.Extensions
 {
@@ -95,6 +96,22 @@ namespace HangfireService.Extensions
                 .AddSingleton<PtMerchantBalanceCheckService>()
                 .AddSingleton<WorldCupDepositDailySummaryService>()
                 .AddSingleton<ConfigService>();
+        }
+
+        public static IServiceCollection RegisterPromotion(this IServiceCollection services, IConfiguration configuration)
+        {
+            services
+                .AddScoped<IBonusSummaryTimerService, BonusSummaryTimerService>()
+                .AddScoped<IReferralPromotionService, ReferralPromotionService>()
+                .AddScoped<ReferralPromotion>()
+                .AddScoped<PromotionSummaryBase>(
+                    serviceProvider => 
+                    {
+                        var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
+                        var referralService = serviceProvider.GetRequiredService<IReferralPromotionService>();
+                        return new ReferralPromotion(timerService, referralService, PromotionType.Referral);
+                    });
+            return services;
         }
 
         public static IServiceCollection RegisterScheduledJobs(this IServiceCollection services, IConfiguration configuration)

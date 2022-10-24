@@ -11,6 +11,7 @@ using Serilog.Context;
 using System.ComponentModel;
 using HangfireService.Core.Extensions;
 using HangfireService.Core.Models.Options;
+using HangfireService.Core.Promotion;
 
 namespace HangfireService.Core.Jobs
 {
@@ -20,6 +21,7 @@ namespace HangfireService.Core.Jobs
         private readonly MainDBDataLayer _mainDbDataLayer;
         private readonly ReportDBDataLayer _reportDbDataLayer;
         private static List<JobOption> _jobList;
+        private readonly IEnumerable<PromotionSummaryBase> _promotion;
 
         public BonusSummaryJob(IServiceProvider provider) : base(provider)
         {
@@ -27,6 +29,7 @@ namespace HangfireService.Core.Jobs
             MyJobManager.GetJobGroups()?.TryGetValue("Relay", out _jobList);
             _mainDbDataLayer = provider.GetRequiredService<MainDBDataLayer>();
             _reportDbDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
+            _promotion = provider.GetServices<PromotionSummaryBase>();
         }
 
         [DisplayName("{0}")]
@@ -34,8 +37,15 @@ namespace HangfireService.Core.Jobs
         {
             try
             {
+                
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
                 var option = JsonConvert.DeserializeObject<BonusSummaryOption>(JsonConvert.SerializeObject(jobOption.Parameters));
+                if (option.PromotionType == PromotionType.Referral)
+                {
+                    var promotion = _promotion.Single(a => a.PromotionType == option.PromotionType);
+                    await promotion.Run();
+                }
+
                 var workerTime = GetWorkerTime(option , out var isAutoRun);
                 var result = false;
 
