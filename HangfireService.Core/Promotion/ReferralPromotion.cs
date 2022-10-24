@@ -18,13 +18,12 @@ namespace HangfireService.Core.Promotion
         }
         public override async Task Run()
         {
-            
             var id = await _timerService.GetWorkerId((int)PromotionType);
             var dto = await _referralService.GetReferralMLog(id);
             var referral = dto.ToList();
             if (referral.Any())
             {
-                var referralBonus = referral.Select(a => new ReferralBonusSummaryDetail()
+                var referralBonus = referral.Select(a => new InsertBonusSummaryDetailDto()
                 {
                     CustId = a.CustId,
                     SiteId = a.SiteId,
@@ -34,7 +33,7 @@ namespace HangfireService.Core.Promotion
                     BonusType = 10,
                     UserName = a.UserName,
                     TransactionType = 5,
-                    Amount = a.ReferralAmount,
+                    Amount = a.Amount,
                     Rollover = 0,
                     Turnover = 0,
                     ClaimDate = a.CreateTime

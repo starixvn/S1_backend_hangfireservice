@@ -15,4 +15,5 @@ public enum PromotionType
     PrizeDraw = 3,
     VerificationReward = 4,
     Referral = 10,
+    VipUpgrade = 14
 }

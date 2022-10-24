@@ -15,14 +15,14 @@ namespace HangfireService.Core.Promotion
             _mainDb = sqlClients.FirstOrDefault(a => a.DataBase == DataBase.Main);
             _reportDb = sqlClients.FirstOrDefault(a => a.DataBase == DataBase.Report);
         }
-        
+
         public async Task<IEnumerable<ReferralMLogDto>> GetReferralMLog(int id)
         {
             var p = new DynamicParameters(new { _Id = id });
             return await _reportDb.QueryAsync<ReferralMLogDto>("Service_ReferralSummary_Get", p);
         }
 
-        public async Task<int> InsertReferralBonusSummary(IEnumerable<ReferralBonusSummaryDetail> referralBonus)
+        public async Task<int> InsertReferralBonusSummary(IEnumerable<InsertBonusSummaryDetailDto> referralBonus)
         {
             return await _mainDb.ExecuteAsync("Service_BonusSummaryForReferral_Ins", referralBonus);
         }
