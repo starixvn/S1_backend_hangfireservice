@@ -241,11 +241,32 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Execute("Service_BonusSummaryForPromotion_Set", trans , parameters: new DynamicParameters(new { _StartTime = startTime, _EndTime = endTime }));
         }
         
+        public int BonusSummaryVerificationSet(DateTime startTime , DateTime endTime , IDbTransaction trans)
+        {
+            return _dbClient.Execute("Service_BonusSummaryForVerification_Set", trans , parameters: new DynamicParameters(new { _StartTime = startTime, _EndTime = endTime }));
+        }
+        
+        public int BonusSummaryDrawPrizeSet(int id , IDbTransaction trans, out int maxId)
+        {
+            var props = new DynamicParameters();
+            props.Add("_Id", id);
+            props.Add("_MaxId", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            var result = _dbClient.Execute("Service_BonusSummaryForDrawPrize_Set", trans,props);
+            maxId = props.Get<int?>("_MaxId") ?? 0;
+            
+            return result;
+        }
+        
         public int SetBonusSummaryTimer(int type , DateTime time, IDbTransaction trans)
         {
             return _dbClient.Execute("Service_BonusSummaryTimer_Set", trans , parameters: new { _Type = type , _Time = time});
         }
 
+        public int SetWorkerId(int type, string memo, int id ,IDbTransaction trans)
+        {
+            return _dbClient.Execute("Service_BonusSummaryTimerId_Set", trans , new { _Type = type, _Memo = memo, _Id = id });
+        }
+        
         #endregion
         
         public int InsertRelayData(string sp, object parameters, IDbTransaction trans)

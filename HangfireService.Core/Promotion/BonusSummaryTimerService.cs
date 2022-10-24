@@ -7,26 +7,29 @@ namespace HangfireService.Core.Promotion
 {
     public class BonusSummaryTimerService : IBonusSummaryTimerService
     {
-        private readonly MySqlClient _sqlClient;
+        private readonly MySqlClient _reportDb;
+        private readonly MySqlClient _mainDb;
+        
 
         public BonusSummaryTimerService(IEnumerable<MySqlClient> sqlClients)
         {
-            _sqlClient = sqlClients.FirstOrDefault(a => a.DataBase == DataBase.Report);
+            _mainDb = sqlClients.FirstOrDefault(a => a.DataBase == DataBase.Main);
+            _reportDb = sqlClients.FirstOrDefault(a => a.DataBase == DataBase.Report);
         }
 
         public async Task<int> GetWorkerId(int type)
         {
-            return await _sqlClient.QueryFirstAsync<int>("Service_BonusSummaryTimerId_Get", new { _Type = type });
+            return await _reportDb.QueryFirstAsync<int>("Service_BonusSummaryTimerId_Get", new { _Type = type });
         }
 
         public async Task<int> SetWorkerId(int type, string memo, int id)
         {
-            return await _sqlClient.ExecuteAsync("Service_BonusSummaryTimerId_Set", new { _Type = type, _Memo = memo, _Id = id });
+            return await _mainDb.ExecuteAsync("Service_BonusSummaryTimerId_Set", new { _Type = type, _Memo = memo, _Id = id });
         }
 
         public BonusSummaryTimer GetBonusSummaryTimer(int type)
         {
-            return _sqlClient.QueryFirst<BonusSummaryTimer>("Service_BonusSummaryTimer_Get", new { _Type = type });
+            return _reportDb.QueryFirst<BonusSummaryTimer>("Service_BonusSummaryTimer_Get", new { _Type = type });
         }
     }
 }
