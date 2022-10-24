@@ -23,7 +23,7 @@ namespace HangfireService.Core.Promotion
 
         public async Task<int> InsertReferralBonusSummary(IEnumerable<InsertBonusSummaryDetailDto> referralBonus)
         {
-            return await _mainDb.ExecuteAsync("Service_BonusSummaryForReferral_Ins", referralBonus);
+            return await _mainDb.ExecuteAsync("Service_BonusSummaryDetail_Ins", referralBonus);
         }
     }
 }

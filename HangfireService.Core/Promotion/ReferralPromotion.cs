@@ -32,7 +32,7 @@ namespace HangfireService.Core.Promotion
                     BonusCode = "Referral",
                     BonusType = 10,
                     UserName = a.UserName,
-                    TransactionType = 5,
+                    TransactionType = 0,
                     Amount = a.Amount,
                     Rollover = 0,
                     Turnover = 0,
@@ -43,7 +43,7 @@ namespace HangfireService.Core.Promotion
                 if (result > 1)
                 {
                     var lastId = referral.Max(a => a.Id);
-                    await _timerService.SetWorkerId((int)WorkerType, "Referral", lastId);
+                    await _timerService.SetWorkerId((int)WorkerType, "ReferralMLog", lastId);
                 }
             }
             return true;
