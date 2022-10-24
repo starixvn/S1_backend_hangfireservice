@@ -8,16 +8,16 @@ namespace HangfireService.Core.Promotion
         private readonly IVipUpgradePromotionService _vipUpgradeService;
         private readonly IBonusSummaryTimerService _timerService;
 
-        public VipUpgradePromotion(IBonusSummaryTimerService timerService, IVipUpgradePromotionService vipUpgradeService, PromotionType type)
+        public VipUpgradePromotion(IBonusSummaryTimerService timerService, IVipUpgradePromotionService vipUpgradeService, WorkerType type)
         {
-            PromotionType = type;
+            WorkerType = type;
             _vipUpgradeService = vipUpgradeService;
             _timerService = timerService;
         }
 
         public override async Task<bool> Run()
         {
-            var id = await _timerService.GetWorkerId((int)PromotionType);
+            var id = await _timerService.GetWorkerId((int)WorkerType);
             var dto = await _vipUpgradeService.GetVipLevelLog(id);
             var referral = dto.ToList();
             if (referral.Any())
@@ -42,7 +42,7 @@ namespace HangfireService.Core.Promotion
                 if (result > 1)
                 {
                     var lastId = referral.Max(a => a.Id);
-                    await _timerService.SetWorkerId((int)PromotionType, "VipUpgrade", lastId);
+                    await _timerService.SetWorkerId((int)WorkerType, "VipUpgrade", lastId);
                 }
             }
             return true;

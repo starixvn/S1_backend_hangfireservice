@@ -22,6 +22,7 @@ namespace HangfireService.Core.Jobs
         private readonly ReportDBDataLayer _reportDbDataLayer;
         private static List<JobOption> _jobList;
         private readonly IEnumerable<PromotionSummaryBase> _promotion;
+        private readonly IBonusSummaryTimerService _timerService;
 
         public BonusSummaryJob(IServiceProvider provider) : base(provider)
         {
@@ -30,6 +31,7 @@ namespace HangfireService.Core.Jobs
             _mainDbDataLayer = provider.GetRequiredService<MainDBDataLayer>();
             _reportDbDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
             _promotion = provider.GetServices<PromotionSummaryBase>();
+            _timerService = provider.GetService<IBonusSummaryTimerService>();
         }
 
         [DisplayName("{0}")]
@@ -37,52 +39,77 @@ namespace HangfireService.Core.Jobs
         {
             try
             {
-                
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
+                
                 var option = JsonConvert.DeserializeObject<BonusSummaryOption>(JsonConvert.SerializeObject(jobOption.Parameters));
-                if (option.PromotionType is PromotionType.Referral or PromotionType.VipUpgrade)
+                
+                if (option.WorkerType is WorkerType.Referral or WorkerType.VipUpgrade)
                 {
-                    var promotion = _promotion.Single(a => a.PromotionType == option.PromotionType);
+                    var promotion = _promotion.Single(a => a.WorkerType == option.WorkerType);
                     return await promotion.Run();
+                }
+
+                #region Init
+                    
+                var workerTime = new WorkerTime(); 
+                var workerId = 0;
+                var maxId = 0;
+                bool isAutoRun;
+                var result = false;
+                    
+                #endregion
+                
+                if (option.TimerType == TimerType.Time)
+                {
+                    workerTime = GetWorkerTime(option , out isAutoRun);
                 }
                 else
                 {
-                    var workerTime = GetWorkerTime(option , out var isAutoRun);
-                    var result = false;
-
-                    await using var conn = _mainDbDataLayer.GetMySqlConnection();
-                    conn.Open();
-                    var trans = await conn.BeginTransactionAsync();
-                
-                    switch (option.PromotionType)
-                    {
-                        case PromotionType.Promotion:
-                            result = _mainDbDataLayer.BonusSummaryPromotionSet(workerTime.Item1, workerTime.Item2 ,trans ) >= 0;
-                            break;
-                        case PromotionType.Rebate:
-                            break;
-                        case PromotionType.PrizeDraw:
-                            break;
-                        case PromotionType.VerificationReward:
-                            break;
-                        default:
-                            break;
-                    }
-
-                    if (result && isAutoRun) 
-                        result = _mainDbDataLayer.SetBonusSummaryTimer((int) option.PromotionType, workerTime.Item2 ,trans) >= 0;
-
-                    if (result)
-                    {
-                        trans.Commit();
-                    }
-                    else
-                    {
-                        await trans.DisposeAsync();
-                    }
-                
-                    return result;
+                    workerId = await GetWorkerId(option , out isAutoRun);
                 }
+                    
+                await using var conn = _mainDbDataLayer.GetMySqlConnection();
+                conn.Open();
+                var trans = await conn.BeginTransactionAsync();
+                    
+                switch (option.WorkerType)
+                {
+                    case WorkerType.Promotion:
+                        result = _mainDbDataLayer.BonusSummaryPromotionSet(workerTime.StartTime, workerTime.EndDate ,trans ) >= 0;
+                        break;
+                    case WorkerType.Rebate:
+                        break;
+                    case WorkerType.PrizeDraw:
+                        result = _mainDbDataLayer.BonusSummaryDrawPrizeSet(workerId ,trans ,out maxId) >= 0;
+                        break;
+                    case WorkerType.VerificationReward:
+                        result = _mainDbDataLayer.BonusSummaryVerificationSet(workerTime.StartTime, workerTime.EndDate ,trans ) >= 0;
+                        break;
+                    default:
+                        break;
+                }
+
+                if (option.TimerType == TimerType.Time)
+                {
+                    if (result && isAutoRun) 
+                        result = _mainDbDataLayer.SetBonusSummaryTimer((int) option.WorkerType, workerTime.EndDate ,trans) >= 0;
+                }
+                else
+                {
+                    if (result && isAutoRun) 
+                        result = _mainDbDataLayer.SetWorkerId((int) option.WorkerType, "PrizeLog" , maxId ,trans) >= 0 ;
+                }
+                   
+                if (result)
+                {
+                    trans.Commit();
+                }
+                else
+                {
+                    await trans.DisposeAsync();
+                }
+                    
+                return result;
             }
             catch (Exception ex)
             {
@@ -130,13 +157,13 @@ namespace HangfireService.Core.Jobs
             return ExecuteAsync($"Execute.{jobName}.({startTime} ~ {endTime})", jobOption, context, cancellationToken).Result;
         }
 
-        private ( DateTime ,DateTime ) GetWorkerTime( BonusSummaryOption option , out bool isAutoRun)
+        private WorkerTime GetWorkerTime( BonusSummaryOption option , out bool isAutoRun)
         {
             DateTime startTime;
             var endTime = DateTime.Now;
             if (!option.StartTime.HasValue || !option.EndDate.HasValue)
             {
-                startTime = _reportDbDataLayer.GetBonusSummaryTimer((int)option.PromotionType).StartTime;
+                startTime = _reportDbDataLayer.GetBonusSummaryTimer((int)option.WorkerType).StartTime;
                 isAutoRun = true;
             }
             else
@@ -145,9 +172,33 @@ namespace HangfireService.Core.Jobs
                 endTime = option.EndDate.Value;
                 isAutoRun = false;
             }
+            
             startTime = startTime.AddMinutes(-5);
 
-            return (startTime, endTime);
+            var workerTime = new WorkerTime()
+            {
+                StartTime = startTime,
+                EndDate = endTime
+            };
+            
+            return workerTime;
+        }
+        
+        private Task<int> GetWorkerId( BonusSummaryOption option , out bool isAutoRun)
+        {
+            Task<int> id;
+            if (!option.Id.HasValue)
+            {
+                id =  _timerService.GetWorkerId((int)option.WorkerType);
+                isAutoRun = true;
+            }
+            else
+            {
+                id = Task.FromResult(option.Id.Value);
+                isAutoRun = false;
+            }
+
+            return id;
         }
     }
 }

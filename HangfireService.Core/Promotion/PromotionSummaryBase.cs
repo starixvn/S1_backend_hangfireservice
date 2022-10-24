@@ -4,7 +4,7 @@ namespace HangfireService.Core.Promotion
 {
     public abstract class PromotionSummaryBase
     {
-        public PromotionType PromotionType { get; set; }
+        public WorkerType WorkerType { get; set; }
         public abstract Task<bool> Run();
     }
     

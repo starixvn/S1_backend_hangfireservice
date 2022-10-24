@@ -10,15 +10,15 @@ namespace HangfireService.Core.Promotion
         private readonly IReferralPromotionService _referralService;
         private readonly IBonusSummaryTimerService _timerService;
 
-        public ReferralPromotion(IBonusSummaryTimerService timerService, IReferralPromotionService referralReferralService, PromotionType type)
+        public ReferralPromotion(IBonusSummaryTimerService timerService, IReferralPromotionService referralReferralService, WorkerType type)
         {
-            PromotionType = type;
+            WorkerType = type;
             _timerService = timerService;
             _referralService = referralReferralService;
         }
         public override async Task<bool> Run()
         {
-            var id = await _timerService.GetWorkerId((int)PromotionType);
+            var id = await _timerService.GetWorkerId((int)WorkerType);
             var dto = await _referralService.GetReferralMLog(id);
             var referral = dto.ToList();
             if (referral.Any())
@@ -43,7 +43,7 @@ namespace HangfireService.Core.Promotion
                 if (result > 1)
                 {
                     var lastId = referral.Max(a => a.Id);
-                    await _timerService.SetWorkerId((int)PromotionType, "Referral", lastId);
+                    await _timerService.SetWorkerId((int)WorkerType, "Referral", lastId);
                 }
             }
             return true;
