@@ -16,7 +16,7 @@ namespace HangfireService.Core.Promotion
             _timerService = timerService;
             _referralService = referralReferralService;
         }
-        public override async Task Run()
+        public override async Task<bool> Run()
         {
             var id = await _timerService.GetWorkerId((int)PromotionType);
             var dto = await _referralService.GetReferralMLog(id);
@@ -46,6 +46,7 @@ namespace HangfireService.Core.Promotion
                     await _timerService.SetWorkerId((int)PromotionType, "Referral", lastId);
                 }
             }
+            return true;
         }
     }
 }
