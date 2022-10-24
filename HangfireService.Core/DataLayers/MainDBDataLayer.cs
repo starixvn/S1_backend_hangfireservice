@@ -257,6 +257,17 @@ namespace HangfireService.Core.DataLayers
             return result;
         }
         
+        public int BonusSummaryRebateSet(int id , IDbTransaction trans, out int maxId)
+        {
+            var props = new DynamicParameters();
+            props.Add("_Id", id);
+            props.Add("_MaxId", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            var result = _dbClient.Execute("Service_BonusSummaryForRebate_Set", trans,props);
+            maxId = props.Get<int?>("_MaxId") ?? 0;
+            
+            return result;
+        }
+        
         public int SetBonusSummaryTimer(int type , DateTime time, IDbTransaction trans)
         {
             return _dbClient.Execute("Service_BonusSummaryTimer_Set", trans , parameters: new { _Type = type , _Time = time});

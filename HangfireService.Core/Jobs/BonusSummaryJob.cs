@@ -78,6 +78,7 @@ namespace HangfireService.Core.Jobs
                         result = _mainDbDataLayer.BonusSummaryPromotionSet(workerTime.StartTime, workerTime.EndDate ,trans ) >= 0;
                         break;
                     case WorkerType.Rebate:
+                        result = _mainDbDataLayer.BonusSummaryRebateSet(workerId ,trans ,out maxId) >= 0;
                         break;
                     case WorkerType.PrizeDraw:
                         result = _mainDbDataLayer.BonusSummaryDrawPrizeSet(workerId ,trans ,out maxId) >= 0;
@@ -140,21 +141,31 @@ namespace HangfireService.Core.Jobs
             IJobCancellationToken cancellationToken = null,
             [DisplayData("JobName", ConvertType = typeof(JobList))] string jobName = null,
             [DisplayData("BeginDate", placeholderText: "yyyy-MM-dd")] string beginDate = null,
-            [DisplayData("EndDate", placeholderText: "yyyy-MM-dd")] string endDate = null)
+            [DisplayData("EndDate", placeholderText: "yyyy-MM-dd")] string endDate = null,
+            [DisplayData("Id", placeholderText: "Id")] string id = null)
         {
             if (!_jobList.Any())
             {
                 return null;
             }
             var jobOption = _jobList.First(i => i.JobName == jobName);
-            var start = DateTime.ParseExact($"{beginDate}", "yyyy-MM-dd", null);
-            var end = DateTime.ParseExact($"{endDate}", "yyyy-MM-dd", null);
-            
-            var startTime = start.ToString("yyyy-MM-dd");
-            var endTime = end.ToString("yyyy-MM-dd");
-            jobOption.Parameters.Update("StartTime", startTime);
-            jobOption.Parameters.Update("EndDate", endTime);
-            return ExecuteAsync($"Execute.{jobName}.({startTime} ~ {endTime})", jobOption, context, cancellationToken).Result;
+            var option = JsonConvert.DeserializeObject<BonusSummaryOption>(JsonConvert.SerializeObject(jobOption.Parameters));
+
+            if (option.TimerType == TimerType.Time)
+            {
+                var start = DateTime.ParseExact($"{beginDate}", "yyyy-MM-dd", null);
+                var end = DateTime.ParseExact($"{endDate}", "yyyy-MM-dd", null);
+                var startTime = start.ToString("yyyy-MM-dd");
+                var endTime = end.ToString("yyyy-MM-dd");
+                jobOption.Parameters.Update("StartTime", startTime);
+                jobOption.Parameters.Update("EndDate", endTime);
+                return ExecuteAsync($"Execute.{jobName}.({startTime} ~ {endTime})", jobOption, context, cancellationToken).Result;
+            }
+            else
+            {
+                jobOption.Parameters.Update("Id", id);
+                return ExecuteAsync($"Execute.{jobName}.((Id:{id})", jobOption, context, cancellationToken).Result;
+            } 
         }
 
         private WorkerTime GetWorkerTime( BonusSummaryOption option , out bool isAutoRun)
