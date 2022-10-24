@@ -40,47 +40,49 @@ namespace HangfireService.Core.Jobs
                 
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
                 var option = JsonConvert.DeserializeObject<BonusSummaryOption>(JsonConvert.SerializeObject(jobOption.Parameters));
-                if (option.PromotionType == PromotionType.Referral)
+                if (option.PromotionType is PromotionType.Referral or PromotionType.VipUpgrade)
                 {
                     var promotion = _promotion.Single(a => a.PromotionType == option.PromotionType);
-                    await promotion.Run();
-                }
-
-                var workerTime = GetWorkerTime(option , out var isAutoRun);
-                var result = false;
-
-                await using var conn = _mainDbDataLayer.GetMySqlConnection();
-                conn.Open();
-                var trans = await conn.BeginTransactionAsync();
-                
-                switch (option.PromotionType)
-                {
-                    case PromotionType.Promotion:
-                        result = _mainDbDataLayer.BonusSummaryPromotionSet(workerTime.Item1, workerTime.Item2 ,trans ) >= 0;
-                        break;
-                    case PromotionType.Rebate:
-                        break;
-                    case PromotionType.PrizeDraw:
-                        break;
-                    case PromotionType.VerificationReward:
-                        break;
-                   default:
-                       break;
-                }
-
-                if (result && isAutoRun) 
-                    result = _mainDbDataLayer.SetBonusSummaryTimer((int) option.PromotionType, workerTime.Item2 ,trans) >= 0;
-
-                if (result)
-                {
-                    trans.Commit();
+                    return await promotion.Run();
                 }
                 else
                 {
-                    await trans.DisposeAsync();
-                }
+                    var workerTime = GetWorkerTime(option , out var isAutoRun);
+                    var result = false;
+
+                    await using var conn = _mainDbDataLayer.GetMySqlConnection();
+                    conn.Open();
+                    var trans = await conn.BeginTransactionAsync();
                 
-                return result;
+                    switch (option.PromotionType)
+                    {
+                        case PromotionType.Promotion:
+                            result = _mainDbDataLayer.BonusSummaryPromotionSet(workerTime.Item1, workerTime.Item2 ,trans ) >= 0;
+                            break;
+                        case PromotionType.Rebate:
+                            break;
+                        case PromotionType.PrizeDraw:
+                            break;
+                        case PromotionType.VerificationReward:
+                            break;
+                        default:
+                            break;
+                    }
+
+                    if (result && isAutoRun) 
+                        result = _mainDbDataLayer.SetBonusSummaryTimer((int) option.PromotionType, workerTime.Item2 ,trans) >= 0;
+
+                    if (result)
+                    {
+                        trans.Commit();
+                    }
+                    else
+                    {
+                        await trans.DisposeAsync();
+                    }
+                
+                    return result;
+                }
             }
             catch (Exception ex)
             {

@@ -15,7 +15,7 @@ namespace HangfireService.Core.Promotion
             _timerService = timerService;
         }
 
-        public override async Task Run()
+        public override async Task<bool> Run()
         {
             var id = await _timerService.GetWorkerId((int)PromotionType);
             var dto = await _vipUpgradeService.GetVipLevelLog(id);
@@ -45,6 +45,7 @@ namespace HangfireService.Core.Promotion
                     await _timerService.SetWorkerId((int)PromotionType, "VipUpgrade", lastId);
                 }
             }
+            return true;
         }
     }
 }
