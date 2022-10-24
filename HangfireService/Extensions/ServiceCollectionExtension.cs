@@ -105,6 +105,7 @@ namespace HangfireService.Extensions
                 .AddScoped<IReferralPromotionService, ReferralPromotionService>()
                 .AddScoped<IReferralFreeCreditPromotionService, ReferralFreeCreditPromotionService>()
                 .AddScoped<IVipUpgradePromotionService, VipUpgradePromotionService>()
+                .AddScoped<IOtherPromotionService, OtherPromotionService>()
                 .AddScoped<PromotionSummaryBase>(
                     serviceProvider => 
                     {
@@ -125,6 +126,13 @@ namespace HangfireService.Extensions
                         var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
                         var vipUpgradeService = serviceProvider.GetRequiredService<IVipUpgradePromotionService>();
                         return new VipUpgradePromotion(timerService, vipUpgradeService, WorkerType.VipUpgrade);
+                    })
+                .AddScoped<PromotionSummaryBase>(
+                    serviceProvider => 
+                    {
+                        var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
+                        var otherService = serviceProvider.GetRequiredService<IOtherPromotionService>();
+                        return new OtherPromotion(timerService, otherService, WorkerType.Other);
                     });
             return services;
         }
