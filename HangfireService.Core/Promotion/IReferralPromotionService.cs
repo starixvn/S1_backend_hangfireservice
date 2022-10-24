@@ -5,6 +5,6 @@ namespace HangfireService.Core.Promotion
     public interface IReferralPromotionService
     {
         Task<IEnumerable<ReferralMLogDto>> GetReferralMLog(int id);
-        Task<int> InsertReferralBonusSummary(IEnumerable<ReferralBonusSummaryDetail> referralBonus);
+        Task<int> InsertReferralBonusSummary(IEnumerable<InsertBonusSummaryDetailDto> referralBonus);
     }
 }
