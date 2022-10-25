@@ -5,14 +5,14 @@ public class BonusSummaryOption
     public WorkerType WorkerType { get; set; }
     public TimerType TimerType { get; set; }
     public DateTime? StartTime { get; set; }
-    public DateTime? EndDate { get; set; }
+    public DateTime? EndTime { get; set; }
     public int? Id { get; set; }
 }
 
 public class WorkerTime
 {
     public DateTime StartTime { get; set; }
-    public DateTime EndDate { get; set; }
+    public DateTime EndTime { get; set; }
 }
 
 public enum WorkerType
