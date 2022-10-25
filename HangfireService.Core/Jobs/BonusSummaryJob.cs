@@ -11,6 +11,7 @@ using Serilog.Context;
 using System.ComponentModel;
 using HangfireService.Core.Extensions;
 using HangfireService.Core.Models.Options;
+using HangfireService.Core.Models.Promotion;
 using HangfireService.Core.Promotion;
 
 namespace HangfireService.Core.Jobs
@@ -46,6 +47,12 @@ namespace HangfireService.Core.Jobs
                 if (option.WorkerType is WorkerType.Referral or WorkerType.ReferralFreeCredit or WorkerType.VipUpgrade or WorkerType.Other)
                 {
                     var promotion = _promotion.Single(a => a.WorkerType == option.WorkerType);
+                    
+                    if (option.StartTime.HasValue && option.EndDate.HasValue)
+                        promotion.ManualOption = new ManualOption() { StartTime = option.StartTime.Value, EndTime = option.EndDate.Value };
+                    if (option.Id.HasValue)
+                        promotion.ManualOption = new ManualOption() { Id = option.Id.Value };
+
                     return await promotion.Run();
                 }
 

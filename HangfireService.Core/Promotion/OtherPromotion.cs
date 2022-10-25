@@ -17,7 +17,12 @@ namespace HangfireService.Core.Promotion
 
         public override async Task<bool> Run()
         {
-            var id = await _timerService.GetWorkerId((int)WorkerType);
+            int id;
+            if (ManualOption != null) 
+                id = ManualOption.Id;
+            else 
+                id = await _timerService.GetWorkerId((int)WorkerType);
+
             var dto = await _promotionService.GetSummaryDataById("Service_OtherSummary_Get", id);
             var adjustmentInfo = dto.ToList();
             if (adjustmentInfo.Any())
@@ -39,7 +44,7 @@ namespace HangfireService.Core.Promotion
                 });
             
                 var result = await _promotionService.InsertReferralBonusSummary(bonusSummaryDetail);
-                if (result > 1)
+                if (result > 1 && ManualOption == null)
                 {
                     var lastId = adjustmentInfo.Max(a => a.Id);
                     await _timerService.SetWorkerId((int)WorkerType, "AdjustmentInfo", lastId);

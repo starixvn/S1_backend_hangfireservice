@@ -18,7 +18,12 @@ namespace HangfireService.Core.Promotion
         }
         public override async Task<bool> Run()
         {
-            var id = await _timerService.GetWorkerId((int)WorkerType);
+            int id;
+            if (ManualOption != null) 
+                id = ManualOption.Id;
+            else 
+                id = await _timerService.GetWorkerId((int)WorkerType);
+            
             var dto = await _promotionService.GetSummaryDataById("Service_ReferralSummary_Get", id);
             var referral = dto.ToList();
             if (referral.Any())
@@ -40,7 +45,7 @@ namespace HangfireService.Core.Promotion
                 });
             
                 var result = await _promotionService.InsertReferralBonusSummary(referralBonus);
-                if (result > 1)
+                if (result > 1 && ManualOption == null)
                 {
                     var lastId = referral.Max(a => a.Id);
                     await _timerService.SetWorkerId((int)WorkerType, "ReferralMLog", lastId);

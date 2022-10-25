@@ -43,4 +43,11 @@ namespace HangfireService.Core.Models.Promotion
         public decimal Turnover { get; set; }
         public DateTime ClaimDate { get; set; }
     }
+
+    public class ManualOption
+    {
+        public DateTime StartTime { get; set; }
+        public DateTime EndTime { get; set; }
+        public int Id { get; set; }
+    }
 }
