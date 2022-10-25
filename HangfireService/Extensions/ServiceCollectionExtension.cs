@@ -98,20 +98,18 @@ namespace HangfireService.Extensions
                 .AddSingleton<ConfigService>();
         }
 
-        public static IServiceCollection RegisterPromotion(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection RegisterPromotion(this IServiceCollection services)
         {
             services
                 .AddScoped<IBonusSummaryTimerService, BonusSummaryTimerService>()
-                .AddScoped<IReferralPromotionService, ReferralPromotionService>()
                 .AddScoped<IReferralFreeCreditPromotionService, ReferralFreeCreditPromotionService>()
-                .AddScoped<IVipUpgradePromotionService, VipUpgradePromotionService>()
-                .AddScoped<IOtherPromotionService, OtherPromotionService>()
+                .AddScoped<IPromotionService, PromotionService>()
                 .AddScoped<PromotionSummaryBase>(
                     serviceProvider => 
                     {
                         var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
-                        var referralService = serviceProvider.GetRequiredService<IReferralPromotionService>();
-                        return new ReferralPromotion(timerService, referralService, WorkerType.Referral);
+                        var promotionService = serviceProvider.GetRequiredService<IPromotionService>();
+                        return new ReferralPromotion(timerService, promotionService, WorkerType.Referral);
                     })
                 .AddScoped<PromotionSummaryBase>(
                     serviceProvider => 
@@ -124,15 +122,15 @@ namespace HangfireService.Extensions
                     serviceProvider => 
                     {
                         var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
-                        var vipUpgradeService = serviceProvider.GetRequiredService<IVipUpgradePromotionService>();
-                        return new VipUpgradePromotion(timerService, vipUpgradeService, WorkerType.VipUpgrade);
+                        var promotionService = serviceProvider.GetRequiredService<IPromotionService>();
+                        return new VipUpgradePromotion(timerService, promotionService, WorkerType.VipUpgrade);
                     })
                 .AddScoped<PromotionSummaryBase>(
                     serviceProvider => 
                     {
                         var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
-                        var otherService = serviceProvider.GetRequiredService<IOtherPromotionService>();
-                        return new OtherPromotion(timerService, otherService, WorkerType.Other);
+                        var promotionService = serviceProvider.GetRequiredService<IPromotionService>();
+                        return new OtherPromotion(timerService, promotionService, WorkerType.Other);
                     });
             return services;
         }

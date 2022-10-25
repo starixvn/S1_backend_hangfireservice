@@ -4,20 +4,20 @@ using HangfireService.Core.Models.Promotion;
 
 namespace HangfireService.Core.Promotion
 {
-    public class OtherPromotionService : IOtherPromotionService
+    public class PromotionService : IPromotionService
     {
         private readonly MySqlClient _reportDb;
         private readonly MySqlClient _mainDb;
 
-        public OtherPromotionService(IEnumerable<MySqlClient> sqlClients)
+        public PromotionService(IEnumerable<MySqlClient> sqlClients)
         {
             _mainDb = sqlClients.FirstOrDefault(a => a.DataBase == DataBase.Main);
             _reportDb = sqlClients.FirstOrDefault(a => a.DataBase == DataBase.Report);
         }
         
-        public async Task<IEnumerable<AdjustmentInfoDto>> GetAdjustmentInfo(int id)
+        public async Task<IEnumerable<GetBonusSummaryDataDto>> GetSummaryDataById(string sp, int id)
         {
-            return await _reportDb.QueryAsync<AdjustmentInfoDto>("Service_OtherSummary_Get", new { _Id = id });
+            return await _reportDb.QueryAsync<GetBonusSummaryDataDto>(sp, new { _Id = id });
         }
 
         public async Task<int> InsertReferralBonusSummary(IEnumerable<InsertBonusSummaryDetailDto> referralBonus)
