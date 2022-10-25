@@ -5,20 +5,20 @@ namespace HangfireService.Core.Promotion
 {
     public class OtherPromotion : PromotionSummaryBase
     {
-        private readonly IOtherPromotionService _otherService;
+        private readonly IPromotionService _promotionService;
         private readonly IBonusSummaryTimerService _timerService;
 
-        public OtherPromotion(IBonusSummaryTimerService timerService, IOtherPromotionService otherService, WorkerType type)
+        public OtherPromotion(IBonusSummaryTimerService timerService, IPromotionService promotionService, WorkerType type)
         {
             WorkerType = type;
             _timerService = timerService;
-            _otherService = otherService;
+            _promotionService = promotionService;
         }
 
         public override async Task<bool> Run()
         {
             var id = await _timerService.GetWorkerId((int)WorkerType);
-            var dto = await _otherService.GetAdjustmentInfo(id);
+            var dto = await _promotionService.GetSummaryDataById("Service_OtherSummary_Get", id);
             var adjustmentInfo = dto.ToList();
             if (adjustmentInfo.Any())
             {
@@ -38,7 +38,7 @@ namespace HangfireService.Core.Promotion
                     ClaimDate = a.CreateTime
                 });
             
-                var result = await _otherService.InsertReferralBonusSummary(bonusSummaryDetail);
+                var result = await _promotionService.InsertReferralBonusSummary(bonusSummaryDetail);
                 if (result > 1)
                 {
                     var lastId = adjustmentInfo.Max(a => a.Id);

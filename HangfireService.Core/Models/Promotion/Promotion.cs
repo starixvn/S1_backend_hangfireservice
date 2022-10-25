@@ -1,6 +1,6 @@
 namespace HangfireService.Core.Models.Promotion
 {
-    public class VipLevelLogDto
+    public class GetBonusSummaryDataByIdDto
     {
         public int Id { get; set; }
         public int SiteId { get; set; }
@@ -10,25 +10,8 @@ namespace HangfireService.Core.Models.Promotion
         public decimal Amount { get; set; }
         public DateTime CreateTime { get; set; }
     }
-
-    public class InsertBonusSummaryDetailDto
+    public class GetBonusSummaryDataByTimeDto
     {
-        public int CustId { get; set; }
-        public int SiteId { get; set; }
-        public int CurrencyId { get; set; }
-        public string BonusId { get; set; }
-        public string BonusCode { get; set; }
-        public int BonusType { get; set; }
-        public string UserName { get; set; }
-        public int TransactionType { get; set; }
-        public decimal Amount { get; set; }
-        public decimal Rollover { get; set; }
-        public decimal Turnover { get; set; }
-        public DateTime ClaimDate { get; set; }
-    }
-    public class ReferralMLogDto
-    {
-        public int Id { get; set; }
         public int SiteId { get; set; }
         public int CustId { get; set; }
         public int CurrencyId { get; set; }
@@ -45,15 +28,19 @@ namespace HangfireService.Core.Models.Promotion
         public decimal Amount { get; set; }
         public DateTime CreateTime { get; set; }
     }
-
-    public class AdjustmentInfoDto
+    public class InsertBonusSummaryDetailDto
     {
-        public int Id { get; set; }
-        public int SiteId { get; set; }
         public int CustId { get; set; }
+        public int SiteId { get; set; }
         public int CurrencyId { get; set; }
+        public string BonusId { get; set; }
+        public string BonusCode { get; set; }
+        public int BonusType { get; set; }
         public string UserName { get; set; }
+        public int TransactionType { get; set; }
         public decimal Amount { get; set; }
-        public DateTime CreateTime { get; set; }
+        public decimal Rollover { get; set; }
+        public decimal Turnover { get; set; }
+        public DateTime ClaimDate { get; set; }
     }
 }

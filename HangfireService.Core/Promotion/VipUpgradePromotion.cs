@@ -5,20 +5,20 @@ namespace HangfireService.Core.Promotion
 {
     public class VipUpgradePromotion : PromotionSummaryBase
     {
-        private readonly IVipUpgradePromotionService _vipUpgradeService;
+        private readonly IPromotionService _promotionService;
         private readonly IBonusSummaryTimerService _timerService;
 
-        public VipUpgradePromotion(IBonusSummaryTimerService timerService, IVipUpgradePromotionService vipUpgradeService, WorkerType type)
+        public VipUpgradePromotion(IBonusSummaryTimerService timerService, IPromotionService promotionService, WorkerType type)
         {
             WorkerType = type;
-            _vipUpgradeService = vipUpgradeService;
+            _promotionService = promotionService;
             _timerService = timerService;
         }
 
         public override async Task<bool> Run()
         {
             var id = await _timerService.GetWorkerId((int)WorkerType);
-            var dto = await _vipUpgradeService.GetVipLevelLog(id);
+            var dto = await _promotionService.GetSummaryDataById("Service_VipUpgradeSummary_Get", id);
             var referral = dto.ToList();
             if (referral.Any())
             {
@@ -38,7 +38,7 @@ namespace HangfireService.Core.Promotion
                     ClaimDate = a.CreateTime
                 });
             
-                var result = await _vipUpgradeService.InsertReferralBonusSummary(referralBonus);
+                var result = await _promotionService.InsertReferralBonusSummary(referralBonus);
                 if (result > 1)
                 {
                     var lastId = referral.Max(a => a.Id);
