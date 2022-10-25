@@ -17,10 +17,20 @@ namespace HangfireService.Core.Promotion
 
         public override async Task<bool> Run()
         {
-            var timer = _timerService.GetBonusSummaryTimer((int)WorkerType);
-            var startTime = timer.StartTime;
-            var endTime = startTime.AddMinutes(15);
-            
+            DateTime startTime;
+            DateTime endTime;
+            if (ManualOption != null)
+            {
+                startTime = ManualOption.StartTime;
+                endTime = ManualOption.EndTime;
+            }
+            else
+            {
+                var timer = _timerService.GetBonusSummaryTimer((int)WorkerType);
+                startTime = timer.StartTime;
+                endTime = startTime.AddMinutes(15);
+            }
+
             var dto = await _promotionService.GetSummaryDataByTime("Service_ReferralFreeCreditSummary_Get", startTime, endTime);
             var referral = dto.ToList();
             if (referral.Any())
@@ -42,7 +52,7 @@ namespace HangfireService.Core.Promotion
                 });
             
                 var result = await _promotionService.InsertReferralBonusSummary(referralBonus);
-                if (result > 1)
+                if (result > 1 && ManualOption == null)
                 {
                     _timerService.SetBonusSummaryTimer((int)WorkerType, endTime);
                     return true;
