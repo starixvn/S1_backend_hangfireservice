@@ -15,9 +15,14 @@ namespace HangfireService.Core.Promotion
             _reportDb = sqlClients.FirstOrDefault(a => a.DataBase == DataBase.Report);
         }
         
-        public async Task<IEnumerable<GetBonusSummaryDataDto>> GetSummaryDataById(string sp, int id)
+        public async Task<IEnumerable<GetBonusSummaryDataByIdDto>> GetSummaryDataById(string sp, int id)
         {
-            return await _reportDb.QueryAsync<GetBonusSummaryDataDto>(sp, new { _Id = id });
+            return await _reportDb.QueryAsync<GetBonusSummaryDataByIdDto>(sp, new { _Id = id });
+        }
+
+        public async Task<IEnumerable<GetBonusSummaryDataByTimeDto>> GetSummaryDataByTime(string sp, DateTime startTime, DateTime endTime)
+        {
+            return await _reportDb.QueryAsync<GetBonusSummaryDataByTimeDto>(sp, new { _StartTime = startTime, _EndTime = endTime });
         }
 
         public async Task<int> InsertReferralBonusSummary(IEnumerable<InsertBonusSummaryDetailDto> referralBonus)

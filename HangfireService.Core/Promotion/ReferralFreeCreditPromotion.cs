@@ -5,13 +5,13 @@ namespace HangfireService.Core.Promotion
 {
     public class ReferralFreeCreditPromotion : PromotionSummaryBase
     {
-        private readonly IReferralFreeCreditPromotionService _referralFreeCreditService;
+        private readonly IPromotionService _promotionService;
         private readonly IBonusSummaryTimerService _timerService;
 
-        public ReferralFreeCreditPromotion(IBonusSummaryTimerService timerService, IReferralFreeCreditPromotionService referralFreeCreditService, WorkerType type)
+        public ReferralFreeCreditPromotion(IBonusSummaryTimerService timerService, IPromotionService promotionService, WorkerType type)
         {
             WorkerType = type;
-            _referralFreeCreditService = referralFreeCreditService;
+            _promotionService = promotionService;
             _timerService = timerService;
         }
 
@@ -21,7 +21,7 @@ namespace HangfireService.Core.Promotion
             var startTime = timer.StartTime;
             var endTime = startTime.AddMinutes(15);
             
-            var dto = await _referralFreeCreditService.GetReferralLog(startTime, endTime);
+            var dto = await _promotionService.GetSummaryDataByTime("Service_ReferralFreeCreditSummary_Get", startTime, endTime);
             var referral = dto.ToList();
             if (referral.Any())
             {
@@ -41,7 +41,7 @@ namespace HangfireService.Core.Promotion
                     ClaimDate = a.CreateTime
                 });
             
-                var result = await _referralFreeCreditService.InsertReferralBonusSummary(referralBonus);
+                var result = await _promotionService.InsertReferralBonusSummary(referralBonus);
                 if (result > 1)
                 {
                     _timerService.SetBonusSummaryTimer((int)WorkerType, endTime);

@@ -102,7 +102,6 @@ namespace HangfireService.Extensions
         {
             services
                 .AddScoped<IBonusSummaryTimerService, BonusSummaryTimerService>()
-                .AddScoped<IReferralFreeCreditPromotionService, ReferralFreeCreditPromotionService>()
                 .AddScoped<IPromotionService, PromotionService>()
                 .AddScoped<PromotionSummaryBase>(
                     serviceProvider => 
@@ -115,8 +114,8 @@ namespace HangfireService.Extensions
                     serviceProvider => 
                     {
                         var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
-                        var referralFreeCreditService = serviceProvider.GetRequiredService<IReferralFreeCreditPromotionService>();
-                        return new ReferralFreeCreditPromotion(timerService, referralFreeCreditService, WorkerType.ReferralFreeCredit);
+                        var promotionService = serviceProvider.GetRequiredService<IPromotionService>();
+                        return new ReferralFreeCreditPromotion(timerService, promotionService, WorkerType.ReferralFreeCredit);
                     })
                 .AddScoped<PromotionSummaryBase>(
                     serviceProvider => 
