@@ -143,7 +143,7 @@ namespace HangfireService.Core.Jobs
         [Job]
         [DisplayName("Run {2} by ManagementPage")]
         [AutomaticRetry(Attempts = 0, OnAttemptsExceeded = AttemptsExceededAction.Delete)]
-        public object Run(
+        public async Task<object> Run(
             PerformContext context = null,
             IJobCancellationToken cancellationToken = null,
             [DisplayData("JobName", ConvertType = typeof(JobList))] string jobName = null,
@@ -160,18 +160,19 @@ namespace HangfireService.Core.Jobs
 
             if (option.TimerType == TimerType.Time)
             {
-                var start = DateTime.ParseExact($"{beginDate}", "yyyy-MM-dd", null);
-                var end = DateTime.ParseExact($"{endDate}", "yyyy-MM-dd", null);
-                var startTime = start.ToString("yyyy-MM-dd");
-                var endTime = end.ToString("yyyy-MM-dd");
-                jobOption.Parameters.Update("StartTime", startTime);
-                jobOption.Parameters.Update("EndTime", endTime);
-                return ExecuteAsync($"Execute.{jobName}.({startTime} ~ {endTime})", jobOption, context, cancellationToken).Result;
+                var isStartTime = DateTime.TryParse(beginDate, out var startTime);
+                var isEndTime = DateTime.TryParse(beginDate, out var endTime);
+                if (isStartTime && isEndTime)
+                {
+                    jobOption.Parameters.Update("StartTime", beginDate);
+                    jobOption.Parameters.Update("EndTime", endDate);
+                }
+                return await ExecuteAsync($"Execute.{jobName}.({startTime} ~ {endTime})", jobOption, context, cancellationToken);
             }
             else
             {
                 jobOption.Parameters.Update("Id", id);
-                return ExecuteAsync($"Execute.{jobName}.((Id:{id})", jobOption, context, cancellationToken).Result;
+                return await ExecuteAsync($"Execute.{jobName}.((Id:{id})", jobOption, context, cancellationToken);
             } 
         }
 
