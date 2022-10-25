@@ -82,7 +82,7 @@ namespace HangfireService.Core.Jobs
                 switch (option.WorkerType)
                 {
                     case WorkerType.Promotion:
-                        result = _mainDbDataLayer.BonusSummaryPromotionSet(workerTime.StartTime, workerTime.EndDate ,trans ) >= 0;
+                        result = _mainDbDataLayer.BonusSummaryPromotionSet(workerTime.StartTime, workerTime.EndTime ,trans ) >= 0;
                         break;
                     case WorkerType.Rebate:
                         result = _mainDbDataLayer.BonusSummaryRebateSet(workerId ,trans ,out maxId) >= 0;
@@ -91,7 +91,7 @@ namespace HangfireService.Core.Jobs
                         result = _mainDbDataLayer.BonusSummaryDrawPrizeSet(workerId ,trans ,out maxId) >= 0;
                         break;
                     case WorkerType.VerificationReward:
-                        result = _mainDbDataLayer.BonusSummaryVerificationSet(workerTime.StartTime, workerTime.EndDate ,trans ) >= 0;
+                        result = _mainDbDataLayer.BonusSummaryVerificationSet(workerTime.StartTime, workerTime.EndTime ,trans ) >= 0;
                         break;
                     default:
                         break;
@@ -100,7 +100,7 @@ namespace HangfireService.Core.Jobs
                 if (option.TimerType == TimerType.Time)
                 {
                     if (result && isAutoRun) 
-                        result = _mainDbDataLayer.SetBonusSummaryTimer((int) option.WorkerType, workerTime.EndDate ,trans) >= 0;
+                        result = _mainDbDataLayer.SetBonusSummaryTimer((int) option.WorkerType, workerTime.EndTime ,trans) >= 0;
                 }
                 else
                 {
@@ -165,7 +165,7 @@ namespace HangfireService.Core.Jobs
                 var startTime = start.ToString("yyyy-MM-dd");
                 var endTime = end.ToString("yyyy-MM-dd");
                 jobOption.Parameters.Update("StartTime", startTime);
-                jobOption.Parameters.Update("EndDate", endTime);
+                jobOption.Parameters.Update("EndTime", endTime);
                 return ExecuteAsync($"Execute.{jobName}.({startTime} ~ {endTime})", jobOption, context, cancellationToken).Result;
             }
             else
@@ -179,7 +179,7 @@ namespace HangfireService.Core.Jobs
         {
             DateTime startTime;
             var endTime = DateTime.Now;
-            if (!option.StartTime.HasValue || !option.EndDate.HasValue)
+            if (!option.StartTime.HasValue || !option.EndTime.HasValue)
             {
                 startTime = _reportDbDataLayer.GetBonusSummaryTimer((int)option.WorkerType).StartTime;
                 isAutoRun = true;
@@ -187,7 +187,7 @@ namespace HangfireService.Core.Jobs
             else
             {
                 startTime = option.StartTime.Value;
-                endTime = option.EndDate.Value;
+                endTime = option.EndTime.Value;
                 isAutoRun = false;
             }
             
@@ -196,7 +196,7 @@ namespace HangfireService.Core.Jobs
             var workerTime = new WorkerTime()
             {
                 StartTime = startTime,
-                EndDate = endTime
+                EndTime = endTime
             };
             
             return workerTime;
