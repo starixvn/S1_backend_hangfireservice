@@ -32,7 +32,7 @@ namespace HangfireService.Core.Models.DBs
                 result.Append($" || {message}");
             }
 
-            if (IsExpire)
+            if (!string.IsNullOrEmpty(OTPNum) && IsExpire)
             {
                 result.Append($" || OTP is Expire.");
             }
