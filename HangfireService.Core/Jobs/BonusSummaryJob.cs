@@ -48,8 +48,8 @@ namespace HangfireService.Core.Jobs
                 {
                     var promotion = _promotion.Single(a => a.WorkerType == option.WorkerType);
                     
-                    if (option.StartTime.HasValue && option.EndDate.HasValue)
-                        promotion.ManualOption = new ManualOption() { StartTime = option.StartTime.Value, EndTime = option.EndDate.Value };
+                    if (option.StartTime.HasValue && option.EndTime.HasValue)
+                        promotion.ManualOption = new ManualOption() { StartTime = option.StartTime.Value, EndTime = option.EndTime.Value };
                     if (option.Id.HasValue)
                         promotion.ManualOption = new ManualOption() { Id = option.Id.Value };
 
