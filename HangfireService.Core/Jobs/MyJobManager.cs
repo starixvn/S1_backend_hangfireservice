@@ -81,7 +81,7 @@ namespace HangfireService.Core.Jobs
             foreach (var job in connection.GetRecurringJobs())
             {
                 BackgroundJob.Schedule(() => StartAfterSeconds(job.Id, seconds), TimeSpan.FromSeconds(seconds));
-                seconds += 10;
+                seconds += 5;
             }
         }
 

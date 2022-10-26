@@ -234,14 +234,14 @@ namespace HangfireService.Core.DataLayers
         }
         #endregion
 
-        public int SetTpBetRecordRelayData(DateTime date, int timeoutSeconds)
+        public int InsertRelayData(string sp, object parameters, IDbTransaction trans)
+        {        
+            return _dbClient.Execute(sp, trans, parameters);
+        }
+
+        public int DeleteRelayData(string sp, object parameters, IDbTransaction trans)
         {
-            var parameters = new
-            {
-                StartTime = date,
-                EndTime = date.AddDays(1),
-            };
-            return _dbClient.QueryFirst<int>("Relay_TpBetRecord_Set_V3", parameters, commandTimeout: timeoutSeconds);
+            return _dbClient.Execute(sp, trans, parameters);
         }
     }
 }

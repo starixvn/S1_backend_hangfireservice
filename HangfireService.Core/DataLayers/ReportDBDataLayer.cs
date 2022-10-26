@@ -93,5 +93,11 @@ namespace HangfireService.Core.DataLayers
         {
             return _dbClient.Query<TpCurrency>("Service_TpCurrency_Get", parameters: new { TpId });
         }
+
+        public IEnumerable<dynamic> GetRelayData(string sp, object parameters, int timeoutSeconds)
+        {
+            return _dbClient.Query(sp, parameters: parameters, commandTimeout: timeoutSeconds);
+        }
+
     }
 }
