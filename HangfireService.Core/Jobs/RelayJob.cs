@@ -47,7 +47,7 @@ namespace HangfireService.Core.Jobs
                     var date = option.StartTime;
                     while (date <= option.EndTime)
                     {
-                        _logger.LogInformation($"{jobName} ExcuteRelay Date:{date::yyyy-MM-dd}");
+                        _logger.LogInformation($"{jobName} || Excute Summary Date:{date::yyyy-MM-dd}");
                         result += await ExcuteRelay(option, date, date.AddDays(1));
                         date = date.AddDays(1);
                     }
