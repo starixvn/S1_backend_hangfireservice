@@ -170,7 +170,7 @@ namespace HangfireService.Core.Jobs
         {
             public Dictionary<string, string> GetData()
             {
-                return _jobList?.Where(i => i.JobName.Contains("Relay-Days"))
+                return _jobList?.Where(i => i.JobName.Contains("Relay-Days") || i.JobName.Contains("Summary-Days"))
                     .ToDictionary(f => f.JobName, f => f.JobName);
             }
             public string GetDefaultValue()
