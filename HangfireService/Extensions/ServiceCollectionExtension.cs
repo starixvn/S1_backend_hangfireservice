@@ -131,7 +131,7 @@ namespace HangfireService.Extensions
                         var promotionService = serviceProvider.GetRequiredService<IPromotionService>();
                         return new OtherPromotion(timerService, promotionService, WorkerType.Other);
                     })
-                .AddScoped<PromotionSummaryBase>(
+                .AddSingleton<PromotionSummaryBase>(
                 serviceProvider => 
                 {
                     var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
