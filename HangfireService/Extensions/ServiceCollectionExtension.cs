@@ -101,30 +101,30 @@ namespace HangfireService.Extensions
         public static IServiceCollection RegisterPromotion(this IServiceCollection services)
         {
             services
-                .AddScoped<IBonusSummaryTimerService, BonusSummaryTimerService>()
-                .AddScoped<IPromotionService, PromotionService>()
-                .AddScoped<PromotionSummaryBase>(
+                .AddSingleton<IBonusSummaryTimerService, BonusSummaryTimerService>()
+                .AddSingleton<IPromotionService, PromotionService>()
+                .AddSingleton<PromotionSummaryBase>(
                     serviceProvider => 
                     {
                         var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
                         var promotionService = serviceProvider.GetRequiredService<IPromotionService>();
                         return new ReferralPromotion(timerService, promotionService, WorkerType.Referral);
                     })
-                .AddScoped<PromotionSummaryBase>(
+                .AddSingleton<PromotionSummaryBase>(
                     serviceProvider => 
                     {
                         var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
                         var promotionService = serviceProvider.GetRequiredService<IPromotionService>();
                         return new ReferralFreeCreditPromotion(timerService, promotionService, WorkerType.ReferralFreeCredit);
                     })
-                .AddScoped<PromotionSummaryBase>(
+                .AddSingleton<PromotionSummaryBase>(
                     serviceProvider => 
                     {
                         var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
                         var promotionService = serviceProvider.GetRequiredService<IPromotionService>();
                         return new VipUpgradePromotion(timerService, promotionService, WorkerType.VipUpgrade);
                     })
-                .AddScoped<PromotionSummaryBase>(
+                .AddSingleton<PromotionSummaryBase>(
                     serviceProvider => 
                     {
                         var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
