@@ -24,10 +24,20 @@ namespace HangfireService.Core.Promotion
         {
             return await _reportDb.QueryAsync<GetBonusSummaryDataByTimeDto>(sp, new { _StartTime = startTime, _EndTime = endTime });
         }
+        
+        public async Task<IEnumerable<InsertBonusSummaryInfoDto>> GetBonusSummaryDetailByTime(string sp, DateTime startTime, DateTime endTime)
+        {
+            return await _reportDb.QueryAsync<InsertBonusSummaryInfoDto>(sp, new { _StartTime = startTime, _EndTime = endTime });
+        }
 
         public async Task<int> InsertReferralBonusSummary(IEnumerable<InsertBonusSummaryDetailDto> referralBonus)
         {
             return await _mainDb.ExecuteAsync("Service_BonusSummaryDetail_Ins", referralBonus);
+        }
+        
+        public async Task<int> InsertBonusSummaryInfo(IEnumerable<InsertBonusSummaryInfoDto> bonusSummaryInfo)
+        {
+            return await _mainDb.ExecuteAsync("Service_BonusSummaryInfo_Ins", bonusSummaryInfo);
         }
     }
 }

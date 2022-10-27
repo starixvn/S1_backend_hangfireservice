@@ -50,4 +50,18 @@ namespace HangfireService.Core.Models.Promotion
         public DateTime EndTime { get; set; }
         public int Id { get; set; }
     }
+    public class InsertBonusSummaryInfoDto
+    {
+        public DateTime RecordDate { get; set; }
+        public int SiteId { get; set; }
+        public int CurrencyId { get; set; }
+        public string BonusCode { get; set; }
+        public string BonusType { get; set; }
+        public string BonusName { get; set; }
+        public DateTime? StartTime { get; set; }
+        public DateTime? EndTime { get; set; }
+        public int TotalClaimants { get; set; }
+        public decimal TotalClaimedAmount { get; set; }
+        public decimal GGR { get; set; }
+    }
 }

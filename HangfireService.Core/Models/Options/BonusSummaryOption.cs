@@ -24,7 +24,8 @@ public enum WorkerType
     Referral = 5,
     ReferralFreeCredit = 6,
     VipUpgrade = 7,
-    Other = 8
+    Other = 8,
+    BonusSummaryInfo = 10
 }
 
 public enum BonusType

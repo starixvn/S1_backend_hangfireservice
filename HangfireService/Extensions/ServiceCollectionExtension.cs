@@ -102,35 +102,23 @@ namespace HangfireService.Extensions
         {
             services
                 .AddSingleton<IBonusSummaryTimerService, BonusSummaryTimerService>()
-                .AddSingleton<IPromotionService, PromotionService>()
+                .AddSingleton<IPromotionService, PromotionService>();
+            
+            var provider = services.BuildServiceProvider();
+            var timerService = provider.GetRequiredService<IBonusSummaryTimerService>();
+            var promotionService = provider.GetRequiredService<IPromotionService>();
+
+            services
                 .AddSingleton<PromotionSummaryBase>(
-                    serviceProvider => 
-                    {
-                        var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
-                        var promotionService = serviceProvider.GetRequiredService<IPromotionService>();
-                        return new ReferralPromotion(timerService, promotionService, WorkerType.Referral);
-                    })
+                    _ => new ReferralPromotion(timerService, promotionService, WorkerType.Referral))
                 .AddSingleton<PromotionSummaryBase>(
-                    serviceProvider => 
-                    {
-                        var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
-                        var promotionService = serviceProvider.GetRequiredService<IPromotionService>();
-                        return new ReferralFreeCreditPromotion(timerService, promotionService, WorkerType.ReferralFreeCredit);
-                    })
+                    _ => new ReferralFreeCreditPromotion(timerService, promotionService, WorkerType.ReferralFreeCredit))
                 .AddSingleton<PromotionSummaryBase>(
-                    serviceProvider => 
-                    {
-                        var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
-                        var promotionService = serviceProvider.GetRequiredService<IPromotionService>();
-                        return new VipUpgradePromotion(timerService, promotionService, WorkerType.VipUpgrade);
-                    })
+                    _ => new VipUpgradePromotion(timerService, promotionService, WorkerType.VipUpgrade))
                 .AddSingleton<PromotionSummaryBase>(
-                    serviceProvider => 
-                    {
-                        var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
-                        var promotionService = serviceProvider.GetRequiredService<IPromotionService>();
-                        return new OtherPromotion(timerService, promotionService, WorkerType.Other);
-                    });
+                    _ => new OtherPromotion(timerService, promotionService, WorkerType.Other))
+                .AddSingleton<PromotionSummaryBase>(
+                _ => new BonusSummaryInfo(timerService, promotionService, WorkerType.BonusSummaryInfo));
             return services;
         }
 
