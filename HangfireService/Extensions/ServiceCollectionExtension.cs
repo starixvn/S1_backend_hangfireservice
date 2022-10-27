@@ -130,7 +130,14 @@ namespace HangfireService.Extensions
                         var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
                         var promotionService = serviceProvider.GetRequiredService<IPromotionService>();
                         return new OtherPromotion(timerService, promotionService, WorkerType.Other);
-                    });
+                    })
+                .AddScoped<PromotionSummaryBase>(
+                serviceProvider => 
+                {
+                    var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
+                    var promotionService = serviceProvider.GetRequiredService<IPromotionService>();
+                    return new BonusSummaryInfo(timerService, promotionService, WorkerType.BonusSummaryInfo);
+                });
             return services;
         }
 
