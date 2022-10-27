@@ -13,6 +13,7 @@ using HangfireService.Core.Service;
 using HangfireService.Core.ThirdParty;
 using HangfireService.Core.ThirdParty.Interfaces;
 using System.Net;
+using HangfireService.Core.Promotion;
 
 namespace HangfireService.Extensions
 {
@@ -95,6 +96,49 @@ namespace HangfireService.Extensions
                 .AddSingleton<PtMerchantBalanceCheckService>()
                 .AddSingleton<WorldCupDepositDailySummaryService>()
                 .AddSingleton<ConfigService>();
+        }
+
+        public static IServiceCollection RegisterPromotion(this IServiceCollection services)
+        {
+            services
+                .AddScoped<IBonusSummaryTimerService, BonusSummaryTimerService>()
+                .AddScoped<IPromotionService, PromotionService>()
+                .AddScoped<PromotionSummaryBase>(
+                    serviceProvider => 
+                    {
+                        var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
+                        var promotionService = serviceProvider.GetRequiredService<IPromotionService>();
+                        return new ReferralPromotion(timerService, promotionService, WorkerType.Referral);
+                    })
+                .AddScoped<PromotionSummaryBase>(
+                    serviceProvider => 
+                    {
+                        var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
+                        var promotionService = serviceProvider.GetRequiredService<IPromotionService>();
+                        return new ReferralFreeCreditPromotion(timerService, promotionService, WorkerType.ReferralFreeCredit);
+                    })
+                .AddScoped<PromotionSummaryBase>(
+                    serviceProvider => 
+                    {
+                        var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
+                        var promotionService = serviceProvider.GetRequiredService<IPromotionService>();
+                        return new VipUpgradePromotion(timerService, promotionService, WorkerType.VipUpgrade);
+                    })
+                .AddScoped<PromotionSummaryBase>(
+                    serviceProvider => 
+                    {
+                        var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
+                        var promotionService = serviceProvider.GetRequiredService<IPromotionService>();
+                        return new OtherPromotion(timerService, promotionService, WorkerType.Other);
+                    })
+                .AddScoped<PromotionSummaryBase>(
+                serviceProvider => 
+                {
+                    var timerService = serviceProvider.GetRequiredService<IBonusSummaryTimerService>();
+                    var promotionService = serviceProvider.GetRequiredService<IPromotionService>();
+                    return new BonusSummaryInfo(timerService, promotionService, WorkerType.BonusSummaryInfo);
+                });
+            return services;
         }
 
         public static IServiceCollection RegisterScheduledJobs(this IServiceCollection services, IConfiguration configuration)
