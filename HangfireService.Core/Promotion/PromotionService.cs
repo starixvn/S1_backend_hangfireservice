@@ -1,6 +1,7 @@
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Promotion;
+using Newtonsoft.Json;
 
 namespace HangfireService.Core.Promotion
 {
@@ -30,11 +31,12 @@ namespace HangfireService.Core.Promotion
             return await _reportDb.QueryAsync<InsertBonusSummaryInfoDto>(sp, new { _StartTime = startTime, _EndTime = endTime });
         }
 
-        public async Task<int> InsertBonusSummaryDetail(IEnumerable<InsertBonusSummaryDetailDto> referralBonus)
+        public async Task<int> InsertBonusSummaryDetail(IEnumerable<InsertBonusSummaryDetailDto> bonusSummary)
         {
-            return await _mainDb.ExecuteAsync("Service_BonusSummaryDetail_Ins", referralBonus);
+            return await _mainDb.ExecuteAsync("Service_BonusSummaryDetail_Ins",
+                new { _BonusSummary = JsonConvert.SerializeObject(bonusSummary) });
         }
-        
+
         public async Task<int> InsertBonusSummaryInfo(IEnumerable<InsertBonusSummaryInfoDto> bonusSummaryInfo)
         {
             return await _mainDb.ExecuteAsync("Service_BonusSummaryInfo_Ins", bonusSummaryInfo);

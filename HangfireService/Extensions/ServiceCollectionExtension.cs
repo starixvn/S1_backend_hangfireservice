@@ -108,16 +108,20 @@ namespace HangfireService.Extensions
             var provider = services.BuildServiceProvider();
             var timerService = provider.GetRequiredService<IBonusSummaryTimerService>();
             var promotionService = provider.GetRequiredService<IPromotionService>();
+            var rLogger = provider.GetRequiredService<ILogger<ReferralPromotion>>();
+            var rfLogger = provider.GetRequiredService<ILogger<ReferralFreeCreditPromotion>>();
+            var vLogger = provider.GetRequiredService<ILogger<VipUpgradePromotion>>();
+            var oLogger = provider.GetRequiredService<ILogger<OtherPromotion>>();
 
             services
                 .AddSingleton<PromotionSummaryBase>(
-                    _ => new ReferralPromotion(timerService, promotionService, WorkerType.Referral))
+                    _ => new ReferralPromotion(timerService, promotionService, WorkerType.Referral, rLogger))
                 .AddSingleton<PromotionSummaryBase>(
-                    _ => new ReferralFreeCreditPromotion(timerService, promotionService, WorkerType.ReferralFreeCredit))
+                    _ => new ReferralFreeCreditPromotion(timerService, promotionService, WorkerType.ReferralFreeCredit, rfLogger))
                 .AddSingleton<PromotionSummaryBase>(
-                    _ => new VipUpgradePromotion(timerService, promotionService, WorkerType.VipUpgrade))
+                    _ => new VipUpgradePromotion(timerService, promotionService, WorkerType.VipUpgrade, vLogger))
                 .AddSingleton<PromotionSummaryBase>(
-                    _ => new OtherPromotion(timerService, promotionService, WorkerType.Other))
+                    _ => new OtherPromotion(timerService, promotionService, WorkerType.Other, oLogger))
                 .AddSingleton<PromotionSummaryBase>(
                 _ => new BonusSummaryInfo(timerService, promotionService, WorkerType.BonusSummaryInfo));
             return services;
