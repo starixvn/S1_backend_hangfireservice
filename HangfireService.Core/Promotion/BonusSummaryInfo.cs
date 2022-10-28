@@ -41,6 +41,7 @@ namespace HangfireService.Core.Promotion
                     SiteId = a.SiteId,
                     CurrencyId = a.CurrencyId,
                     BonusCode = a.BonusCode,
+                    ClaimStatus = a.ClaimStatus,
                     BonusType = a.BonusType,
                     BonusName = a.BonusName ?? "",
                     StartTime = a.StartTime,

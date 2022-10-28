@@ -57,6 +57,7 @@ namespace HangfireService.Core.Models.Promotion
         public int CurrencyId { get; set; }
         public string BonusCode { get; set; }
         public int BonusType { get; set; }
+        public int ClaimStatus { get; set; }
         public string BonusName { get; set; }
         public DateTime? StartTime { get; set; }
         public DateTime? EndTime { get; set; }
