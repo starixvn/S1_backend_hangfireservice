@@ -29,6 +29,7 @@ builder.Services
     .AddDatabaseConnection(builder.Configuration)
     .RegisterServices(builder.Configuration)
     .RegisterPromotion()
+    .RegisterPayment()
     .AddHangfireService(builder.Configuration)
     .RegisterScheduledJobs(builder.Configuration)
     .RegisterTpHelper()

@@ -30,7 +30,7 @@ namespace HangfireService.Core.Promotion
             return await _reportDb.QueryAsync<InsertBonusSummaryInfoDto>(sp, new { _StartTime = startTime, _EndTime = endTime });
         }
 
-        public async Task<int> InsertReferralBonusSummary(IEnumerable<InsertBonusSummaryDetailDto> referralBonus)
+        public async Task<int> InsertBonusSummaryDetail(IEnumerable<InsertBonusSummaryDetailDto> referralBonus)
         {
             return await _mainDb.ExecuteAsync("Service_BonusSummaryDetail_Ins", referralBonus);
         }
