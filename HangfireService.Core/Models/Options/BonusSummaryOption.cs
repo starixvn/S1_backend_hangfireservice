@@ -28,6 +28,12 @@ public enum WorkerType
     BonusSummaryInfo = 10
 }
 
+public enum PaymentWorkerType
+{
+    Deposit = 1,
+    Withdraw = 2
+}
+
 public enum BonusType
 {
     WelcomeBonus = 1,
