@@ -49,7 +49,7 @@ namespace HangfireService.Core.Promotion
                 if (result > 1 && ManualOption == null)
                 {
                     var lastId = referral.Max(a => a.Id);
-                    await _timerService.SetWorkerId((int)WorkerType, "VipUpgrade", lastId);
+                    await _timerService.SetWorkerId((int)WorkerType, "VipLevelLog", lastId);
                 }
             }
             return true;
