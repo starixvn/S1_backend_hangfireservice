@@ -27,7 +27,7 @@ namespace HangfireService.Core.Promotion
             var referralFreeCredit = dto.ToList();
             if (referralFreeCredit.Any())
             {
-                var referralBonus = referralFreeCredit.Select(a => new InsertBonusSummaryDetailDto()
+                var bonusSummaryDetail = referralFreeCredit.Select(a => new InsertBonusSummaryDetailDto()
                 {
                     CustId = a.CustId,
                     SiteId = a.SiteId,
@@ -43,7 +43,7 @@ namespace HangfireService.Core.Promotion
                     ClaimDate = a.CreateTime
                 });
             
-                var result = await _promotionService.InsertReferralBonusSummary(referralBonus);
+                var result = await _promotionService.InsertBonusSummaryDetail(bonusSummaryDetail);
                 if (result > 1 && ManualOption == null)
                 {
                     var lastId = referralFreeCredit.Max(a => a.Id);
