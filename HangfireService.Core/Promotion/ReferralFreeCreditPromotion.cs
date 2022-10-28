@@ -17,30 +17,22 @@ namespace HangfireService.Core.Promotion
 
         public override async Task<bool> Run()
         {
-            DateTime startTime;
-            DateTime endTime;
-            if (ManualOption != null)
-            {
-                startTime = ManualOption.StartTime;
-                endTime = ManualOption.EndTime;
-            }
-            else
-            {
-                var timer = _timerService.GetBonusSummaryTimer((int)WorkerType);
-                startTime = timer.StartTime;
-                endTime = startTime.AddMinutes(15);
-            }
+            int id;
+            if (ManualOption != null) 
+                id = ManualOption.Id;
+            else 
+                id = await _timerService.GetWorkerId((int)WorkerType);
 
-            var dto = await _promotionService.GetSummaryDataByTime("Service_ReferralFreeCreditSummary_Get", startTime, endTime);
-            var referral = dto.ToList();
-            if (referral.Any())
+            var dto = await _promotionService.GetSummaryDataById("Service_ReferralFreeCreditSummary_Get", id);
+            var referralFreeCredit = dto.ToList();
+            if (referralFreeCredit.Any())
             {
-                var referralBonus = referral.Select(a => new InsertBonusSummaryDetailDto()
+                var referralBonus = referralFreeCredit.Select(a => new InsertBonusSummaryDetailDto()
                 {
                     CustId = a.CustId,
                     SiteId = a.SiteId,
                     CurrencyId = a.CurrencyId,
-                    BonusId = "RC" + a.CustId,
+                    BonusId = "RC" + a.Id,
                     BonusCode = WorkerType.ToString(),
                     BonusType = (int)BonusType.ReferralFreeCredit,
                     UserName = a.UserName,
@@ -54,11 +46,10 @@ namespace HangfireService.Core.Promotion
                 var result = await _promotionService.InsertReferralBonusSummary(referralBonus);
                 if (result > 1 && ManualOption == null)
                 {
-                    _timerService.SetBonusSummaryTimer((int)WorkerType, endTime);
-                    return true;
+                    var lastId = referralFreeCredit.Max(a => a.Id);
+                    await _timerService.SetWorkerId((int)WorkerType, "ReferralLog", lastId);
                 }
             }
-            _timerService.SetBonusSummaryTimer((int)WorkerType, endTime);
             return true;
         }
     }
