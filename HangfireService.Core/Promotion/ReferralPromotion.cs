@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Net.NetworkInformation;
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.Models.Promotion;
+using Microsoft.Extensions.Logging;
 
 namespace HangfireService.Core.Promotion
 {
@@ -9,12 +10,13 @@ namespace HangfireService.Core.Promotion
     {
         private readonly IPromotionService _promotionService;
         private readonly IBonusSummaryTimerService _timerService;
-
-        public ReferralPromotion(IBonusSummaryTimerService timerService, IPromotionService promotionService, WorkerType type)
+        private readonly ILogger<ReferralPromotion> _logger;
+        public ReferralPromotion(IBonusSummaryTimerService timerService, IPromotionService promotionService, WorkerType type, ILogger<ReferralPromotion> logger)
         {
             WorkerType = type;
             _timerService = timerService;
             _promotionService = promotionService;
+            _logger = logger;
         }
         public override async Task<bool> Run()
         {

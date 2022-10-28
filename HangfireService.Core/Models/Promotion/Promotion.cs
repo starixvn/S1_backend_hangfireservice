@@ -41,6 +41,7 @@ namespace HangfireService.Core.Models.Promotion
         public decimal Amount { get; set; }
         public decimal Rollover { get; set; }
         public decimal Turnover { get; set; }
+        public int ClaimStatus { get; set; }
         public DateTime ClaimDate { get; set; }
     }
 
