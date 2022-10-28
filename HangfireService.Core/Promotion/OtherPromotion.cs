@@ -43,7 +43,7 @@ namespace HangfireService.Core.Promotion
                     ClaimDate = a.CreateTime
                 });
             
-                var result = await _promotionService.InsertReferralBonusSummary(bonusSummaryDetail);
+                var result = await _promotionService.InsertBonusSummaryDetail(bonusSummaryDetail);
                 if (result > 1 && ManualOption == null)
                 {
                     var lastId = adjustmentInfo.Max(a => a.Id);
