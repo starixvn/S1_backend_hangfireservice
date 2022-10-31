@@ -13,7 +13,6 @@ using HangfireService.Core.Service;
 using HangfireService.Core.ThirdParty;
 using HangfireService.Core.ThirdParty.Interfaces;
 using System.Net;
-using HangfireService.Core.Payment;
 using HangfireService.Core.Promotion;
 
 namespace HangfireService.Extensions
@@ -124,22 +123,6 @@ namespace HangfireService.Extensions
                     _ => new OtherPromotion(timerService, promotionService, WorkerType.Other, oLogger))
                 .AddSingleton<PromotionSummaryBase>(
                 _ => new BonusSummaryInfo(timerService, promotionService, WorkerType.BonusSummaryInfo));
-            return services;
-        }
-
-        public static IServiceCollection RegisterPayment(this IServiceCollection services)
-        {
-            services
-                .AddSingleton<IDailyPaymentSummaryTimerService, DailyPaymentSummaryTimerService>()
-                .AddSingleton<IDepositSummaryService, DepositSummaryService>()
-                .AddSingleton<PaymentSummaryBase>(
-                    provider =>
-                    {
-                        var timerService = provider.GetRequiredService<IDailyPaymentSummaryTimerService>();
-                        var depositService = provider.GetRequiredService<IDepositSummaryService>();
-                        return new DepositSummary(depositService, timerService, PaymentWorkerType.Deposit);
-                    });
-
             return services;
         }
 
