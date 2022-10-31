@@ -83,6 +83,7 @@ namespace HangfireService.Core.Jobs
                 EndTime,
                 StartIndex,
                 PageSize,
+                SummaryTypeList = option.SummaryType
             };
             var relayData = _reportDBDataLayer.GetRelayData(option.GetSP, parameters, option.TimeoutSeconds);       
             var forContinue = relayData.Count() == PageSize;
