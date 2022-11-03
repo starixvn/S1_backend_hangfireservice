@@ -39,7 +39,7 @@ namespace HangfireService.Core.Promotion
 
         public async Task<int> InsertBonusSummaryInfo(IEnumerable<InsertBonusSummaryInfoDto> bonusSummaryInfo)
         {
-            return await _mainDb.ExecuteAsync("Service_BonusSummaryInfo_Ins", bonusSummaryInfo);
+            return await _mainDb.ExecuteAsync("Service_BonusSummaryInfo_Ins", new { SummaryInfoList = JsonConvert.SerializeObject(bonusSummaryInfo) });
         }
     }
 }

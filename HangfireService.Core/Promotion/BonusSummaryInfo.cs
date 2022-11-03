@@ -48,8 +48,14 @@ namespace HangfireService.Core.Promotion
                     EndTime = a.EndTime,
                     TotalClaimants = a.TotalClaimants,
                     TotalClaimedAmount = a.TotalClaimedAmount,
+                    TotalDeposit = a.TotalDeposit,
+                    TotalWithdrawal = a.TotalWithdrawal,
                     //todo
-                    GGR = 0
+                    GGR = 0,
+                    RunningCount = a.RunningCount,
+                    CancelCount = a.CancelCount,
+                    FulFillCount = a.FulFillCount,
+                    OtherPlatformCount = a.OtherPlatformCount
                 });
             
                 var result = await _promotionService.InsertBonusSummaryInfo(bonusSummaryInfo);

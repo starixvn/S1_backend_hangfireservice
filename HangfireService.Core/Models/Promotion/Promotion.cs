@@ -64,6 +64,12 @@ namespace HangfireService.Core.Models.Promotion
         public DateTime? EndTime { get; set; }
         public int TotalClaimants { get; set; }
         public decimal TotalClaimedAmount { get; set; }
+        public decimal TotalDeposit { get; set; }
+        public decimal TotalWithdrawal { get; set; }
         public decimal GGR { get; set; }
+        public decimal RunningCount { get; set; }
+        public decimal CancelCount { get; set; }
+        public decimal FulFillCount { get; set; }
+        public decimal OtherPlatformCount { get; set; }
     }
 }
