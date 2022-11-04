@@ -30,10 +30,10 @@ namespace HangfireService.Core.ThirdParty
             var BeginTime = new DateTimeOffset(checkOption.BeginTime).ToUnixTimeSeconds();
             var EndTime = new DateTimeOffset(checkOption.EndTime).ToUnixTimeSeconds();
             var bettrans = await _wagerDbClient.QueryAsync<BettransCheckData>("Finance_TpWager9W_Summary_Get", new { BeginTime, EndTime });
-            //foreach (var item in bettrans)
-            //{
-            //    item.CurrencyId = _tpCurrency.First(c => c.TpCurrencyId == item.TpCurrencyId).CurrencyId;
-            //}
+            foreach (var item in bettrans)
+            {
+                item.CurrencyId = _tpCurrency.First(c => c.TpCurrencyId == item.TpCurrencyId).CurrencyId;
+            }
             return bettrans;
         }
 
