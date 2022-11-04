@@ -41,21 +41,14 @@ namespace HangfireService.Core.Promotion
                     SiteId = a.SiteId,
                     CurrencyId = a.CurrencyId,
                     BonusCode = a.BonusCode,
-                    ClaimStatus = a.ClaimStatus,
                     BonusType = a.BonusType,
                     BonusName = a.BonusName ?? "",
                     StartTime = a.StartTime,
                     EndTime = a.EndTime,
-                    TotalClaimants = a.TotalClaimants,
-                    TotalClaimedAmount = a.TotalClaimedAmount,
                     TotalDeposit = a.TotalDeposit,
                     TotalWithdrawal = a.TotalWithdrawal,
                     //todo
-                    GGR = 0,
-                    RunningCount = a.RunningCount,
-                    CancelCount = a.CancelCount,
-                    FulFillCount = a.FulFillCount,
-                    OtherPlatformCount = a.OtherPlatformCount
+                    GGR = 0
                 });
             
                 var result = await _promotionService.InsertBonusSummaryInfo(bonusSummaryInfo);
