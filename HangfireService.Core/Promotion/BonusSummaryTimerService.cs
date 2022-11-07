@@ -26,10 +26,5 @@ namespace HangfireService.Core.Promotion
         {
             return _reportDb.QueryFirst<BonusSummaryTimer>("Service_Timer_Get", new { _Type = type });
         }
-
-        public int SetBonusSummaryTimer(int type, DateTime time)
-        {
-            return _mainDb.Execute("Service_BonusSummaryTimer_Set" , new { _Type = type , _Time = time});
-        }
     }
 }
