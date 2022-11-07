@@ -50,15 +50,10 @@ namespace HangfireService.Core.Promotion
                     //todo
                     GGR = 0
                 });
-            
-                var result = await _promotionService.InsertBonusSummaryInfo(bonusSummaryInfo);
-                if (result > 1)
-                {
-                    _timerService.SetBonusSummaryTimer((int)WorkerType, endTime);
-                    return true;
-                }
+                
+                await _promotionService.InsertBonusSummaryInfo(bonusSummaryInfo);
             }
-            _timerService.SetBonusSummaryTimer((int)WorkerType, endTime);
+            await _timerService.SetWorkerTimer((int)WorkerType,"BonusSummaryDetail", -1 , endTime);
             return true;
         }
     }

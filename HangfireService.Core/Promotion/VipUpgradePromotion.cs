@@ -23,7 +23,7 @@ namespace HangfireService.Core.Promotion
             if (ManualOption != null) 
                 id = ManualOption.Id;
             else 
-                id = await _timerService.GetWorkerId((int)WorkerType);
+                id = _timerService.GetBonusSummaryTimer((int)WorkerType).Id;
             
             var dto = await _promotionService.GetSummaryDataById("Service_VipUpgradeSummary_Get", id);
             var referral = dto.ToList();
@@ -49,7 +49,7 @@ namespace HangfireService.Core.Promotion
                 if (result > 1 && ManualOption == null)
                 {
                     var lastId = referral.Max(a => a.Id);
-                    await _timerService.SetWorkerId((int)WorkerType, "VipLevelLog", lastId);
+                    await _timerService.SetWorkerTimer((int)WorkerType, "VipLevelLog", lastId , null);
                 }
             }
             return true;
