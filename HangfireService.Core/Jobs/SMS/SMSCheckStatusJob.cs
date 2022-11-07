@@ -27,7 +27,8 @@ namespace HangfireService.Core.Jobs.SMS
         private static List<JobOption> _jobList;
         private readonly ReportDBDataLayer _reportDBDataLayer;
         private readonly MainDBDataLayer _mainDBDataLayer;
-        private readonly Dictionary<OTPProvider, Func<OTPCheck, Task<OTPCheckResult>>> _providerHandler;
+        private readonly Dictionary<string, Func<OTPCheck, Task<OTPCheckResult>>> _providerHandler;
+        private readonly Func<OTPCheck, Task<OTPCheckResult>> _defaultCheck;
 
         public SMSCheckStatusJob(IServiceProvider provider) : base(provider)
         {
@@ -39,12 +40,12 @@ namespace HangfireService.Core.Jobs.SMS
             MyJobManager.GetJobGroups()?.TryGetValue("SMS", out _jobList);
             _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
             _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
-            _providerHandler = new Dictionary<OTPProvider, Func<OTPCheck, Task<OTPCheckResult>>>()
+            _providerHandler = new Dictionary<string, Func<OTPCheck, Task<OTPCheckResult>>>()
             {
-                { OTPProvider.SkyLine, SkyLineCheckStatus},
-                { OTPProvider.NxCloud, NxCloudCheckStatus},
-                { OTPProvider.YC, YCCheckStatus},
+                { "SkyLine", SkyLineCheckStatus},
+                { "NxCloud", NxCloudCheckStatus}
             };
+            _defaultCheck = CheckStatusByPass;
         }
 
         [DisplayName("{0}")]
@@ -55,7 +56,11 @@ namespace HangfireService.Core.Jobs.SMS
                 var checkList = _reportDBDataLayer.GetOTPCheckList();
                 foreach (var otp in checkList)
                 {
-                    var result = await _providerHandler[otp.OTPProvider].Invoke(otp);
+
+                    var result = _providerHandler.TryGetValue(otp.OTPProvider, out var func)
+                        ? await func.Invoke(otp)
+                        : await _defaultCheck.Invoke(otp);
+                    
                     if (result.OTPStatus != (int)OTPStatus.SendToProvider)
                     {
                         _mainDBDataLayer.SetOTPStatus(result);
@@ -202,7 +207,7 @@ namespace HangfireService.Core.Jobs.SMS
             }
         }
 
-        private async Task<OTPCheckResult> YCCheckStatus(OTPCheck oTPCheck)
+        private async Task<OTPCheckResult> CheckStatusByPass(OTPCheck oTPCheck)
         {
             return oTPCheck.GetResult(OTPStatus.SendToCustomer);
         }

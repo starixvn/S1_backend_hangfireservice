@@ -8,7 +8,7 @@ namespace HangfireService.Core.Models.DBs
         public int CurrencyId { get; set; }
         public int OTPType { get; set; }
         public int CustId { get; set; }     
-        public OTPProvider OTPProvider { get; set; }
+        public string OTPProvider { get; set; }
         public string Request_id { get; set; }
         public string OTPNum { get; set; }
         public string OTPResponse { get; set; }
