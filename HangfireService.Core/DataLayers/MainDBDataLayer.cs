@@ -268,14 +268,9 @@ namespace HangfireService.Core.DataLayers
             return result;
         }
         
-        public int SetBonusSummaryTimer(int type , DateTime time, IDbTransaction trans)
+        public int SetBonusSummaryTimer(int type , int id, DateTime? time ,string memo,IDbTransaction trans)
         {
-            return _dbClient.Execute("Service_BonusSummaryTimer_Set", trans , parameters: new { _Type = type , _Time = time});
-        }
-
-        public int SetWorkerId(int type, string memo, int id ,IDbTransaction trans)
-        {
-            return _dbClient.Execute("Service_BonusSummaryTimerId_Set", trans , new { _Type = type, _Memo = memo, _Id = id });
+            return _dbClient.Execute("Service_Timer_Set", trans , parameters: new { _Type = type , _StartTime = time, _Memo = memo, _Id = id});
         }
         
         #endregion
