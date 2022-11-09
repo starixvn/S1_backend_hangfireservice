@@ -86,6 +86,8 @@ namespace HangfireService.Extensions
                 .AddSingleton<SecureHelper>()
                 .AddSingleton<ExcelHelper>()
                 .AddSingleton<TelegramBotHelper>()
+                .Configure<Dictionary<string, AWSKeyConfigOption>>(configuration.GetSection("SMSConfig"))
+                .AddSingleton<AWSCloudWatchLogsHelper>()
                 .AddTransient<MainDBDataLayer>()
                 .AddTransient<WagerDBDataLayer>()
                 .AddTransient<ReportDBDataLayer>()
