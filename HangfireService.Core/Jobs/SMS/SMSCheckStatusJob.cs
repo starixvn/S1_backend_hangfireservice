@@ -15,6 +15,7 @@ using Microsoft.Extensions.Configuration;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using System.Net;
+using Amazon.CloudWatchLogs.Model;
 
 namespace HangfireService.Core.Jobs.SMS
 {
@@ -23,6 +24,7 @@ namespace HangfireService.Core.Jobs.SMS
     {
         protected readonly HttpHelper _httpHelper;
         private readonly SecureHelper _secureHelper;
+        private readonly AWSCloudWatchLogsHelper _awsSnsHelper;
         private readonly Dictionary<string, SMSOption> _smsConfig;
         private static List<JobOption> _jobList;
         private readonly ReportDBDataLayer _reportDBDataLayer;
@@ -35,6 +37,7 @@ namespace HangfireService.Core.Jobs.SMS
             LogContext.PushProperty("ClassName", GetType().Name);
             _httpHelper = provider.GetRequiredService<HttpHelper>();
             _secureHelper = provider.GetRequiredService<SecureHelper>();
+            _awsSnsHelper = provider.GetRequiredService<AWSCloudWatchLogsHelper>();
             var iConfiguration = provider.GetRequiredService<IConfiguration>();
             _smsConfig = iConfiguration.GetSection("SMSConfig").Get<Dictionary<string, SMSOption>>();
             MyJobManager.GetJobGroups()?.TryGetValue("SMS", out _jobList);
@@ -43,7 +46,8 @@ namespace HangfireService.Core.Jobs.SMS
             _providerHandler = new Dictionary<string, Func<OTPCheck, Task<OTPCheckResult>>>()
             {
                 { "SkyLine", SkyLineCheckStatus},
-                { "NxCloud", NxCloudCheckStatus}
+                { "NxCloud", NxCloudCheckStatus},
+                { "AWS", AWSCheckStatus}
             };
             _defaultCheck = CheckStatusByPass;
         }
@@ -210,6 +214,52 @@ namespace HangfireService.Core.Jobs.SMS
         private async Task<OTPCheckResult> CheckStatusByPass(OTPCheck oTPCheck)
         {
             return oTPCheck.GetResult(OTPStatus.SendToCustomer);
+        }
+        
+        private async Task<OTPCheckResult> AWSCheckStatus(OTPCheck oTPCheck)
+        {
+
+            try
+            {
+                var startQueryRequest = new StartQueryRequest
+                {
+                    LogGroupName = "sns/ap-southeast-1/761771912479/DirectPublishToPhoneNumber",
+                    StartTime = ((DateTimeOffset)oTPCheck.CreateTime.AddHours(8).AddMinutes(-2)).ToUnixTimeSeconds(), 
+                    EndTime = ((DateTimeOffset)oTPCheck.CreateTime.AddHours(8).AddMinutes(2)).ToUnixTimeSeconds(),
+                    QueryString = "fields @timestamp, @message" +
+                                  $" | filter @message like \"{oTPCheck.Request_id}\""+
+                                  " | sort @timestamp desc",
+                    Limit = 1000
+                };
+                
+                var results = _awsSnsHelper.GetCloudWatchLods(startQueryRequest);
+                if (!results.Any())
+                {
+                    startQueryRequest.LogGroupName = "sns/ap-southeast-1/761771912479/DirectPublishToPhoneNumber/Failure";
+                    results = _awsSnsHelper.GetCloudWatchLods(startQueryRequest);
+                }
+
+                var status = OTPStatus.SendToProvider;
+                var message = "";
+                if (results.Any())
+                {
+                    var result = results.FirstOrDefault(i => i.notification.messageId == oTPCheck.Request_id);
+                    status = result?.status switch
+                    {
+                        "SUCCESS" => OTPStatus.SendToCustomer, // 成功
+                        "FAILURE" => OTPStatus.Fail, // 失败
+                        _ => OTPStatus.SendToProvider
+                    };
+                    message = result?.delivery.providerResponse;
+                }
+                
+                return oTPCheck.GetResult(status, message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return oTPCheck.GetResult(OTPStatus.SendToProvider);
+            }
         }
 
         private SMSOption GetSkyLineOption(OTPCheck oTPCheck)
