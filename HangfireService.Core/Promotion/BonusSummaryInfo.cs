@@ -47,8 +47,7 @@ namespace HangfireService.Core.Promotion
                     EndTime = a.EndTime,
                     TotalDeposit = a.TotalDeposit,
                     TotalWithdrawal = a.TotalWithdrawal,
-                    //todo
-                    GGR = 0
+                    GGR = a.GGR
                 });
                 
                 await _promotionService.InsertBonusSummaryInfo(bonusSummaryInfo);
