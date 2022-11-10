@@ -227,7 +227,7 @@ namespace HangfireService.Core.Jobs.SMS
                     StartTime = ((DateTimeOffset)oTPCheck.CreateTime.AddHours(8).AddMinutes(-2)).ToUnixTimeSeconds(), 
                     EndTime = ((DateTimeOffset)oTPCheck.CreateTime.AddHours(8).AddMinutes(2)).ToUnixTimeSeconds(),
                     QueryString = "fields @timestamp, @message" +
-                                  $" | filter @message like /{oTPCheck.Request_id}/"+
+                                  // $" | filter @message like /{oTPCheck.Request_id}/"+
                                   " | sort @timestamp desc",
                     Limit = 1000
                 };
