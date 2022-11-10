@@ -47,7 +47,7 @@ namespace HangfireService.Core.Jobs.SMS
             {
                 { "SkyLine", SkyLineCheckStatus},
                 { "NxCloud", NxCloudCheckStatus},
-                { "AWS", AwsCheckStatus}
+                // { "AWS", AwsCheckStatus}
             };
             _defaultCheck = CheckStatusByPass;
         }
