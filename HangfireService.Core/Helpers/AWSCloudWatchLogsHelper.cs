@@ -47,7 +47,7 @@ public class AWSCloudWatchLogsHelper
             QueryId = startQueryResponse.QueryId
         };
         var getQueryResults = _client.GetQueryResultsAsync(getQueryRequest).Result;
-        _logger.LogInformation($"Tp.Request.Response:{getQueryResults}");
+        _logger.LogWarning($"Tp.Request.Response:{getQueryResults}");
         return getQueryResults.Results.Select(result => JsonConvert.DeserializeObject<AWSSNSCloudWatchResponse>(result[1].Value)).ToList();
     }
 }
