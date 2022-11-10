@@ -82,11 +82,11 @@ namespace HangfireService.Extensions
             }
 
             return services
+                .Configure<AWSKeyConfigOption>(configuration.GetSection("ailab-cloudwatchlogs"))
                 .AddSingleton<HttpHelper>()
                 .AddSingleton<SecureHelper>()
                 .AddSingleton<ExcelHelper>()
                 .AddSingleton<TelegramBotHelper>()
-                .Configure<Dictionary<string, AWSKeyConfigOption>>(configuration.GetSection("SMSConfig"))
                 .AddSingleton<AWSCloudWatchLogsHelper>()
                 .AddTransient<MainDBDataLayer>()
                 .AddTransient<WagerDBDataLayer>()
