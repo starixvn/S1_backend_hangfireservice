@@ -218,16 +218,17 @@ namespace HangfireService.Core.Jobs.SMS
         
         private async Task<OTPCheckResult> AWSCheckStatus(OTPCheck oTPCheck)
         {
-
+            LogContext.PushProperty("TP", "AWSCloudWatchLogs");
+            LogContext.PushProperty("RequestId", Guid.NewGuid().ToString());
             try
             {
                 var startQueryRequest = new StartQueryRequest
                 {
                     LogGroupName = "sns/ap-southeast-1/761771912479/DirectPublishToPhoneNumber",
-                    StartTime = ((DateTimeOffset)oTPCheck.CreateTime.AddHours(8).AddMinutes(-2)).ToUnixTimeSeconds(), 
-                    EndTime = ((DateTimeOffset)oTPCheck.CreateTime.AddHours(8).AddMinutes(2)).ToUnixTimeSeconds(),
+                    StartTime = oTPCheck.CreateTimeToUnix - 120, 
+                    EndTime = oTPCheck.CreateTimeToUnix + 120,
                     QueryString = "fields @timestamp, @message" +
-                                  // $" | filter @message like /{oTPCheck.Request_id}/"+
+                                  $" | filter @message like /{oTPCheck.Request_id}/"+
                                   " | sort @timestamp desc",
                     Limit = 1000
                 };
