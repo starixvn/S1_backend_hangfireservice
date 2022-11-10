@@ -232,11 +232,11 @@ namespace HangfireService.Core.Jobs.SMS
                     Limit = 1000
                 };
                 
-                var results = _awsSnsHelper.GetCloudWatchLods(startQueryRequest);
+                var results = _awsSnsHelper.GetCloudWatchLogs(startQueryRequest);
                 if (!results.Any())
                 {
                     startQueryRequest.LogGroupName = "sns/ap-southeast-1/761771912479/DirectPublishToPhoneNumber/Failure";
-                    results = _awsSnsHelper.GetCloudWatchLods(startQueryRequest);
+                    results = _awsSnsHelper.GetCloudWatchLogs(startQueryRequest);
                 }
 
                 var status = OTPStatus.SendToProvider;

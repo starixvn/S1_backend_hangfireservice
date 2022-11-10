@@ -15,7 +15,7 @@ public class AWSCloudWatchLogsHelper
     public AWSCloudWatchLogsHelper(IServiceProvider provider)
     {
         var configuration = provider.GetRequiredService<IConfiguration>();
-        var awsKeyConfig = provider.GetRequiredService<IOptions<Dictionary<string, AWSKeyConfigOption>>>().Value["ailab-cloudwatchlogs"];
+        var awsKeyConfig = provider.GetRequiredService<IOptions<AWSKeyConfigOption>>();
         var proxyHost = configuration.GetValue<string>("ProxyHost");
         var proxyPort = configuration.GetValue<int>("ProxyPort");
 
@@ -30,10 +30,10 @@ public class AWSCloudWatchLogsHelper
             config.ProxyPort = proxyPort;
         }
 
-        _client = new AmazonCloudWatchLogsClient(awsKeyConfig.AccessKey, awsKeyConfig.SecretKey, config);
+        _client = new AmazonCloudWatchLogsClient(awsKeyConfig.Value.AccessKey, awsKeyConfig.Value.SecretKey, config);
     }
 
-    public List<AWSSNSCloudWatchResponse> GetCloudWatchLods(StartQueryRequest request)
+    public List<AWSSNSCloudWatchResponse> GetCloudWatchLogs(StartQueryRequest request)
     {
         var startQueryResponse = _client.StartQueryAsync(request).Result;
         var getQueryRequest = new GetQueryResultsRequest
