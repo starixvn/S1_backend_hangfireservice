@@ -40,7 +40,6 @@ public class AWSCloudWatchLogsHelper
     public List<AWSSNSCloudWatchResponse> GetCloudWatchLogs(StartQueryRequest request)
     {
         var fooJson = JsonConvert.SerializeObject(request);
-        LogContext.PushProperty("Tp.Request.Info", JsonConvert.SerializeObject(_client));
         LogContext.PushProperty("TpInfo", fooJson);
         var startQueryResponse = _client.StartQueryAsync(request).Result;
         var getQueryRequest = new GetQueryResultsRequest
