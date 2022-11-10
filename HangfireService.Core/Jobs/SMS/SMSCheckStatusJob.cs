@@ -47,7 +47,7 @@ namespace HangfireService.Core.Jobs.SMS
             {
                 { "SkyLine", SkyLineCheckStatus},
                 { "NxCloud", NxCloudCheckStatus},
-                { "AWS", AWSCheckStatus}
+                { "AWS", AwsCheckStatus}
             };
             _defaultCheck = CheckStatusByPass;
         }
@@ -216,7 +216,7 @@ namespace HangfireService.Core.Jobs.SMS
             return oTPCheck.GetResult(OTPStatus.SendToCustomer);
         }
         
-        private async Task<OTPCheckResult> AWSCheckStatus(OTPCheck oTPCheck)
+        private Task<OTPCheckResult> AwsCheckStatus(OTPCheck oTPCheck)
         {
             LogContext.PushProperty("TP", "AWSCloudWatchLogs");
             LogContext.PushProperty("RequestId", Guid.NewGuid().ToString());
@@ -254,12 +254,12 @@ namespace HangfireService.Core.Jobs.SMS
                     message = result?.delivery.providerResponse;
                 }
                 
-                return oTPCheck.GetResult(status, message);
+                return Task.FromResult(oTPCheck.GetResult(status, message));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
-                return oTPCheck.GetResult(OTPStatus.SendToProvider);
+                return Task.FromResult(oTPCheck.GetResult(OTPStatus.SendToProvider));
             }
         }
 
