@@ -15,6 +15,7 @@ using Microsoft.Extensions.Configuration;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using System.Net;
+using Amazon.CloudWatchLogs.Model;
 
 namespace HangfireService.Core.Jobs.SMS
 {
@@ -23,28 +24,32 @@ namespace HangfireService.Core.Jobs.SMS
     {
         protected readonly HttpHelper _httpHelper;
         private readonly SecureHelper _secureHelper;
+        private readonly AWSCloudWatchLogsHelper _awsSnsHelper;
         private readonly Dictionary<string, SMSOption> _smsConfig;
         private static List<JobOption> _jobList;
         private readonly ReportDBDataLayer _reportDBDataLayer;
         private readonly MainDBDataLayer _mainDBDataLayer;
-        private readonly Dictionary<OTPProvider, Func<OTPCheck, Task<OTPCheckResult>>> _providerHandler;
+        private readonly Dictionary<string, Func<OTPCheck, Task<OTPCheckResult>>> _providerHandler;
+        private readonly Func<OTPCheck, Task<OTPCheckResult>> _defaultCheck;
 
         public SMSCheckStatusJob(IServiceProvider provider) : base(provider)
         {
             LogContext.PushProperty("ClassName", GetType().Name);
             _httpHelper = provider.GetRequiredService<HttpHelper>();
             _secureHelper = provider.GetRequiredService<SecureHelper>();
+            _awsSnsHelper = provider.GetRequiredService<AWSCloudWatchLogsHelper>();
             var iConfiguration = provider.GetRequiredService<IConfiguration>();
             _smsConfig = iConfiguration.GetSection("SMSConfig").Get<Dictionary<string, SMSOption>>();
             MyJobManager.GetJobGroups()?.TryGetValue("SMS", out _jobList);
             _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
             _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
-            _providerHandler = new Dictionary<OTPProvider, Func<OTPCheck, Task<OTPCheckResult>>>()
+            _providerHandler = new Dictionary<string, Func<OTPCheck, Task<OTPCheckResult>>>()
             {
-                { OTPProvider.SkyLine, SkyLineCheckStatus},
-                { OTPProvider.NxCloud, NxCloudCheckStatus},
-                { OTPProvider.YC, YCCheckStatus},
+                { "SkyLine", SkyLineCheckStatus},
+                { "NxCloud", NxCloudCheckStatus},
+                // { "AWS", AwsCheckStatus}
             };
+            _defaultCheck = CheckStatusByPass;
         }
 
         [DisplayName("{0}")]
@@ -55,7 +60,11 @@ namespace HangfireService.Core.Jobs.SMS
                 var checkList = _reportDBDataLayer.GetOTPCheckList();
                 foreach (var otp in checkList)
                 {
-                    var result = await _providerHandler[otp.OTPProvider].Invoke(otp);
+
+                    var result = _providerHandler.TryGetValue(otp.OTPProvider, out var func)
+                        ? await func.Invoke(otp)
+                        : await _defaultCheck.Invoke(otp);
+                    
                     if (result.OTPStatus != (int)OTPStatus.SendToProvider)
                     {
                         _mainDBDataLayer.SetOTPStatus(result);
@@ -202,9 +211,56 @@ namespace HangfireService.Core.Jobs.SMS
             }
         }
 
-        private async Task<OTPCheckResult> YCCheckStatus(OTPCheck oTPCheck)
+        private async Task<OTPCheckResult> CheckStatusByPass(OTPCheck oTPCheck)
         {
             return oTPCheck.GetResult(OTPStatus.SendToCustomer);
+        }
+        
+        private Task<OTPCheckResult> AwsCheckStatus(OTPCheck oTPCheck)
+        {
+            LogContext.PushProperty("TP", "AWSCloudWatchLogs");
+            LogContext.PushProperty("RequestId", Guid.NewGuid().ToString());
+            try
+            {
+                var startQueryRequest = new StartQueryRequest
+                {
+                    LogGroupName = "sns/ap-southeast-1/761771912479/DirectPublishToPhoneNumber",
+                    StartTime = oTPCheck.CreateTimeToUnix - 120, 
+                    EndTime = oTPCheck.CreateTimeToUnix + 120,
+                    QueryString = "fields @timestamp, @message" +
+                                  // $" | filter @message like /{oTPCheck.Request_id}/"+
+                                  " | sort @timestamp desc",
+                    Limit = 1000
+                };
+                
+                var results = _awsSnsHelper.GetCloudWatchLogs(startQueryRequest);
+                if (!results.Any())
+                {
+                    startQueryRequest.LogGroupName = "sns/ap-southeast-1/761771912479/DirectPublishToPhoneNumber/Failure";
+                    results = _awsSnsHelper.GetCloudWatchLogs(startQueryRequest);
+                }
+
+                var status = OTPStatus.SendToProvider;
+                var message = "";
+                if (results.Any())
+                {
+                    var result = results.FirstOrDefault(i => i.notification.messageId == oTPCheck.Request_id);
+                    status = result?.status switch
+                    {
+                        "SUCCESS" => OTPStatus.SendToCustomer, // 成功
+                        "FAILURE" => OTPStatus.Fail, // 失败
+                        _ => OTPStatus.SendToProvider
+                    };
+                    message = result?.delivery.providerResponse;
+                }
+                
+                return Task.FromResult(oTPCheck.GetResult(status, message));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return Task.FromResult(oTPCheck.GetResult(OTPStatus.SendToProvider));
+            }
         }
 
         private SMSOption GetSkyLineOption(OTPCheck oTPCheck)
