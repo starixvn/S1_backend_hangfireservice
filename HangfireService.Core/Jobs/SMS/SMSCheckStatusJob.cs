@@ -246,7 +246,7 @@ namespace HangfireService.Core.Jobs.SMS
 
                 BackgroundJob.Schedule(
                     () => AwsOtpResult(oTPCheck, queryId, true, JsonConvert.SerializeObject(startQueryRequest)),
-                    TimeSpan.FromSeconds(10));
+                    TimeSpan.FromMinutes(1));
                 
                 return oTPCheck.GetResult(OTPStatus.SendToProvider);
             }
@@ -294,12 +294,12 @@ namespace HangfireService.Core.Jobs.SMS
                     //再次嘗試跟 AWS 要 OTP 發送狀態，確保 AWS 已處理完請求
                     BackgroundJob.Schedule(
                         () => AwsOtpResult(oTPCheck, queryId, false, queryString),
-                        TimeSpan.FromMinutes(1));
+                        TimeSpan.FromMinutes(3));
                 }
                 else
                 {
                     //嘗試一次後拿不到資料直接更新資料，避免無窮迴圈
-                    _mainDBDataLayer.SetOTPStatus(oTPCheck.GetResult(OTPStatus.SendToCustomer));
+                    _mainDBDataLayer.SetOTPStatus(oTPCheck.GetResult(OTPStatus.SendToCustomer, "系統檢查2次自動Pass"));
                 }
 
                 return result;
