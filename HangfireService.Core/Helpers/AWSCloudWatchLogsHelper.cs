@@ -37,7 +37,7 @@ public class AWSCloudWatchLogsHelper
         _client = new AmazonCloudWatchLogsClient(awsKeyConfig.Value.AccessKey, awsKeyConfig.Value.SecretKey, config);
     }
 
-    public List<AWSSNSCloudWatchResponse> GetCloudWatchLogs(StartQueryRequest request)
+    public async Task<List<AWSSNSCloudWatchResponse>> GetCloudWatchLogs(StartQueryRequest request)
     {
         var fooJson = JsonConvert.SerializeObject(request);
         LogContext.PushProperty("TpInfo", fooJson);
@@ -46,7 +46,8 @@ public class AWSCloudWatchLogsHelper
         {
             QueryId = startQueryResponse.QueryId
         };
-        var getQueryResults = _client.GetQueryResultsAsync(getQueryRequest).Result;
+        await Task.Delay(5000);
+        var getQueryResults = await _client.GetQueryResultsAsync(getQueryRequest);
         _logger.LogWarning($"Tp.Request.Response:{JsonConvert.SerializeObject(getQueryResults)}");
         return getQueryResults.Results.Select(result => JsonConvert.DeserializeObject<AWSSNSCloudWatchResponse>(result[1].Value)).ToList();
     }
