@@ -164,7 +164,7 @@ namespace HangfireService.Core.Jobs.SMS
 
             try
             {
-                LogContext.PushProperty("TP", "NxCloudC");
+                LogContext.PushProperty("TP", "NxCloud");
                 LogContext.PushProperty("RequestId", Guid.NewGuid().ToString());
                 
                 var smsOption = GetNxCloudOption(oTPCheck);
