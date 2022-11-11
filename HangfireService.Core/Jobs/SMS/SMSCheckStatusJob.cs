@@ -65,7 +65,7 @@ namespace HangfireService.Core.Jobs.SMS
                         ? await func.Invoke(otp)
                         : await _defaultCheck.Invoke(otp);
                     
-                    if (result.OTPStatus != (int)OTPStatus.SendToProvider)
+                    if (result.OTPStatus is (int)OTPStatus.SendToCustomer or (int)OTPStatus.Fail)
                     {
                         _mainDBDataLayer.SetOTPStatus(result);
                     }
@@ -218,16 +218,15 @@ namespace HangfireService.Core.Jobs.SMS
         
         private async Task<OTPCheckResult> AwsCheckStatus(OTPCheck oTPCheck)
         {
-            LogContext.PushProperty("TP", "AWSCloudWatchLogs");
-            LogContext.PushProperty("RequestId", Guid.NewGuid().ToString());
             try
             {
+                var smsOption = _smsConfig["AwsSMS"];
                 var startQueryRequest = new StartQueryRequest
                 {
                     LogGroupNames = new List<string>
                     {
-                        "sns/ap-southeast-1/761771912479/DirectPublishToPhoneNumber",
-                        "sns/ap-southeast-1/761771912479/DirectPublishToPhoneNumber/Failure"
+                        smsOption.KEY1,
+                        smsOption.KEY2
                     },
                     StartTime = oTPCheck.CreateTimeToUnix - 120,
                     EndTime = ((DateTimeOffset)DateTime.UtcNow.AddSeconds(-1)).ToUnixTimeSeconds(),
@@ -236,24 +235,67 @@ namespace HangfireService.Core.Jobs.SMS
                                   " | sort @timestamp",
                     Limit = 100
                 };
+                var queryId = _awsSnsHelper.GetCloudWatchLogsQueryId(startQueryRequest);
+
+                BackgroundJob.Schedule(
+                    () => AwsOtpResult(oTPCheck, queryId, true, JsonConvert.SerializeObject(startQueryRequest)),
+                    TimeSpan.FromSeconds(10));
                 
-                var results = await _awsSnsHelper.GetCloudWatchLogs(startQueryRequest);
+                return oTPCheck.GetResult(OTPStatus.SendToProvider);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return oTPCheck.GetResult(OTPStatus.SendToProvider);
+            }
+        }
+
+        public async Task<OTPCheckResult> AwsOtpResult(OTPCheck oTPCheck, string queryId, bool retry,
+            string queryString)
+        {
+            LogContext.PushProperty("TP", "AWSCloudWatchLogs");
+            LogContext.PushProperty("RequestId", queryId);
+            LogContext.PushProperty("TpInfo", JsonConvert.SerializeObject(queryString));
+
+            try
+            {
+                var results = _awsSnsHelper.GetCloudWatchLogsQueryResults(queryId);
 
                 var status = OTPStatus.SendToProvider;
                 var message = "";
                 if (results.Any())
                 {
-                    var result = results.FirstOrDefault(i => i.notification.messageId == oTPCheck.Request_id);
-                    status = result?.status switch
+                    var awsResult = results.FirstOrDefault(i => i.notification.messageId == oTPCheck.Request_id);
+                    status = awsResult?.status switch
                     {
                         "SUCCESS" => OTPStatus.SendToCustomer, // 成功
                         "FAILURE" => OTPStatus.Fail, // 失败
                         _ => OTPStatus.SendToProvider
                     };
-                    message = result?.delivery.providerResponse;
+                    message = awsResult?.delivery.providerResponse;
                 }
-                
-                return oTPCheck.GetResult(status, message);
+
+                var result = oTPCheck.GetResult(status, message);
+                if (result.OTPStatus is (int)OTPStatus.SendToCustomer or (int)OTPStatus.Fail)
+                {
+                    _mainDBDataLayer.SetOTPStatus(result);
+                    return result;
+                }
+
+                if (retry)
+                {
+                    //再次嘗試跟 AWS 要 OTP 發送狀態，確保 AWS 已處理完請求
+                    BackgroundJob.Schedule(
+                        () => AwsOtpResult(oTPCheck, queryId, false, queryString),
+                        TimeSpan.FromMinutes(1));
+                }
+                else
+                {
+                    //嘗試一次後拿不到資料直接更新資料，避免無窮迴圈
+                    _mainDBDataLayer.SetOTPStatus(oTPCheck.GetResult(OTPStatus.SendToCustomer));
+                }
+
+                return result;
             }
             catch (Exception ex)
             {
