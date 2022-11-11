@@ -47,7 +47,7 @@ namespace HangfireService.Core.Jobs.SMS
             {
                 { "SkyLine", SkyLineCheckStatus},
                 { "NxCloud", NxCloudCheckStatus},
-                // { "AWS", AwsCheckStatus}
+                { "AWS", AwsCheckStatus}
             };
             _defaultCheck = CheckStatusByPass;
         }
@@ -216,7 +216,7 @@ namespace HangfireService.Core.Jobs.SMS
             return oTPCheck.GetResult(OTPStatus.SendToCustomer);
         }
         
-        private Task<OTPCheckResult> AwsCheckStatus(OTPCheck oTPCheck)
+        private async Task<OTPCheckResult> AwsCheckStatus(OTPCheck oTPCheck)
         {
             LogContext.PushProperty("TP", "AWSCloudWatchLogs");
             LogContext.PushProperty("RequestId", Guid.NewGuid().ToString());
@@ -224,21 +224,20 @@ namespace HangfireService.Core.Jobs.SMS
             {
                 var startQueryRequest = new StartQueryRequest
                 {
-                    LogGroupName = "sns/ap-southeast-1/761771912479/DirectPublishToPhoneNumber",
-                    StartTime = oTPCheck.CreateTimeToUnix - 120, 
-                    EndTime = oTPCheck.CreateTimeToUnix + 120,
+                    LogGroupNames = new List<string>
+                    {
+                        "sns/ap-southeast-1/761771912479/DirectPublishToPhoneNumber",
+                        "sns/ap-southeast-1/761771912479/DirectPublishToPhoneNumber/Failure"
+                    },
+                    StartTime = oTPCheck.CreateTimeToUnix - 120,
+                    EndTime = ((DateTimeOffset)DateTime.UtcNow.AddSeconds(-1)).ToUnixTimeSeconds(),
                     QueryString = "fields @timestamp, @message" +
-                                  // $" | filter @message like /{oTPCheck.Request_id}/"+
-                                  " | sort @timestamp desc",
-                    Limit = 1000
+                                  $" | filter @message like /{oTPCheck.Request_id}/" +
+                                  " | sort @timestamp",
+                    Limit = 100
                 };
                 
-                var results = _awsSnsHelper.GetCloudWatchLogs(startQueryRequest);
-                if (!results.Any())
-                {
-                    startQueryRequest.LogGroupName = "sns/ap-southeast-1/761771912479/DirectPublishToPhoneNumber/Failure";
-                    results = _awsSnsHelper.GetCloudWatchLogs(startQueryRequest);
-                }
+                var results = await _awsSnsHelper.GetCloudWatchLogs(startQueryRequest);
 
                 var status = OTPStatus.SendToProvider;
                 var message = "";
@@ -254,12 +253,12 @@ namespace HangfireService.Core.Jobs.SMS
                     message = result?.delivery.providerResponse;
                 }
                 
-                return Task.FromResult(oTPCheck.GetResult(status, message));
+                return oTPCheck.GetResult(status, message);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
-                return Task.FromResult(oTPCheck.GetResult(OTPStatus.SendToProvider));
+                return oTPCheck.GetResult(OTPStatus.SendToProvider);
             }
         }
 
