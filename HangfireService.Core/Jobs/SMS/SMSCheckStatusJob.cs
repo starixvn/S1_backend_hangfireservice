@@ -164,6 +164,9 @@ namespace HangfireService.Core.Jobs.SMS
 
             try
             {
+                LogContext.PushProperty("TP", "NxCloudC");
+                LogContext.PushProperty("RequestId", Guid.NewGuid().ToString());
+                
                 var smsOption = GetNxCloudOption(oTPCheck);
                 var url = smsOption.CheckURL;
                 var data = new Dictionary<string, string>()
@@ -174,20 +177,23 @@ namespace HangfireService.Core.Jobs.SMS
                     { "messageid", oTPCheck.Request_id}
                 };
 
+                LogContext.PushProperty("TpInfo", JsonConvert.SerializeObject(data));
+
                 using var httpResponse = await _httpHelper.HttpFromPostAsync(url, null, data, "application/x-www-form-urlencoded");
                 if (httpResponse.StatusCode != HttpStatusCode.OK)
                 {
-                    _logger.LogError($"httpResponse error URL : {url} data:{data} StatusCode: {httpResponse.StatusCode}");
+                    _logger.LogWarning($"httpResponse error URL : {url} data:{data} StatusCode: {httpResponse.StatusCode}");
                     return oTPCheck.GetResult(OTPStatus.SendToProvider);
                 }
 
                 var content = await httpResponse.Content.ReadAsStringAsync();
+                _logger.LogWarning($"httpResponse Result URL : {url} content : {content} StatusCode: {httpResponse.StatusCode}");
                 var result = JsonConvert.DeserializeObject<NxCloudCheckResult>(content);
                 if (result.code != "0")
                 {
-                    _logger.LogError($"httpResponse Result error URL : {url} content : {content}");
                     return oTPCheck.GetResult(OTPStatus.SendToProvider);
                 }
+                
 
                 var status = result.row.dr switch
                 {
@@ -200,6 +206,7 @@ namespace HangfireService.Core.Jobs.SMS
                     "ESME_RINVDSTADR" => OTPStatus.Fail, // 错误号码
                     "ESME_RINVSRCADR" => OTPStatus.Fail, // 错误发件人
                     "UNKNOWN" => OTPStatus.SendToProvider, // 未知
+                    _ => OTPStatus.Fail
                 };
 
                 return oTPCheck.GetResult(status, $"check status is {result.row.dr}");
