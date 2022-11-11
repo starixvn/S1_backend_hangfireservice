@@ -206,7 +206,7 @@ namespace HangfireService.Core.Jobs.SMS
                     "ESME_RINVDSTADR" => OTPStatus.Fail, // 错误号码
                     "ESME_RINVSRCADR" => OTPStatus.Fail, // 错误发件人
                     "UNKNOWN" => OTPStatus.SendToProvider, // 未知
-                    _ => OTPStatus.Fail
+                    _ => OTPStatus.SendToProvider
                 };
 
                 return oTPCheck.GetResult(status, $"check status is {result.row.dr}");
