@@ -4,6 +4,7 @@ using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Options;
 using MySql.Data.MySqlClient;
 using System.Data;
+using HangfireService.Core.Service;
 
 namespace HangfireService.Core.DataLayers
 {
@@ -319,6 +320,26 @@ namespace HangfireService.Core.DataLayers
         {
             return _dbClient.Execute("Service_OTPLog_Set", result);
         }
+
+
+        /// <summary>
+        /// 新增玩家充值總帳
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public Task<int> InsertDailyExchangeRate(MpaUpdateExchangeRateService.DailyExchangeRateResponse data)
+        {
+            return _dbClient.ExecuteAsync("Service_ExchangeRate_Set", new
+            {
+                _RateDate = data.RateDate,
+                _CurrencyId = data.CurrencyId,
+                _CurrencyName = data.CurrencyName,
+                _TargetCurrencyId = data.TargetCurrencyId,
+                _TargetCurrencyName = data.TargetCurrencyName,
+                _TargetCurrencyRate = data.TargetCurrencyRate
+            });
+        }
+
     }
 }
 
