@@ -3,6 +3,7 @@ using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Options;
 using MySql.Data.MySqlClient;
+using MySqlX.XDevAPI.Common;
 using System.Data;
 
 namespace HangfireService.Core.DataLayers
@@ -248,6 +249,13 @@ namespace HangfireService.Core.DataLayers
         {
             return _dbClient.Execute("Service_OTPLog_Set", result);
         }
+
+        #region Online Count
+
+        public async Task<int> SetOnlineCount(IEnumerable<OnlineCountDto> onlineCountDtos)
+            => await _dbClient.ExecuteAsync("Service_OnlineCount_Set_V2", onlineCountDtos);
+
+        #endregion
     }
 }
 
