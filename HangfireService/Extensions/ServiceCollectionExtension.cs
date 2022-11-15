@@ -98,6 +98,7 @@ namespace HangfireService.Extensions
                 .AddSingleton<WorldCupDepositDailySummaryService>()
                 .AddSingleton<OnlineCountService>()
                 .AddSingleton<CustomerAutoLockService>()
+                .AddSingleton<CustClosingBalanceService>()
                 .AddSingleton<ConfigService>();
         }
 

@@ -251,14 +251,14 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Execute("Service_OTPLog_Set", result);
         }
 
-        #region Online Count
+        #region Statistical-Online Count
 
         public async Task<int> SetOnlineCount(IEnumerable<OnlineCountDto> onlineCountDtos)
             => await _dbClient.ExecuteAsync("Service_OnlineCount_Set_V2", onlineCountDtos);
 
         #endregion
 
-        #region Customer Auto Lock
+        #region Statistical-Customer Auto Lock
 
         public async Task<int> SetCustomerStatus(int custId, int status)
             => await _dbClient.ExecuteAsync("Service_LockDormantAccount_Set", new { CustId = custId, Status = status });
@@ -268,6 +268,20 @@ namespace HangfireService.Core.DataLayers
 
         public async Task<int> SetDormantSetting(int siteId)
             => await _dbClient.ExecuteAsync("Service_DormantSetting_Set", new { SiteId = siteId });
+
+        #endregion
+
+        #region Statistical-Cust Closing Balance
+
+        public async Task<int> SetCustClosingBalance()
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add("TotalCount", dbType: DbType.Int32, direction: ParameterDirection.InputOutput);
+
+            await _dbClient.ExecuteAsync("Service_CustClosingBalance_Set", parameters);
+
+            return parameters.Get<int?>("TotalCount") ?? 0;
+        }
 
         #endregion
     }
