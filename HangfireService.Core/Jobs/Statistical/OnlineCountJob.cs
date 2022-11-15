@@ -14,7 +14,7 @@ using System.ComponentModel;
 
 namespace HangfireService.Core.Jobs;
 
-[ManagementPage("OnlineCountJob", queue: "report")]
+[ManagementPage("OnlineCountJob", queue: "statistical")]
 internal class OnlineCountJob : BaseJob, IScheduledJob
 {
     private readonly OnlineCountService _onlineCountService;

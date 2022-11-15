@@ -25,7 +25,7 @@ public class OnlineCountService
 
     public async Task RunJobAsync()
     {
-        await SetOnlineCount(GetOnlineCount().Result);
+        await SetOnlineCount(await GetOnlineCount());
         await Task.CompletedTask;
     }
 
@@ -33,5 +33,5 @@ public class OnlineCountService
         => await _reportDBDataLayer.GetOnlineCount();
 
     private async Task<int> SetOnlineCount(IEnumerable<OnlineCountDto> onlineCountDtos)
-    => await _mainDBDataLayer.SetOnlineCount(onlineCountDtos);
+        => await _mainDBDataLayer.SetOnlineCount(onlineCountDtos);
 }

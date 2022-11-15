@@ -110,5 +110,17 @@ namespace HangfireService.Core.DataLayers
             => await _dbClient.QueryAsync<OnlineCountDto>("Service_OnlineUsers_Get_V2", commandTimeout: 120);
 
         #endregion
+
+        #region Customer Auto Lock
+
+        public async Task<IEnumerable<DormantSettingDto>> GetDormantSetting()
+            => await _dbClient.QueryAsync<DormantSettingDto>("Service_DormantSetting_Get");
+
+        public async Task<IEnumerable<DormantCustomerDto>> GetDormantCustomer(int siteId, int days, string statusStr)
+           => await _dbClient.QueryAsync<DormantCustomerDto>("Service_DormantAccount_Get",
+               parameters: new { SiteId = siteId, Day = days, StatusList = statusStr },
+               commandTimeout: 180);
+
+        #endregion
     }
 }

@@ -4,6 +4,7 @@ using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Options;
 using MySql.Data.MySqlClient;
 using MySqlX.XDevAPI.Common;
+using OfficeOpenXml.FormulaParsing.Excel.Operators;
 using System.Data;
 
 namespace HangfireService.Core.DataLayers
@@ -59,7 +60,7 @@ namespace HangfireService.Core.DataLayers
         #endregion
 
         #region Archive
-       
+
         public int DeleteArchive(string sp, dynamic parameters, IDbTransaction trans)
         {
             return _dbClient.Execute(sp, trans, parameters);
@@ -254,6 +255,19 @@ namespace HangfireService.Core.DataLayers
 
         public async Task<int> SetOnlineCount(IEnumerable<OnlineCountDto> onlineCountDtos)
             => await _dbClient.ExecuteAsync("Service_OnlineCount_Set_V2", onlineCountDtos);
+
+        #endregion
+
+        #region Customer Auto Lock
+
+        public async Task<int> SetCustomerStatus(int custId, int status)
+            => await _dbClient.ExecuteAsync("Service_LockDormantAccount_Set", new { CustId = custId, Status = status });
+
+        public async Task<int> SetCustNotes(int custId, string note, string @operator)
+            => await _dbClient.ExecuteAsync("Admin_CustNotes_Ins", new { CustId = custId, Note = note, Operator = @operator });
+
+        public async Task<int> SetDormantSetting(int siteId)
+            => await _dbClient.ExecuteAsync("Service_DormantSetting_Set", new { SiteId = siteId });
 
         #endregion
     }
