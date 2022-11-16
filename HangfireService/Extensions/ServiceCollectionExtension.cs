@@ -99,6 +99,7 @@ namespace HangfireService.Extensions
                 .AddSingleton<OnlineCountService>()
                 .AddSingleton<CustomerAutoLockService>()
                 .AddSingleton<CustClosingBalanceService>()
+                .AddSingleton<LeaderBoardService>()
                 .AddSingleton<ConfigService>();
         }
 

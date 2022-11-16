@@ -33,7 +33,7 @@ public class CustClosingBalanceJob : BaseJob, IScheduledJob
         _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
         try
         {
-            await _custClosingBalanceService.RunJobAsync();
+            await _custClosingBalanceService.RunJobAsync(jobName);
         }
         catch (Exception ex)
         {

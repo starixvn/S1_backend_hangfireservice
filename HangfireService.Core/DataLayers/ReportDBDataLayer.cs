@@ -122,5 +122,37 @@ namespace HangfireService.Core.DataLayers
                commandTimeout: 180);
 
         #endregion
+
+        #region Statistical-LeaderBoard
+
+        public async Task<IEnumerable<LeaderboardEventDto>> GetLeaderBoardEvent()
+            => await _dbClient.QueryAsync<LeaderboardEventDto>("Service_LeaderboardEvent_Get");
+
+        public async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetTpBetRecordForLeadBoard(int isRelay, LeaderboardEventDto eventDto)
+            => await _dbClient.QueryAsync<GetTpBetRecordForLeadBoardDto>(eventDto.SPName,
+                new
+                {
+                    SiteId = eventDto.SiteId,
+                    EventCode = eventDto.EventCode,
+                    StartDate = eventDto.StartTime,
+                    EndDate = eventDto.EndTime,
+                    TimeZone = eventDto.TimeZoom,
+                    Is14 = isRelay
+                },
+                commandTimeout: 0);
+
+        public async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetLeaderBoardExtraPoint(LeaderboardEventDto eventDto,string sp)
+            => await _dbClient.QueryAsync<GetTpBetRecordForLeadBoardDto>(sp,
+        new
+        {
+            SiteId = eventDto.SiteId,
+            EventCode = eventDto.EventCode,
+            StartDate = eventDto.StartTime,
+            EndDate = eventDto.EndTime,
+            TimeZone = eventDto.TimeZoom
+        },
+        commandTimeout: 0);
+        #endregion
+
     }
 }

@@ -6,6 +6,7 @@ using MySql.Data.MySqlClient;
 using MySqlX.XDevAPI.Common;
 using OfficeOpenXml.FormulaParsing.Excel.Operators;
 using System.Data;
+using System.Security.Policy;
 
 namespace HangfireService.Core.DataLayers
 {
@@ -282,6 +283,16 @@ namespace HangfireService.Core.DataLayers
 
             return parameters.Get<int?>("TotalCount") ?? 0;
         }
+
+        #endregion
+
+        #region Statistical-LeaderBoard
+
+        public async Task SetLeaderBoard(IEnumerable<GetTpBetRecordForLeadBoardDto> leadBoardDtos)
+            => await _dbClient.ExecuteAsync("Service_LeaderboardV2_Set", leadBoardDtos);
+
+        public async Task<int> SetLeaderBoardEventOverTime()
+            => await _dbClient.ExecuteAsync("Service_LeaderboardOverTime_Set");
 
         #endregion
     }
