@@ -60,28 +60,21 @@ namespace HangfireService.Core.Jobs
                         continue;
                     }
 
-                    if (categoryId == 8 && (tpGameType.Type == 47 || tpGameType.Type == 61))
+                    if (categoryId == 10 && (tpGameType.Type == 47 || tpGameType.Type == 61))
                     {
-                        // 排除Poker V8 & MP No Revenue GameType重複檢查 
+                        // 排除Games(Poker) V8 & MP No Revenue GameType重複檢查 
                         continue;
                     }
 
                     LogContext.PushProperty("Tp", tpGameType.TpId);
                     LogContext.PushProperty("GameType", tpGameType.TypeName);
                     var bettrans = Enumerable.Empty<TpSettlePendingModel>();
-                    var gameIds = new List<long> { 7, 8, 9, 10, 11, 12, 15, 16, 18, 28, 29, 32, 35, 36, 37, 39, 44, 45, 49, 50, 52, 53, 57, 63, 64, 65 };
+                    var gameIds = new List<long> { 7, 8, 9, 10, 11, 12, 15, 16, 18, 28, 29, 32, 35, 36, 37, 39, 44, 45, 50, 52, 53, 57, 63, 64, 65 };
 
                     switch (categoryId)
                     {
                         case 1:
-                            if (gameIds.Contains(tpGameType.Type))
-                            {
-                                bettrans = await _reportDBDataLayer.GetTpSettlePendingSportByTpGameType(tpGameType.Type, begin, end);
-                            }
-                            else
-                            {
-                                bettrans = await _reportDBDataLayer.GetTpSettlePendingTpUnsettleByTpGameType(tpGameType.TpId, tpGameType.Type, begin, end);
-                            }
+                            bettrans = await _reportDBDataLayer.GetTpSettlePendingTpUnsettleByTpGameType(tpGameType.TpId, tpGameType.Type, begin, end);
                             break;
                         case 2:
                             if (tpGameType.Type == 34 || tpGameType.Type == 46 || tpGameType.Type == 86)
@@ -138,7 +131,9 @@ namespace HangfireService.Core.Jobs
                             {
                                 bettrans = await _wagerDBDataLayer.GetTpSettlePendingPokerByTpGameType(tpGameType.Type, begin, end);
                             }
-                            else if (gameIds.Contains(tpGameType.Type))
+                            break;
+                        case 10:
+                            if (gameIds.Contains(tpGameType.Type))
                             {
                                 bettrans = await _reportDBDataLayer.GetTpSettlePendingPokerByTpGameType(tpGameType.Type, begin, end);
                             }

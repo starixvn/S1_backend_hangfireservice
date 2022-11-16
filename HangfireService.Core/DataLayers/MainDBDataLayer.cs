@@ -243,6 +243,11 @@ namespace HangfireService.Core.DataLayers
         {
             return _dbClient.Execute(sp, trans, parameters);
         }
+
+        public int SetOTPStatus(OTPCheckResult result)
+        {
+            return _dbClient.Execute("Service_OTPLog_Set", result);
+        }
     }
 }
 
