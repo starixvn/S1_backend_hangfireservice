@@ -41,7 +41,7 @@ namespace HangfireService.Core.Jobs
             {
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
 
-                var option = JsonConvert.DeserializeObject<TpSettleOption>(JsonConvert.SerializeObject(jobOption.Parameters));
+                var option = JsonConvert.DeserializeObject<TpSettleOption>(jobOption.Parameters);
                 int subtractDay = option.SubtractDay;
                 int categoryId = option.CategoryId;
                 string categoryName = option.CategoryName;

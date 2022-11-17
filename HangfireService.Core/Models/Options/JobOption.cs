@@ -4,7 +4,7 @@ namespace HangfireService.Core.Models.Jobs
 {
     public class JobOption
     {
-        public string Type { get; set; }
+        public string Group { get; set; }
 
         public string ClassName { get; set; }
 
@@ -16,6 +16,6 @@ namespace HangfireService.Core.Models.Jobs
 
         public bool Enable { get; set; }
 
-        public ExpandoObject Parameters { get; set; }
+        public string Parameters { get; set; }
     }
 }
