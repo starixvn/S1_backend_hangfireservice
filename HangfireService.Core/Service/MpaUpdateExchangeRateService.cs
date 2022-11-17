@@ -100,6 +100,7 @@ namespace HangfireService.Core.Service
                 }
                 else
                 {
+                    dateList.Add(DateTime.Today.AddDays(1).ToString("yyyy-MM-dd"));
                     var dayDiff = DateTime.Today.AddDays(-3); // 抓最近三天內的匯率更新
                     while (DateTime.Today >= dayDiff)
                     {
