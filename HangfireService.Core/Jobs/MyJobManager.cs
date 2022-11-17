@@ -11,9 +11,9 @@ namespace HangfireService.Core.Jobs
     {
         private static IReadOnlyDictionary<string, List<JobOption>> _jobGroups;
 
-        public static void SettingJob(IConfiguration configuration)
+        public static void SettingJob(Dictionary<string, List<JobOption>> jobGroups)
         {
-            _jobGroups = configuration.GetSection("ScheduledJob").Get<Dictionary<string, List<JobOption>>>();
+            _jobGroups = jobGroups;
         }
 
         public static IReadOnlyDictionary<string, List<JobOption>> GetJobGroups()
@@ -29,7 +29,7 @@ namespace HangfireService.Core.Jobs
             {
                 foreach (var option in jobGroup.Value)
                 {
-                    if (option.Enable && option.Type == typeof(IScheduledJob).Name)
+                    if (option.Enable)
                     {
                         var job = provider.GetServices<IScheduledJob>()
                             .First(job => job.GetType().Name.Equals(option.ClassName, StringComparison.OrdinalIgnoreCase));

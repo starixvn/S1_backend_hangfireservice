@@ -32,7 +32,7 @@ namespace HangfireService.Core.Jobs
         public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
         {
             _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
-            var option = JsonConvert.DeserializeObject<WorldCupDepositDailySummaryOption>(JsonConvert.SerializeObject(jobOption.Parameters));
+            var option = JsonConvert.DeserializeObject<WorldCupDepositDailySummaryOption>(jobOption.Parameters);
             option.AccountDate = option.AccountDate ?? DateTime.Now.AddHours(8).Date; //機器上是UTC + 0 ，所以要+8小時，如果沒有指定重跑日期，就是抓現在時間
             try
             {
@@ -77,14 +77,11 @@ namespace HangfireService.Core.Jobs
             if (string.IsNullOrEmpty(AccountDate)) return null;
             var result = _worldCupDepositDailySummaryService.ReSetWorldCupDepositDailySummary(siteId, currencyId, custId, DateTime.Parse(AccountDate)).Result;
 
-            var jobOption = new JobOption
-            {
-                Parameters = new ExpandoObject()
-            };
-            jobOption.Parameters.Update("SiteId", siteId.ToString());
-            jobOption.Parameters.Update("CurrencyId", currencyId.ToString());
-            jobOption.Parameters.Update("AccountDate", AccountDate);
-            jobOption.Parameters.Update("CustId", custId.ToString());
+            var jobOption = new JobOption();
+            jobOption.Parameters = jobOption.Parameters.Update("SiteId", siteId.ToString());
+            jobOption.Parameters = jobOption.Parameters.Update("CurrencyId", currencyId.ToString());
+            jobOption.Parameters = jobOption.Parameters.Update("AccountDate", AccountDate);
+            jobOption.Parameters = jobOption.Parameters.Update("CustId", custId.ToString());
 
             return ExecuteAsync($"ReRunWorldCupDepositDailySummaryJob", jobOption, context, cancellationToken).Result;
         }

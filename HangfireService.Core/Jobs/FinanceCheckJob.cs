@@ -47,7 +47,7 @@ namespace HangfireService.Core.Jobs
             try
             {
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
-                var checkOption = JsonConvert.DeserializeObject<FinanceCheckOption>(JsonConvert.SerializeObject(jobOption.Parameters));
+                var checkOption = JsonConvert.DeserializeObject<FinanceCheckOption>(jobOption.Parameters);
                 var tpBetRecordList = _reportDBDataLayer.GetTpBetRecordCheckData(checkOption.BeginTime, checkOption.EndTime)
                                 .GroupBy(i => i.TpId).ToDictionary(i => i.Key, i => i.ToList());
 
@@ -97,8 +97,8 @@ namespace HangfireService.Core.Jobs
             var date = DateTime.ParseExact($"{CheckDate}", "yyyy-MM-dd", null);
             var BeginTime = date.ToString("yyyy-MM-dd");
             var EndTime = date.AddDays(1).ToString("yyyy-MM-dd");
-            jobOption.Parameters.Update("BeginTime", BeginTime);
-            jobOption.Parameters.Update("EndTime", EndTime);
+            jobOption.Parameters = jobOption.Parameters.Update("BeginTime", BeginTime);
+            jobOption.Parameters = jobOption.Parameters.Update("EndTime", EndTime);
 
             return ExecuteAsync($"Execute.{jobName}.({BeginTime}~{EndTime})", jobOption, context, cancellationToken).Result;
         }
