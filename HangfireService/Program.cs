@@ -29,8 +29,8 @@ builder.Services
     .AddDatabaseConnection(builder.Configuration)
     .RegisterServices(builder.Configuration)
     .RegisterPromotion()
-    .AddHangfireService(builder.Configuration)
     .RegisterScheduledJobs(builder.Configuration)
+    .AddHangfireService(builder.Configuration)  
     .RegisterTpHelper()
     .AddOption();
 
