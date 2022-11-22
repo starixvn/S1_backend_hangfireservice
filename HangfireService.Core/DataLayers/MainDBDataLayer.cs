@@ -263,6 +263,11 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Query<TpMaintain>("TpMaintain_Get", new DynamicParameters(new { SiteId = siteId }));
         }
         
+
+        public int SetOTPStatus(OTPCheckResult result)
+        {
+            return _dbClient.Execute("Service_OTPLog_Set", result);
+        }
     }
 }
 

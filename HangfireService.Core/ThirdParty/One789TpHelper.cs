@@ -88,7 +88,7 @@ namespace HangfireService.Core.ThirdParty
         public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, List<TpBetRecordCheck> tpBetRecord, List<BettransCheckData> bettransList, List<TpDailySummaryCheckData> tpDailyList)
         {
             //  改用TpBetRecord.TransTime檢查
-            tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckTransTimeDataByTpId(TpId, checkOption.BeginTime, checkOption.EndTime).ToList();
+            tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckDataByTpId(TpId, checkOption.BeginTime, checkOption.EndTime, TicketStatusExcludeOption.CancelAndUnsettle, TimeOption.TransTime).ToList();
 
             // 交易資料 ValidBet 設為 結算資料 ValidBet，因交易資料無法計算出ValidBet
             foreach (var tpBettransData in bettransList)
