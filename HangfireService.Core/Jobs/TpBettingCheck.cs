@@ -113,6 +113,7 @@ namespace HangfireService.Core.Jobs
                     $"* Betting Monitor Alert * \r\n" +
                     $"* Time : {DateTime.UtcNow.AddHours(8):yyyy-MM-dd HH:mm:ss} * \r\n" +
                     $"=======================\r\n" +
+                    $"Site : {model.SiteName}\r\n" +
                     $"Product : {model.TypeName}\r\n" +
                     $"Currency : {model.Currency}\r\n" +
                     $"Duration : {model.Frequency} Minutes\r\n" +

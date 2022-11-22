@@ -6,6 +6,7 @@ namespace HangfireService.Core.Models.DBs;
 public class TpBettingCheckModel
 {
     public int SiteId { set; get; }
+    public string SiteName { set; get; }
     public string TypeName { set; get; }
     public int TpId { set; get; }
     public int GameType { set; get; }
