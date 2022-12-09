@@ -27,7 +27,7 @@ namespace HangfireService.Core.Service
             _tpCheckMerchantConfig = iConfiguration.GetSection("TpCheckMerchantBalanceConfig").Get<Dictionary<string, PtCheckMerchantBalanceOption>>();
             _commonServiceHost = iConfiguration.GetValue<string>("AiLabServiceHost:CommonServiceHost");
             _tpServiceHost = iConfiguration.GetValue<string>("AiLabServiceHost:TpServiceHost");
-            _letsTalkGroupName = iConfiguration.GetValue<string>("LetsTalkConfig:LetsTalkGroupName");
+            _letsTalkGroupName = iConfiguration.GetValue<string>("LetsTalkConfig:SNS:LetsTalkGroupName");
             _httpHelper = provider.GetRequiredService<HttpHelper>();
             _logger = provider.GetRequiredService<ILogger<BaseJob>>();
             _tpIdMapToSiteName = new Dictionary<int, string>()
