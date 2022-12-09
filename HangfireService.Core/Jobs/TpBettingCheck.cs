@@ -29,7 +29,7 @@ namespace HangfireService.Core.Jobs
             _reportDbDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
             _httpHelper = provider.GetRequiredService<HttpHelper>();
             var iConfiguration = provider.GetRequiredService<IConfiguration>();
-            _letsTalkGroupName = iConfiguration.GetValue<string>("LetsTalkConfig:LetsTalkGroupName");
+            _letsTalkGroupName = iConfiguration.GetValue<string>("LetsTalkConfig:Monitoring:LetsTalkGroupName");
             _commonServiceHost = iConfiguration.GetValue<string>("AiLabServiceHost:CommonServiceHost");
         }
 
