@@ -83,7 +83,7 @@ namespace HangfireService.Core.Jobs
                             break;
                         case 2:
                             // 重作抄單
-                            var hour4 = new List<int> { 24, 36 };
+                            var hour4 = new List<int> { 21, 24, 36 };
                             var day2 = new List<int> { 22, 31 };
                             var day4 = new List<int> { 13, 28 };
 
