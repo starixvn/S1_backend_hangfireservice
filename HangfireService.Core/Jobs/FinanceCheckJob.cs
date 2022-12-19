@@ -111,6 +111,9 @@ namespace HangfireService.Core.Jobs
             if (TpId == 30)
             {
                 specialMsg = "(GameType: 50)";
+            }else if (TpId == 6)
+            {
+                specialMsg = "(GameType: 88~91)";
             }
 
             if (!checkFilter.Any())
