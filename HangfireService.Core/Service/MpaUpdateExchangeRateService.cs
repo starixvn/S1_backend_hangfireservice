@@ -124,7 +124,16 @@ namespace HangfireService.Core.Service
                         var content = await httpResponse.Content.ReadAsStringAsync();
                         var response = JsonConvert.DeserializeObject<List<DailyExchangeRateResponse>>(content);
                         response = response.Where(x => _includeCurrencyName.Contains(x.TargetCurrencyName)).ToList();
-                        response.ForEach(x => x.RateDate = DateTime.Parse(date));
+                        response.ForEach(x =>
+                        {
+                            if ((x.CurrencyId == 15 && x.TargetCurrencyId == 15) ||
+                                (x.CurrencyId == 51 && x.TargetCurrencyId == 51))
+                            {
+                                x.TargetCurrencyRate /= 1000;
+                            }
+
+                            x.RateDate = DateTime.Parse(date);
+                        });
 
                         // insert to db
                         var tasks = response.Select(item => Task.Run(() => _mainDBDataLayer.InsertDailyExchangeRate(item))).ToList();
