@@ -41,7 +41,7 @@ namespace HangfireService.Core.Jobs
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
 
                 var monitorDatas = _reportDbDataLayer.GetTpBettingCheck();
-                var lastBetting = _reportDbDataLayer.GetLastBettingTime(DateTime.UtcNow.AddMinutes(-100000) , DateTime.UtcNow);
+                var lastBetting = _reportDbDataLayer.GetLastBettingTime(DateTime.UtcNow.AddMinutes(-60) , DateTime.UtcNow);
 
                 foreach (var data in monitorDatas)
                 {
