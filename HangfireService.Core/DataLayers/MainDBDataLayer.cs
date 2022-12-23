@@ -234,6 +234,16 @@ namespace HangfireService.Core.DataLayers
         }
         #endregion
 
+		public async Task<int> ExpiredBanner(string bannerName, int siteId, int currencyId)
+        {
+            return await _dbClient.ExecuteAsync("Service_BannerExpired_Set", new
+            {
+                _BannerName = bannerName,
+                _SiteId = siteId,
+                _CurrencyId = currencyId
+            });
+        }
+        
         public int SetTpBetRecordRelayData(DateTime date, int timeoutSeconds)
         {
             var parameters = new
