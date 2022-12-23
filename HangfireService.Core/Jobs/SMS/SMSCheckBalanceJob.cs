@@ -32,7 +32,7 @@ namespace HangfireService.Core.Jobs.SMS
             _secureHelper = provider.GetRequiredService<SecureHelper>();
             var iConfiguration = provider.GetRequiredService<IConfiguration>();
             _smsConfig = iConfiguration.GetSection("SMSConfig").Get<Dictionary<string, SMSOption>>();
-            _letsTalkGroupName = iConfiguration.GetValue<string>("LetsTalkConfig:LetsTalkGroupName");
+            _letsTalkGroupName = iConfiguration.GetValue<string>("LetsTalkConfig:SNS:LetsTalkGroupName");
             _commonServiceHost = iConfiguration.GetValue<string>("AiLabServiceHost:CommonServiceHost");
             MyJobManager.GetJobGroups()?.TryGetValue("SMS", out _jobList);
         }

@@ -243,6 +243,26 @@ namespace HangfireService.Core.DataLayers
             };
             return _dbClient.QueryFirst<int>("Relay_TpBetRecord_Set_V3", parameters, commandTimeout: timeoutSeconds);
         }
+        
+        public int SetLastBettingTime(int siteId, int currencyId, int tpId , int gameType , DateTime? lastBettingTime , bool isExecute)
+        {
+            var parameters = new
+            {
+                _SiteId = siteId,
+                _CurrencyId = currencyId,
+                _TpId = tpId,
+                _GameType = gameType,
+                _LastBettingTime = lastBettingTime,
+                _IsExecute = isExecute
+            };
+            return _dbClient.Execute("Service_TpBettingMonitorSetting_Set", parameters);
+        }
+        
+        public IEnumerable<TpMaintain> GetTpMaintainList(int siteId)
+        {
+            return _dbClient.Query<TpMaintain>("TpMaintain_Get", new DynamicParameters(new { SiteId = siteId }));
+        }
+        
 
         public int SetOTPStatus(OTPCheckResult result)
         {
