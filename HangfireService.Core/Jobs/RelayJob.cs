@@ -161,9 +161,9 @@ namespace HangfireService.Core.Jobs
 
             var StartTime = start.ToString("yyyy-MM-dd");
             var EndTime = end.ToString("yyyy-MM-dd");
-            jobOption.Parameters.Update("StartTime", StartTime);
-            jobOption.Parameters.Update("EndDate", EndTime);
-            jobOption.Parameters.Update("LiminNum", liminNum);
+            jobOption.Parameters = jobOption.Parameters.Update("StartTime", StartTime);
+            jobOption.Parameters = jobOption.Parameters.Update("EndDate", EndTime);
+            jobOption.Parameters = jobOption.Parameters.Update("LiminNum", liminNum);
             return ExecuteAsync($"Execute.{jobName}.({StartTime} ~ {EndTime})", jobOption, context, cancellationToken).Result;
         }
 
