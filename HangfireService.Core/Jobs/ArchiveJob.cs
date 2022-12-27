@@ -24,7 +24,7 @@ namespace HangfireService.Core.Jobs
 
         private readonly ReportDBDataLayer _reportDBDataLayer;
 
-        private static List<JobOption>? _archiveJobList;
+        private static List<JobOption> _archiveJobList;
 
         private static readonly ConcurrentDictionary<string, string> _JobStateList = new();
 
@@ -58,7 +58,7 @@ namespace HangfireService.Core.Jobs
                     return message;
                 }
 
-                var option = JsonConvert.DeserializeObject<ArchiveOption>(JsonConvert.SerializeObject(jobOption.Parameters));
+                var option = JsonConvert.DeserializeObject<ArchiveOption>(jobOption.Parameters);
                 var archiveList = _reportDBDataLayer.GetArchiveList(option.GetSP, option.LiminNum);
                 
                 var success = 0;
@@ -104,10 +104,10 @@ namespace HangfireService.Core.Jobs
         [Job]
         [DisplayName("Run {2} by ManagementPage")]
         public object Run(
-            PerformContext? context = null,
-            IJobCancellationToken? cancellationToken = null,
+            PerformContext context = null,
+            IJobCancellationToken cancellationToken = null,
             [DisplayData("JobName", ConvertType = typeof(ArchiveJobList))]
-            string? jobName = null,
+            string jobName = null,
             [DisplayData("LiminNum", defaultValue:"1000")]
             string liminNum = "1000",
             [DisplayData("TaskCount", defaultValue:"2")]
@@ -119,15 +119,15 @@ namespace HangfireService.Core.Jobs
             }
 
             var jobOption = _archiveJobList.First(i => i.JobName == jobName);
-            jobOption.Parameters.Update("LiminNum", liminNum);
-            jobOption.Parameters.Update("TaskCount", taskCount);
+            jobOption.Parameters = jobOption.Parameters.Update("LiminNum", liminNum);
+            jobOption.Parameters = jobOption.Parameters.Update("TaskCount", taskCount);
 
             return ExecuteAsync($"Execute.{jobName}.({liminNum}/{taskCount})", jobOption, context, cancellationToken).Result;
         }
 
         private class ArchiveJobList : IInputDataList
         {
-            public Dictionary<string, string>? GetData()
+            public Dictionary<string, string> GetData()
             {
                 return _archiveJobList?.ToDictionary(f => f.JobName, f => f.JobName);
             }
