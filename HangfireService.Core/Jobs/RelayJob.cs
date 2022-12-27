@@ -38,7 +38,7 @@ namespace HangfireService.Core.Jobs
             try
             {
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
-                var option = JsonConvert.DeserializeObject<RelayOption>(JsonConvert.SerializeObject(jobOption.Parameters));
+                var option = JsonConvert.DeserializeObject<RelayOption>(jobOption.Parameters);
                 var result = 0;
 
                 if (option.ExecuteType == ExecuteType.Days)
