@@ -242,17 +242,7 @@ namespace HangfireService.Core.DataLayers
                 _SiteId = siteId,
                 _CurrencyId = currencyId
             });
-        }
-        
-        public int SetTpBetRecordRelayData(DateTime date, int timeoutSeconds)
-        {
-            var parameters = new
-            {
-                StartTime = date,
-                EndTime = date.AddDays(1),
-            };
-            return _dbClient.QueryFirst<int>("Relay_TpBetRecord_Set_V3", parameters, commandTimeout: timeoutSeconds);
-        }
+        }    
         
         public int SetLastBettingTime(int siteId, int currencyId, int tpId , int gameType , DateTime? lastBettingTime , bool isExecute)
         {
@@ -272,7 +262,16 @@ namespace HangfireService.Core.DataLayers
         {
             return _dbClient.Query<TpMaintain>("TpMaintain_Get", new DynamicParameters(new { SiteId = siteId }));
         }
-        
+
+        public int InsertRelayData(string sp, object parameters, IDbTransaction trans)
+        {
+            return _dbClient.Execute(sp, trans, parameters);
+        }
+
+        public int DeleteRelayData(string sp, object parameters, IDbTransaction trans)
+        {
+            return _dbClient.Execute(sp, trans, parameters);
+        }
 
         public int SetOTPStatus(OTPCheckResult result)
         {

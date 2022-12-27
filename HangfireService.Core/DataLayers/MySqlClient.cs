@@ -85,7 +85,7 @@ namespace HangfireService.Core.DataLayers
             return result;
         }
 
-        public async Task<int> ExecuteAsync(string name, object? parameters = null)
+        public async Task<int> ExecuteAsync(string name, object parameters = null)
         {
             var sw = Stopwatch.StartNew();
             int result;
@@ -105,14 +105,14 @@ namespace HangfireService.Core.DataLayers
             return result;
         }
 
-        public IEnumerable<dynamic> Query(string name, object parameters = null)
+        public IEnumerable<dynamic> Query(string name, object parameters = null, int? commandTimeout = null)
         {
             var sw = Stopwatch.StartNew();
             IEnumerable<dynamic> result;
             try
             {
                 using var connection = new MySqlConnection(_connectionString);
-                result = connection.Query(name, param: parameters, commandType: CommandType.StoredProcedure);
+                result = connection.Query(name, param: parameters, commandType: CommandType.StoredProcedure, commandTimeout: commandTimeout);
             }
             catch (Exception e)
             {
@@ -125,7 +125,7 @@ namespace HangfireService.Core.DataLayers
             return result;
         }
 
-        public int Execute(string name, IDbTransaction trans, object? parameters = null)
+        public int Execute(string name, IDbTransaction trans, object parameters = null)
         {
             var sw = Stopwatch.StartNew();
             int result;
