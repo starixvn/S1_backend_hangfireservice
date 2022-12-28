@@ -276,14 +276,23 @@ namespace HangfireService.Core.DataLayers
         {
             return _dbClient.Execute("Service_Timer_Set", trans , parameters: new { _Type = type , _StartTime = time, _Memo = memo, _Id = id});
         }
-        
+
         #endregion
-        
+
+        #region Relay
+
         public int InsertRelayData(string sp, object parameters, IDbTransaction trans)
         {        
             return _dbClient.Execute(sp, trans, parameters);
         }
-        
+
+        public int DeleteRelayData(string sp, object parameters, IDbTransaction trans)
+        {
+            return _dbClient.Execute(sp, trans, parameters);
+        }
+
+        #endregion
+
         public async Task<int> ExpiredBanner(string bannerName, int siteId, int currencyId)
         {
             return await _dbClient.ExecuteAsync("Service_BannerExpired_Set", new
@@ -311,12 +320,6 @@ namespace HangfireService.Core.DataLayers
         public IEnumerable<TpMaintain> GetTpMaintainList(int siteId)
         {
             return _dbClient.Query<TpMaintain>("TpMaintain_Get", new DynamicParameters(new { SiteId = siteId }));
-        }
-        
-
-        public int DeleteRelayData(string sp, object parameters, IDbTransaction trans)
-        {
-            return _dbClient.Execute(sp, trans, parameters);
         }
 
         public int SetOTPStatus(OTPCheckResult result)
@@ -367,7 +370,6 @@ namespace HangfireService.Core.DataLayers
             => await _dbClient.ExecuteAsync("Service_LeaderboardOverTime_Set");
 
         #endregion
-
 
         /// <summary>
         /// 新增玩家充值總帳

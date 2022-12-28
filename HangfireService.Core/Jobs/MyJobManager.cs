@@ -32,17 +32,20 @@ namespace HangfireService.Core.Jobs
                     if (option.Enable)
                     {
                         var job = provider.GetServices<IScheduledJob>()
-                            .First(job => job.GetType().Name.Equals(option.ClassName, StringComparison.OrdinalIgnoreCase));
+                            .FirstOrDefault(job => job.GetType().Name.Equals(option.ClassName, StringComparison.OrdinalIgnoreCase));
+                        
+                        if (job != null)
+                        {
+                            jobManager.AddOrUpdate(
+                              recurringJobId: option.JobName,
+                              methodCall: () => job.ExecuteAsync(option.JobName, option, null, null),
+                              cronExpression: option.Cron,
+                              queue: jobGroup.Key.ToLower(),
+                              timeZone: TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time"));
 
-                        jobManager.AddOrUpdate(
-                          recurringJobId: option.JobName,
-                          methodCall: () => job.ExecuteAsync(option.JobName, option, null, null),
-                          cronExpression: option.Cron,
-                          queue: jobGroup.Key.ToLower(),
-                          timeZone: TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time"));
-
-                        //都先設定為暫停狀態
-                        Pause(option.JobName);
+                            //都先設定為暫停狀態
+                            Pause(option.JobName);
+                        }                      
                     }
                 }
             }
