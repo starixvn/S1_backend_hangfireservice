@@ -2,7 +2,7 @@
 using Hangfire.Dashboard.Management.Pages;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
-using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Hosting;
 using System.ComponentModel;
 
 namespace HangfireService.Core.Jobs
@@ -49,8 +49,14 @@ namespace HangfireService.Core.Jobs
                     }
                 }
             }
+            
             //全部job延遲時啟動
-            AllDelayStart();
+            var webHostEnvironment = provider.GetRequiredService<IWebHostEnvironment>();
+            if (!webHostEnvironment.EnvironmentName.Equals("Local"))
+            {
+                AllDelayStart();
+            }
+
         }
 
         public static void PauseThenRestart(string jobName, int pauseHours, string reason)
