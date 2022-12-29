@@ -12,6 +12,7 @@ using HangfireService.Core.Models.Options;
 using Hangfire.Dashboard.Management.Support;
 using HangfireService.Core.Extensions;
 using HangfireService.Core.Helpers;
+using MySql.Data.MySqlClient;
 
 namespace HangfireService.Core.Jobs
 {
@@ -112,9 +113,21 @@ namespace HangfireService.Core.Jobs
                     PageSize,
                 }, option.TimeoutSeconds);
                 forContinue = relayData.Count() == PageSize;
-                
-                //寫入分頁其餘資料
-                result += _mainDBDataLayer.InsertRelayData(option.InsertSP, relayData, trans);                                      
+            
+                try
+                {
+                    //寫入分頁其餘資料
+                    result += _mainDBDataLayer.InsertRelayData(option.InsertSP, relayData, trans);
+                }
+                catch (MySqlException mySqlEx)
+                {
+                    //Saba二次結算會造成Duplicatekey，先記錄就好不中斷relay流程，讓每日排程更新資料
+                    _logger.LogWarning(mySqlEx, mySqlEx.Message);                   
+                    if (mySqlEx.Number != 1062)
+                    {
+                        throw;
+                    }
+                }                                             
             }
 
             if (result > 0)
