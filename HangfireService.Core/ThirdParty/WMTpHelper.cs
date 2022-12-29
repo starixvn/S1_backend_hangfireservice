@@ -40,7 +40,8 @@ namespace HangfireService.Core.ThirdParty
 
             // bettrans 資料時間可能會有跨天的問題
             // 因使用transtime檢查會使tpbetrecord 下注跨天計算有問題，暫時調整為settletime比對確保tpbetrecord與wager金額相符，但會造成bettrans跨天計算有問題，後續如有bettrans & 第三方不符，請先手動檢查bettrans & wager (bettime)下注時間撈取總計檢查
-            var bettrans = await _dbClient.QueryAsync<BettransCheckData>("Finance_BettransLC_WM_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
+            var bettransData = await _dbClient.QueryAsync<BettransCheckData>("Finance_BettransLC_WM_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
+            var bettrans = bettransData.Where(x => x.Stake != 0 && x.WinlostAmount != 0);
             foreach (var item in bettrans)
             {
                 item.ValidBet = item.Stake;
