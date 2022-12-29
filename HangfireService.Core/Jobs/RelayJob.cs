@@ -62,10 +62,10 @@ namespace HangfireService.Core.Jobs
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
-                BackgroundJob.Schedule(
-                    () => ExecuteAsync(jobName, jobOption, null, null),
-                    TimeSpan.FromMinutes(5));
-                _telegramBotHelper.SendMessage($"{jobName} 執行發生錯誤，五分鐘後重試。");
+                //BackgroundJob.Schedule(
+                //   () => ExecuteAsync(jobName, jobOption, null, null),
+                //    TimeSpan.FromMinutes(5));
+                //_telegramBotHelper.SendMessage($"{jobName} 執行發生錯誤，五分鐘後重試。");
                 return JsonConvert.SerializeObject(ex);
             }
         }
