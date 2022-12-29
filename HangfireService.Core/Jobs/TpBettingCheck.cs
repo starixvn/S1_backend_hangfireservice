@@ -64,7 +64,7 @@ namespace HangfireService.Core.Jobs
                             .Where(item => item.MaintainCheck(DateTime.UtcNow))
                             .Where(x => x.SiteId == data.SiteId
                                         && x.TpId == data.TpId
-                                        && x.TpGameType == data.GameType);
+                                        && (x.TpGameType == data.GameType || x.TpGameType == 0));
                         
                         if (!maintain.Any())
                         {
