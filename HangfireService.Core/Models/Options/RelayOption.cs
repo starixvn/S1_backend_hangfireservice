@@ -8,8 +8,6 @@
         public ExecuteType ExecuteType { get; set; }
         public int Subtract { get; set; } = 0;
         public int TimeoutSeconds { get; set; } = 300;
-        public int LiminNum { get; set; } = 2000;
-
         public string SummaryType { get; set; } = "";
 
         public DateTime StartTime
