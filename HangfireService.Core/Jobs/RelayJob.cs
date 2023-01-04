@@ -70,10 +70,10 @@ namespace HangfireService.Core.Jobs
 
                 //洗舊資料用
                 if (jobName.Contains("TpBetRecordSummary-Days") && option.StartTime == option.EndTime 
-                    && option.StartTime < new DateTime(2023,01,01))
+                    && option.StartTime >= new DateTime(2022,01,01))
                 {
                     var lastDay = option.StartTime.ToString("yyyy-MM-dd");
-                    var nextDay = option.StartTime.AddDays(1).ToString("yyyy-MM-dd");
+                    var nextDay = option.StartTime.AddDays(-1).ToString("yyyy-MM-dd");
                     jobOption.Parameters = jobOption.Parameters.Update("StartTime", nextDay);
                     jobOption.Parameters = jobOption.Parameters.Update("EndTime", value: nextDay);
                     var newJobName = jobName.Replace(lastDay, nextDay);
