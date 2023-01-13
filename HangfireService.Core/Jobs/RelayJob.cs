@@ -68,6 +68,20 @@ namespace HangfireService.Core.Jobs
                     result += await ExcuteRelay(option, option.StartTime, option.EndTime);
                 }
 
+                //洗舊資料用
+                if (jobName.Contains("TpBetRecordSummary-Days") && option.StartTime == option.EndTime 
+                    && option.StartTime >= new DateTime(2022,01,01))
+                {
+                    var lastDay = option.StartTime.ToString("yyyy-MM-dd");
+                    var nextDay = option.StartTime.AddDays(-1).ToString("yyyy-MM-dd");
+                    jobOption.Parameters = jobOption.Parameters.Update("StartTime", nextDay);
+                    jobOption.Parameters = jobOption.Parameters.Update("EndTime", value: nextDay);
+                    var newJobName = jobName.Replace(lastDay, nextDay);
+                    BackgroundJob.Schedule(
+                      () => ExecuteAsync(newJobName, jobOption, null, null),
+                       TimeSpan.FromSeconds(5));
+                }
+
                 return option.ExecuteType == ExecuteType.Days ? 
                     $"{jobName}.({option.StartTime:yyyy-MM-dd} ~ {option.EndTime:yyyy-MM-dd}) success count: {result}":
                     $"{jobName}.({option.StartTime:yyyy-MM-dd HH:mm} ~ {option.EndTime:yyyy-MM-dd HH:mm}) success count: {result}"; ;
@@ -75,10 +89,10 @@ namespace HangfireService.Core.Jobs
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
-                //BackgroundJob.Schedule(
-                //   () => ExecuteAsync(jobName, jobOption, null, null),
-                //    TimeSpan.FromMinutes(5));
-                //_telegramBotHelper.SendMessage($"{jobName} 執行發生錯誤，五分鐘後重試。");
+                BackgroundJob.Schedule(
+                   () => ExecuteAsync(jobName, jobOption, null, null),
+                    TimeSpan.FromMinutes(5));
+                _telegramBotHelper.SendMessage($"{jobName} 執行發生錯誤，五分鐘後重試。");
                 return JsonConvert.SerializeObject(ex);
             }
         }
@@ -163,7 +177,10 @@ namespace HangfireService.Core.Jobs
             var EndTime = end.ToString("yyyy-MM-dd");
             jobOption.Parameters = jobOption.Parameters.Update("StartTime", StartTime);
             jobOption.Parameters = jobOption.Parameters.Update("EndTime", EndTime);
-            return ExecuteAsync($"Execute.{jobName}.({StartTime} ~ {EndTime})", jobOption, context, cancellationToken).Result;
+            var result = ExecuteAsync($"Execute.{jobName}.({StartTime} ~ {EndTime})", jobOption, context, cancellationToken).Result;
+            
+          
+            return result;
         }
 
         private class JobList : IInputDataList

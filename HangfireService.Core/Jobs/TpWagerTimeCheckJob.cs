@@ -83,7 +83,8 @@ namespace HangfireService.Core.Jobs
                             break;
                         case 2:
                             // 重作抄單
-                            var hour4 = new List<int> { 6, 21, 24, 36 };
+                            var hour4 = new List<int> { 6, 21, 24 };
+                            var hour8 = new List<int> { 36 };
                             var day2 = new List<int> { 22, 31 };
                             var day4 = new List<int> { 13, 28 };
 
@@ -91,6 +92,14 @@ namespace HangfireService.Core.Jobs
                             {
                                 // 落後4小時
                                 if (delayHour >= 4)
+                                {
+                                    checkList.Add(data);
+                                }
+                            }
+                            else if (hour8.Contains(data.TpId))
+                            {
+                                // 落後8小時
+                                if (delayHour >= 8)
                                 {
                                     checkList.Add(data);
                                 }
