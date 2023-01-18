@@ -45,7 +45,7 @@ namespace HangfireService.Core.Service
         /// <param name="amountSettings"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<bool> DepositProcess(WorldCupDepositDailySummaryOption option, IEnumerable<DepositAmountSettingDto> amountSettings)
+        private async Task<bool> DepositProcess(WorldCupDepositDailySummaryOption option, IEnumerable<DepositAmountSettingDto> amountSettings)
         {
             var dateSetting = await GetDateSetting(option);
             var accountDate = option.AccountDate.Value;

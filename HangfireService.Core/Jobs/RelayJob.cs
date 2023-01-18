@@ -107,11 +107,11 @@ namespace HangfireService.Core.Jobs
                 EndTime,
                 SummaryTypeList = option.SummaryType
             };
-            var relayData = _reportDBDataLayer.GetRelayData(option.GetSP, parameters, option.TimeoutSeconds);       
+            var relayData = _reportDBDataLayer.GetRelayData(option.GetSP, parameters, option.TimeoutSeconds);
 
-            using var conn = _mainDBDataLayer.GetMySqlConnection();
+            await using var conn = _mainDBDataLayer.GetMySqlConnection();
             conn.Open();
-            var trans = conn.BeginTransaction();
+            var trans = await conn.BeginTransactionAsync();
             if (relayData.Any())
             {
                 //清除舊資料
@@ -135,10 +135,14 @@ namespace HangfireService.Core.Jobs
             if (result > 0)
             {
                 trans.Commit();
+                await conn.CloseAsync();
+                await conn.DisposeAsync();
             }
             else
             {
-                trans.Dispose();
+                await trans.DisposeAsync();
+                await conn.CloseAsync();
+                await conn.DisposeAsync();
             }
 
             return result;
