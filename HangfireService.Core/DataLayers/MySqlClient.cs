@@ -64,11 +64,7 @@ namespace HangfireService.Core.DataLayers
             try
             {
                 await using var connection = new MySqlConnection(_connectionString);
-                var command = new CommandDefinition(name, parameters,
-                    commandTimeout : commandTimeout,
-                    commandType: CommandType.StoredProcedure,
-                    flags: CommandFlags.NoCache);
-                result = await connection.QueryAsync<T>(command);
+                result = await connection.QueryAsync<T>(name, parameters, commandType: CommandType.StoredProcedure, commandTimeout: commandTimeout);
                 await connection.CloseAsync();
                 await connection.DisposeAsync();
             }
@@ -91,11 +87,7 @@ namespace HangfireService.Core.DataLayers
             try
             {
                 await using var connection = new MySqlConnection(_connectionString);
-                var command = new CommandDefinition(name, parameters,
-                    commandTimeout: commandTimeout,
-                    commandType: CommandType.StoredProcedure,
-                    flags: CommandFlags.NoCache);
-                result = await connection.QueryFirstOrDefaultAsync<T>(command);
+                result = await connection.QueryFirstOrDefaultAsync<T>(name, parameters, commandType: CommandType.StoredProcedure, commandTimeout: commandTimeout);
                 await connection.CloseAsync();
                 await connection.DisposeAsync();
             }
