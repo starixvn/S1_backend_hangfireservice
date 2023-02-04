@@ -140,11 +140,11 @@ namespace HangfireService.Core.Jobs
 
         private async Task<int> ExcuteArchive(ArchiveOption option, dynamic data)
         {
-            using var conn = _mainDBDataLayer.GetMySqlConnection();
+            await using var conn = _mainDBDataLayer.GetMySqlConnection();
             try
             {
                 conn.Open();
-                var trans = conn.BeginTransaction();
+                var trans = await conn.BeginTransactionAsync();
 
                 var doDelete = string.IsNullOrEmpty(option.InsertSP); //InsertSP空白為不需要搬資料，僅刪除舊資料
 
@@ -160,9 +160,13 @@ namespace HangfireService.Core.Jobs
                     if (deleteResult > 0)
                     {
                         trans.Commit();
+                        await conn.CloseAsync();
+                        await conn.DisposeAsync();
                         return deleteResult;
                     }
                 }
+                await conn.CloseAsync();
+                await conn.DisposeAsync();
                 return 0;
             }
             catch (MySqlException ex)
