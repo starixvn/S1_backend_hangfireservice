@@ -93,7 +93,22 @@ namespace HangfireService.Core.DataLayers
         {
             return _dbClient.Query<TpCurrency>("Service_TpCurrency_Get", parameters: new { TpId });
         }
-
+        
+         public Task<IEnumerable<Banner>> GetBanner()
+        {
+            return _dbClient.QueryAsync<Banner>("Service_BannerExpired_Get");
+        }
+        
+        public IEnumerable<TpBettingCheckModel> GetTpBettingCheck()
+        {
+            return _dbClient.Query<TpBettingCheckModel>("Service_TpBettingMonitor_Get");
+        }
+        
+        public IEnumerable<TpLastBetting> GetLastBettingTime(DateTime startTime , DateTime endTime)
+        {
+            return _dbClient.Query<TpLastBetting>("Service_TpLastBetting_Get", parameters: new { _StartTime = startTime, _EndTime = endTime});
+        }
+        
         public IEnumerable<OTPCheck> GetOTPCheckList()
         {
             return _dbClient.Query<OTPCheck>("Service_OTPLog_Check");
@@ -103,5 +118,10 @@ namespace HangfireService.Core.DataLayers
         {
             return _dbClient.QueryFirst<Customer>("Customer_Get", parameters: new { CustId });
         }
+        public IEnumerable<dynamic> GetRelayData(string sp, object parameters, int timeoutSeconds)
+        {
+            return _dbClient.Query(sp, parameters: parameters, commandTimeout: timeoutSeconds);
+        }
+
     }
 }

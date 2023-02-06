@@ -41,7 +41,7 @@ namespace HangfireService.Core.Jobs
         {
             try
             {
-                var option = JsonConvert.DeserializeObject<TpDetailOption>(JsonConvert.SerializeObject(jobOption.Parameters));
+                var option = JsonConvert.DeserializeObject<TpDetailOption>(jobOption.Parameters);
                 if (!_tpHandler.TryGetValue(option.TpId, out IDetailTpHelper tpHelper))
                 {
                     throw new NotImplementedException($"{option.TpId} NotImplemented");
@@ -85,8 +85,8 @@ namespace HangfireService.Core.Jobs
             }
 
             var jobOption = _tpDetailJobList.First(i => i.JobName == jobName);
-            jobOption.Parameters.Update("LiminNum", liminNum);
-            jobOption.Parameters.Update("TaskCount", taskCount);
+            jobOption.Parameters = jobOption.Parameters.Update("LiminNum", liminNum);
+            jobOption.Parameters = jobOption.Parameters.Update("TaskCount", taskCount);
 
             return ExecuteAsync($"Execute.{jobName}.({liminNum}/{taskCount})", jobOption, context, cancellationToken).Result;
         }

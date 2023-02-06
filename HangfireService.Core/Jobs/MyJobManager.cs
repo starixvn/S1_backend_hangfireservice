@@ -2,7 +2,7 @@
 using Hangfire.Dashboard.Management.Pages;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
-using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Hosting;
 using System.ComponentModel;
 
 namespace HangfireService.Core.Jobs
@@ -11,9 +11,9 @@ namespace HangfireService.Core.Jobs
     {
         private static IReadOnlyDictionary<string, List<JobOption>> _jobGroups;
 
-        public static void SettingJob(IConfiguration configuration)
+        public static void SettingJob(Dictionary<string, List<JobOption>> jobGroups)
         {
-            _jobGroups = configuration.GetSection("ScheduledJob").Get<Dictionary<string, List<JobOption>>>();
+            _jobGroups = jobGroups;
         }
 
         public static IReadOnlyDictionary<string, List<JobOption>> GetJobGroups()
@@ -29,25 +29,34 @@ namespace HangfireService.Core.Jobs
             {
                 foreach (var option in jobGroup.Value)
                 {
-                    if (option.Enable && option.Type == typeof(IScheduledJob).Name)
+                    if (option.Enable)
                     {
                         var job = provider.GetServices<IScheduledJob>()
-                            .First(job => job.GetType().Name.Equals(option.ClassName, StringComparison.OrdinalIgnoreCase));
+                            .FirstOrDefault(job => job.GetType().Name.Equals(option.ClassName, StringComparison.OrdinalIgnoreCase));
+                        
+                        if (job != null)
+                        {
+                            jobManager.AddOrUpdate(
+                              recurringJobId: option.JobName,
+                              methodCall: () => job.ExecuteAsync(option.JobName, option, null, null),
+                              cronExpression: option.Cron,
+                              queue: jobGroup.Key.ToLower(),
+                              timeZone: TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time"));
 
-                        jobManager.AddOrUpdate(
-                          recurringJobId: option.JobName,
-                          methodCall: () => job.ExecuteAsync(option.JobName, option, null, null),
-                          cronExpression: option.Cron,
-                          queue: jobGroup.Key.ToLower(),
-                          timeZone: TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time"));
-
-                        //都先設定為暫停狀態
-                        Pause(option.JobName);
+                            //都先設定為暫停狀態
+                            Pause(option.JobName);
+                        }                      
                     }
                 }
             }
+            
             //全部job延遲時啟動
-            AllDelayStart();
+            var webHostEnvironment = provider.GetRequiredService<IWebHostEnvironment>();
+            if (!webHostEnvironment.EnvironmentName.Equals("Local"))
+            {
+                AllDelayStart();
+            }
+
         }
 
         public static void PauseThenRestart(string jobName, int pauseHours, string reason)
@@ -81,7 +90,7 @@ namespace HangfireService.Core.Jobs
             foreach (var job in connection.GetRecurringJobs())
             {
                 BackgroundJob.Schedule(() => StartAfterSeconds(job.Id, seconds), TimeSpan.FromSeconds(seconds));
-                seconds += 10;
+                seconds += 5;
             }
         }
 
