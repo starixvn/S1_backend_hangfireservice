@@ -31,12 +31,8 @@ namespace HangfireService.Core.ThirdParty
         public async Task<IEnumerable<bool>> GetTpBetRecordDetailAsync(IEnumerable<TpDetailTodo> todoList, TpDetailOption option)
         {
             var result = new List<bool>();
-
-            //要注意第三方api可否接受Parallel，不支援可改用foreach
-            Parallel.ForEach(todoList,
-                new ParallelOptions() { MaxDegreeOfParallelism = option.TaskCount },
-                todo =>
-            {
+            foreach (var todo in todoList)
+            { 
                 try
                 {
                     if (todo.GameType == 80)//LG虛擬體育目前無api，在ThirdPartyBetHistory處理細單，所以直接更新成功
@@ -69,7 +65,7 @@ namespace HangfireService.Core.ThirdParty
                     _logger.LogError(e, e.Message);
                     result.Add(false);
                 }
-            });
+            }
 
             return result;
         }
