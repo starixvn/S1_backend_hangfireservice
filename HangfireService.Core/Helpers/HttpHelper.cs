@@ -36,6 +36,7 @@ namespace HangfireService.Core.Helpers
 
         public async Task<string> HttpPostAsync(string url, Dictionary<string, string> headerParams, string parameters, string contentType)
         {
+            LogContext.PushProperty("RequestId", Guid.NewGuid().ToString());
             LogContext.PushProperty("HttpHelper.Request.URL", url);
             HttpClientHandler handler = null;
             if (!string.IsNullOrEmpty(proxyHost))
@@ -70,6 +71,7 @@ namespace HangfireService.Core.Helpers
 
         public async Task<HttpResponseMessage> HttpPost1Async(string url, Dictionary<string, string> headerParams, string parameters, string contentType)
         {
+            LogContext.PushProperty("RequestId", Guid.NewGuid().ToString());
             LogContext.PushProperty("HttpHelper.Request.URL", url);
             HttpClientHandler handler = null;
             if (!string.IsNullOrEmpty(proxyHost))
@@ -107,6 +109,7 @@ namespace HangfireService.Core.Helpers
 
         public async Task<HttpResponseMessage> HttpFromPostAsync(string url, Dictionary<string, string> headerParams, Dictionary<string, string> parameters, string contentType)
         {
+            LogContext.PushProperty("RequestId", Guid.NewGuid().ToString());
             LogContext.PushProperty("HttpHelper.Request.URL", url);
             HttpClientHandler handler = null;
             if (!string.IsNullOrEmpty(proxyHost))
@@ -132,7 +135,7 @@ namespace HangfireService.Core.Helpers
                 }
             }
 
-            _logger.LogInformation($"HttpHelper.Request.BODY:{parameters}");
+            _logger.LogInformation($"HttpHelper.Request.BODY:{string.Join(",", parameters.Select(i => $"{i.Key}={i.Value}"))}");
 
             using var data = new HttpRequestMessage(HttpMethod.Post, url) { Content = new FormUrlEncodedContent(parameters) };
             var response = await client.SendAsync(data);
