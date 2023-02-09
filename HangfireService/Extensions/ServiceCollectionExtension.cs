@@ -96,6 +96,7 @@ namespace HangfireService.Extensions
                 .AddSingleton<ThirdPartyManager>()
                 .AddSingleton<PartitionService>()
                 .AddSingleton<FincanceService>()
+                .AddSingleton<CustomerService>()
                 .AddSingleton<PtMerchantBalanceCheckService>()
                 .AddSingleton<WorldCupDepositDailySummaryService>()
                 .AddSingleton<ConfigService>();
