@@ -11,6 +11,10 @@ namespace HangfireService.Core.ThirdParty
 {
     public class NineWTpHelper : BaseTpHelper, IFinanceTpHelper
     {
+        public bool CheckTransId => false;
+
+        public TimeOption TimeOptionId => TimeOption.SettledTime;
+
         public int TpId { get; } = 31;
         private readonly IEnumerable<TpCurrency> _tpCurrency;
         private readonly MySqlClient _wagerDbClient;

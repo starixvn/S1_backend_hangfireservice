@@ -12,6 +12,10 @@ namespace HangfireService.Core.ThirdParty
 {
     internal class One789TpHelper : BaseTpHelper, IFinanceTpHelper
     {
+        public bool CheckTransId => false;
+
+        public TimeOption TimeOptionId => TimeOption.TransTime;
+
         public int TpId => 23;
 
         private readonly ReportDBDataLayer _reportDbDataLayer;

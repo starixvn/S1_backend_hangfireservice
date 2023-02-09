@@ -12,6 +12,10 @@ namespace HangfireService.Core.ThirdParty
 {
     internal class EVOTpHeler : BaseTpHelper, IFinanceTpHelper
     {
+        public bool CheckTransId => false;
+
+        public TimeOption TimeOptionId => TimeOption.SettledTime;
+
         public int TpId => 36;
 
         private readonly ReportDBDataLayer _reportDbDataLayer;

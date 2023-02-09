@@ -12,6 +12,10 @@ namespace HangfireService.Core.ThirdParty
 {
     internal class YGGTpHelper : BaseTpHelper, IFinanceTpHelper
     {
+        public bool CheckTransId => false;
+
+        public TimeOption TimeOptionId => TimeOption.TransTime;
+
         public int TpId => 8;
 
         private readonly ReportDBDataLayer _reportDbDataLayer;

@@ -12,6 +12,10 @@ namespace HangfireService.Core.ThirdParty
 {
     public class ATTpHelper : BaseTpHelper, IFinanceTpHelper
     {
+        public bool CheckTransId => false;
+
+        public TimeOption TimeOptionId => TimeOption.TransTime;
+
         public int TpId => 24;
         private readonly ReportDBDataLayer _reportDbDataLayer;
         private readonly IEnumerable<TpCurrency> _tpCurrency;
