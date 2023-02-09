@@ -18,4 +18,25 @@ namespace HangfireService.Core.Models.Finance
             ErrorList = errorList;
         }
     }
+
+    public class FinanceCheckTransIdResult
+    {
+        public FinanceCheckTransIdType FinanceCheckTransIdType { get; set; }
+
+        public int TpId { get; set; }
+
+        public int Count { get; set; }
+
+        public List<string> ErrorList { get; set; }
+        public string ErrorData { get; set; }
+
+        public FinanceCheckTransIdResult(FinanceCheckTransIdType financeCheckTransIdType, int tpId, int count, List<string> errorList, string errorData = null)
+        {
+            FinanceCheckTransIdType = financeCheckTransIdType;
+            TpId = tpId;
+            Count = count;
+            ErrorList = errorList;
+            ErrorData = errorData;
+        }
+    }
 }

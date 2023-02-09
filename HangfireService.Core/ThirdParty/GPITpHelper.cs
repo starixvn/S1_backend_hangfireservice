@@ -7,11 +7,16 @@ using HangfireService.Core.Models.Options;
 using HangfireService.Core.Service;
 using HangfireService.Core.ThirdParty.Interfaces;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 
 namespace HangfireService.Core.ThirdParty
 {
     internal class GPITpHelper : BaseTpHelper, IFinanceTpHelper
     {
+        public bool CheckTransId => true;
+
+        public TimeOption TimeOptionId => TimeOption.TransTime;
+
         public int TpId => 6;
 
         private readonly ReportDBDataLayer _reportDbDataLayer;
@@ -106,7 +111,7 @@ namespace HangfireService.Core.ThirdParty
                     tpBetData.WinlostAmount -= tpBetItem.WinlostAmount;
                     tpBetData.ProgressiveBet -= tpBetItem.ProgressiveBet;
                     tpBetData.ProgressiveWin -= tpBetItem.ProgressiveWin;
-                    if(tpBetData.Stake == 0m)
+                    if (tpBetData.Stake == 0m)
                     {
                         tpBetRecord.Remove(tpBetData);
                     }
@@ -147,6 +152,42 @@ namespace HangfireService.Core.ThirdParty
                 _logger.LogError($"[{checkOption.BeginTime:yyyy-MM-dd}]:{ToJson(data)}");
             }
             return checkResult;
+        }
+
+        public async Task<IEnumerable<BettransCheckTransIdData>> GetBettransCheckTransIdData(FinanceCheckTransIdOption checkOption)
+        {
+            var BeginTime = checkOption.BeginTime.GetUnixTime();
+            var EndTime = checkOption.EndTime.GetUnixTime() - 1;
+
+            var tasks = new List<Task<IEnumerable<BettransCheckTransIdData>>>
+            {
+                _wagerClient.QueryAsync<BettransCheckTransIdData>("Finance_TpWagerLT_GPI_Check_TransId_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }),
+                _wagerClient.QueryAsync<BettransCheckTransIdData>("Finance_TpWagerRng_GPI_Check_TransId_Get", new { _BeginTime = BeginTime, _EndTime = EndTime })
+            };
+
+            await Task.WhenAll(tasks);
+
+            var CheckData = new List<BettransCheckTransIdData>();
+            foreach (var item in tasks)
+            {
+                CheckData.AddRange(item.Result);
+            }
+
+            return (from bettrans in CheckData
+                    let exchangeRate = _tpCurrency.First(c => c.CurrencyId == bettrans.CurrencyId).ExchangeRate
+                    select new BettransCheckTransIdData
+                    {
+                        TpId = TpId,
+                        TransId = bettrans.TransId,
+                        CurrencyId = bettrans.CurrencyId,
+                        Stake = bettrans.Stake * exchangeRate,
+                        ValidBet = bettrans.ValidBet * exchangeRate,
+                        Payout = 0,
+                        WinlostAmount = bettrans.WinlostAmount * exchangeRate,
+                        Revenue = 0,
+                        ProgressiveBet = bettrans.ProgressiveBet * exchangeRate,
+                        ProgressiveWin = bettrans.ProgressiveWin * exchangeRate,
+                    }).ToList();
         }
     }
 }
