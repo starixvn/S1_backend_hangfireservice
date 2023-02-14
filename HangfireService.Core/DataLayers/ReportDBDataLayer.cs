@@ -173,6 +173,5 @@ namespace HangfireService.Core.DataLayers
         },
         commandTimeout: 0);
         #endregion
-
     }
 }
