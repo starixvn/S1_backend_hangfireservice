@@ -118,10 +118,62 @@ namespace HangfireService.Core.DataLayers
         {
             return _dbClient.QueryFirst<Customer>("Customer_Get", parameters: new { CustId });
         }
+
+        #region Statistical-Online Count
+
+        public async Task<IEnumerable<OnlineCountDto>> GetOnlineCount()
+            => await _dbClient.QueryAsync<OnlineCountDto>("Service_OnlineUsers_Get_V2", commandTimeout: 120);
+
+        #endregion
+
+        #region Statistical-Customer Auto Lock
+
+        public async Task<IEnumerable<DormantSettingDto>> GetDormantSetting()
+            => await _dbClient.QueryAsync<DormantSettingDto>("Service_DormantSetting_Get");
+
+        public async Task<IEnumerable<DormantCustomerDto>> GetDormantCustomer(int siteId, int days, string statusStr)
+           => await _dbClient.QueryAsync<DormantCustomerDto>("Service_DormantAccount_Get",
+               parameters: new { SiteId = siteId, Day = days, StatusList = statusStr },
+               commandTimeout: 180);
+
+        #endregion
+
+        #region Statistical-LeaderBoard
+
+        public async Task<IEnumerable<LeaderboardEventDto>> GetLeaderBoardEvent()
+            => await _dbClient.QueryAsync<LeaderboardEventDto>("Service_LeaderboardEvent_Get");
+
+        public async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetTpBetRecordForLeadBoard(int isRelay, LeaderboardEventDto eventDto)
+            => await _dbClient.QueryAsync<GetTpBetRecordForLeadBoardDto>(eventDto.SPName,
+                new
+                {
+                    SiteId = eventDto.SiteId,
+                    EventCode = eventDto.EventCode,
+                    StartDate = eventDto.StartTime,
+                    EndDate = eventDto.EndTime,
+                    TimeZone = eventDto.TimeZoom,
+                    Is14 = isRelay
+                },
+                commandTimeout: 0);
+
+        public async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetLeaderBoardExtraPoint(LeaderboardEventDto eventDto,string sp)
+            => await _dbClient.QueryAsync<GetTpBetRecordForLeadBoardDto>(sp,
+        new
+        {
+            SiteId = eventDto.SiteId,
+            EventCode = eventDto.EventCode,
+            StartDate = eventDto.StartTime,
+            EndDate = eventDto.EndTime,
+            TimeZone = eventDto.TimeZoom
+        },
+        commandTimeout: 0);
+        #endregion
+
         public IEnumerable<dynamic> GetRelayData(string sp, object parameters, int timeoutSeconds)
         {
             return _dbClient.Query(sp, parameters: parameters, commandTimeout: timeoutSeconds);
         }
+
 
     }
 }

@@ -98,6 +98,10 @@ namespace HangfireService.Extensions
                 .AddSingleton<FincanceService>()
                 .AddSingleton<PtMerchantBalanceCheckService>()
                 .AddSingleton<WorldCupDepositDailySummaryService>()
+                .AddSingleton<OnlineCountService>()
+                .AddSingleton<CustomerAutoLockService>()
+                .AddSingleton<CustClosingBalanceService>()
+                .AddSingleton<LeaderBoardService>()
                 .AddSingleton<MpaUpdateExchangeRateService>()
                 .AddSingleton<ConfigService>();
         }
