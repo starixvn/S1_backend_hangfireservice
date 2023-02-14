@@ -30,7 +30,10 @@ namespace HangfireService.Extensions
         }
 
         public static IServiceCollection AddHangfireService(this IServiceCollection services, IConfiguration configuration)
-        {       
+        {
+            var provider = services.BuildServiceProvider();
+            var jobGroups = provider.GetRequiredService<Dictionary<string, List<JobOption>>>();
+
             return services
             .AddHangfire(config =>
                 {
@@ -54,7 +57,6 @@ namespace HangfireService.Extensions
             .AddHangfireServer(config =>
             {               
                 config.SchedulePollingInterval = TimeSpan.FromSeconds(15);
-                var jobGroups = configuration.GetSection("ScheduledJob").Get<Dictionary<string, List<JobOption>>>();
                 var queues= jobGroups.Select(item => item.Key.ToLower()).ToList();
                 queues.Add("default");
                 config.Queues = queues.ToArray();
@@ -100,12 +102,19 @@ namespace HangfireService.Extensions
                 .AddSingleton<CustomerAutoLockService>()
                 .AddSingleton<CustClosingBalanceService>()
                 .AddSingleton<LeaderBoardService>()
+                .AddSingleton<MpaUpdateExchangeRateService>()
                 .AddSingleton<ConfigService>();
         }
 
         public static IServiceCollection RegisterScheduledJobs(this IServiceCollection services, IConfiguration configuration)
         {
-            MyJobManager.SettingJob(configuration);
+            var provider = services.BuildServiceProvider();
+            var configService = provider.GetRequiredService<ConfigService>();
+            var jobGroups = configService.Query<JobOption>("Service_ScheduledJob_Get", new { Project = "Hangfire" })
+               .GroupBy(i => i.Group)
+               .ToDictionary(i=>i.Key, i => i.ToList());
+            services.AddSingleton(provider => jobGroups);
+            MyJobManager.SettingJob(jobGroups);
 
             var scheduledJobs = typeof(IScheduledJob).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IScheduledJob)));
             foreach (var job in scheduledJobs)

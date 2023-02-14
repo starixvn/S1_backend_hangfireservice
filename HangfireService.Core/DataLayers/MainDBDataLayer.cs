@@ -7,6 +7,8 @@ using MySqlX.XDevAPI.Common;
 using OfficeOpenXml.FormulaParsing.Excel.Operators;
 using System.Data;
 using System.Security.Policy;
+using HangfireService.Core.Service;
+
 
 namespace HangfireService.Core.DataLayers
 {
@@ -237,14 +239,43 @@ namespace HangfireService.Core.DataLayers
         }
         #endregion
 
-        public int SetTpBetRecordRelayData(DateTime date, int timeoutSeconds)
+		public async Task<int> ExpiredBanner(string bannerName, int siteId, int currencyId)
+        {
+            return await _dbClient.ExecuteAsync("Service_BannerExpired_Set", new
+            {
+                _BannerName = bannerName,
+                _SiteId = siteId,
+                _CurrencyId = currencyId
+            });
+        }    
+        
+        public int SetLastBettingTime(int siteId, int currencyId, int tpId , int gameType , DateTime? lastBettingTime , bool isExecute)
         {
             var parameters = new
             {
-                StartTime = date,
-                EndTime = date.AddDays(1),
+                _SiteId = siteId,
+                _CurrencyId = currencyId,
+                _TpId = tpId,
+                _GameType = gameType,
+                _LastBettingTime = lastBettingTime,
+                _IsExecute = isExecute
             };
-            return _dbClient.QueryFirst<int>("Relay_TpBetRecord_Set_V3", parameters, commandTimeout: timeoutSeconds);
+            return _dbClient.Execute("Service_TpBettingMonitorSetting_Set", parameters);
+        }
+        
+        public IEnumerable<TpMaintain> GetTpMaintainList(int siteId)
+        {
+            return _dbClient.Query<TpMaintain>("TpMaintain_Get", new DynamicParameters(new { SiteId = siteId }));
+        }
+
+        public int InsertRelayData(string sp, object parameters, IDbTransaction trans)
+        {
+            return _dbClient.Execute(sp, trans, parameters);
+        }
+
+        public int DeleteRelayData(string sp, object parameters, IDbTransaction trans)
+        {
+            return _dbClient.Execute(sp, trans, parameters);
         }
 
         public int SetOTPStatus(OTPCheckResult result)
@@ -295,6 +326,25 @@ namespace HangfireService.Core.DataLayers
             => await _dbClient.ExecuteAsync("Service_LeaderboardOverTime_Set");
 
         #endregion
+
+        /// <summary>
+        /// 新增玩家充值總帳
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public Task<int> InsertDailyExchangeRate(MpaUpdateExchangeRateService.DailyExchangeRateResponse data)
+        {
+            return _dbClient.ExecuteAsync("Service_ExchangeRate_Set", new
+            {
+                _RateDate = data.RateDate,
+                _CurrencyId = data.CurrencyId,
+                _CurrencyName = data.CurrencyName,
+                _TargetCurrencyId = data.TargetCurrencyId,
+                _TargetCurrencyName = data.TargetCurrencyName,
+                _TargetCurrencyRate = data.TargetCurrencyRate
+            });
+        }
+
     }
 }
 
