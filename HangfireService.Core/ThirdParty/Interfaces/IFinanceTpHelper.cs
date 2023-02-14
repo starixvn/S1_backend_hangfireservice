@@ -79,8 +79,9 @@ namespace HangfireService.Core.ThirdParty.Interfaces
         public List<FinanceCheckTransIdResult> CheckTransIdData(FinanceCheckTransIdOption checkOption, List<TpBetRecordCheckTransId> tpBetRecord, List<BettransCheckTransIdData> bettransList)
         {
             var checkResult = new List<FinanceCheckTransIdResult>();
-
+            var bettransOfTransIds = new List<string>();
             var err = new List<string>();
+            var res = new List<string>();
 
             // 資料檢查
             if (!bettransList.Any())
@@ -96,7 +97,14 @@ namespace HangfireService.Core.ThirdParty.Interfaces
             if (!bettransList.Any() && !tpBetRecord.Any())
             {
                 // 無資料無須檢查
-                _logger.LogInformation($"[{checkOption.BeginTime:yyyy-MM-dd HH}] TpId:{TpId} 帳務單號檢查無資料");
+                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.結算與交易金額檢查, TpId, res.Count, res));
+                return checkResult;
+            }
+            else if (bettransList.Any() && !tpBetRecord.Any())
+            {
+                // 列出未寫入tpbetrecord的單號
+                bettransOfTransIds = bettransList.Select(x => x.TransId).ToList();
+                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.交易與結算單號檢查, TpId, bettransOfTransIds.Count, bettransOfTransIds));
                 return checkResult;
             }
 
@@ -107,7 +115,7 @@ namespace HangfireService.Core.ThirdParty.Interfaces
             }
 
             // 單號檢查
-            var bettransOfTransIds = bettransList.Select(x => x.TransId).ToList();
+            bettransOfTransIds = bettransList.Select(x => x.TransId).ToList();
             var tpBetRecordOfTransIds = tpBetRecord.Select(x => x.TransId).ToList();
 
             var checkBetTransId = bettransOfTransIds.Except(tpBetRecordOfTransIds).ToList();
@@ -142,6 +150,10 @@ namespace HangfireService.Core.ThirdParty.Interfaces
                     bettransList,
                 };
                 _logger.LogError($"[{checkOption.BeginTime:yyyy-MM-dd HH}]:{JsonConvert.SerializeObject(data)}");
+            }
+            else
+            {
+                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.結算與交易金額檢查, TpId, res.Count, res));
             }
 
             return checkResult;
