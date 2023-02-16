@@ -62,7 +62,7 @@ public class TaggingDuplicateJob: BaseJob, IScheduledJob
                 
                 // step 3: 更新 TagList
                 var idx = 0;
-                const int cnt = 500;
+                const int cnt = 1000;
                 while (idx * cnt < duplicateCustList.Count)
                 {
                     var tagList = new List<CustTagList>();
