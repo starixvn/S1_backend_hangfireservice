@@ -11,7 +11,7 @@ namespace HangfireService.Core.ThirdParty
 {
     internal class APTpHelper : BaseTpHelper, IFinanceTpHelper
     {
-        public bool CheckTransId => true;
+        public bool CheckTransId => false;
 
         public TimeOption TimeOptionId => TimeOption.SettledTime;
 

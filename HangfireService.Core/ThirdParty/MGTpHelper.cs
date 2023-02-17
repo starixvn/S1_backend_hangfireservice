@@ -12,7 +12,7 @@ namespace HangfireService.Core.ThirdParty
 {
     public class MGTpHelper : BaseTpHelper, IFinanceTpHelper
     {
-        public bool CheckTransId => true;
+        public bool CheckTransId => false;
 
         public TimeOption TimeOptionId => TimeOption.SettledTime;
 
