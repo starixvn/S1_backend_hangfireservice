@@ -12,7 +12,7 @@ namespace HangfireService.Core.ThirdParty
 {
     internal class RedTigerTpHelper : BaseTpHelper, IFinanceTpHelper
     {
-        public bool CheckTransId => true;
+        public bool CheckTransId => false;
 
         public TimeOption TimeOptionId => TimeOption.SettledTime;
 
