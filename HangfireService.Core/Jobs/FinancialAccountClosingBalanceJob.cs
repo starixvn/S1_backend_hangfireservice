@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using Hangfire;
-using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Server;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
@@ -9,8 +8,6 @@ using Microsoft.Extensions.Logging;
 using Serilog.Context;
 
 namespace HangfireService.Core.Jobs;
-
-[ManagementPage("FinancialAccountClosingBalanceJob", queue: "financial")]
 public class FinancialAccountClosingBalanceJob: BaseJob, IScheduledJob
 {
     private readonly FincanceService _financeService;

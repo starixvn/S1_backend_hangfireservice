@@ -12,8 +12,6 @@ using Newtonsoft.Json;
 using Serilog.Context;
 
 namespace HangfireService.Core.Jobs;
-
-[ManagementPage("TaggingDuplicateJob", queue: "Tagging")]
 public class TaggingDuplicateJob: BaseJob, IScheduledJob
 {
     private readonly CustomerService _customerService;

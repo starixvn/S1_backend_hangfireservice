@@ -58,7 +58,10 @@ namespace HangfireService.Extensions
             {               
                 config.SchedulePollingInterval = TimeSpan.FromSeconds(15);
                 var queues= jobGroups.Select(item => item.Key.ToLower()).ToList();
-                queues.Add("default");
+                if (!queues.Contains("default"))
+                {
+                    queues.Add("default");
+                }
                 config.Queues = queues.ToArray();
                 config.WorkerCount = Environment.ProcessorCount * 10;
             });

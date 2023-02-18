@@ -5,11 +5,8 @@ using HangfireService.Core.Service;
 using System.ComponentModel;
 using HangfireService.Core.Models.Jobs;
 using Microsoft.Extensions.Logging;
-using Hangfire.Dashboard.Management.Metadata;
 
 namespace HangfireService.Core.Jobs;
-
-[ManagementPage("LeaderBoardJob", queue: "statistical")]
 public class LeaderBoardJob : BaseJob, IScheduledJob
 {
     private readonly LeaderBoardService _leaderBoardService;

@@ -19,7 +19,7 @@ using Amazon.CloudWatchLogs.Model;
 
 namespace HangfireService.Core.Jobs.SMS
 {
-    [ManagementPage("SMSCheckStatus", queue: "sms")]
+    [ManagementPage("SMSCheckStatus", queue: "check")]
     public class SMSCheckStatusJob : BaseJob, IScheduledJob
     {
         protected readonly HttpHelper _httpHelper;
