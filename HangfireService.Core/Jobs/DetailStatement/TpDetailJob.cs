@@ -15,7 +15,7 @@ using Hangfire.Dashboard.Management.Support;
 
 namespace HangfireService.Core.Jobs
 {
-    [ManagementPage("TpDetailJob", queue: "TpDetail")]
+    [ManagementPage("TpDetailJob", queue: "default")]
     public class TpDetailJob : BaseJob, IScheduledJob
     {
         private readonly MainDBDataLayer _mainDBDataLayer;
