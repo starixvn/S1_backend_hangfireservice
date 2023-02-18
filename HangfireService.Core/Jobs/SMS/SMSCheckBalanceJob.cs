@@ -15,7 +15,7 @@ using Hangfire.Dashboard.Management.Support;
 
 namespace HangfireService.Core.Jobs.SMS
 {
-    [ManagementPage("SMSCheckBalance", queue: "sms")]
+    [ManagementPage("SMSCheckBalance", queue: "check")]
     public class SMSCheckBalanceJob : BaseJob, IScheduledJob
     {
         protected readonly HttpHelper _httpHelper;

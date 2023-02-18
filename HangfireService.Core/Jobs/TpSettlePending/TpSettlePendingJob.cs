@@ -16,7 +16,7 @@ using System.ComponentModel;
 
 namespace HangfireService.Core.Jobs
 {
-    [ManagementPage("TpSettlePendingJob", queue: "TpSettlePending")]
+    [ManagementPage("TpSettlePendingJob", queue: "tpsttlepending")]
     public class TpSettlePendingJob : BaseJob, IScheduledJob
     {
         private readonly ReportDBDataLayer _reportDBDataLayer;

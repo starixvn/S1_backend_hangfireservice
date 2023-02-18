@@ -1,20 +1,13 @@
-﻿
-using Google.Protobuf.WellKnownTypes;
-using Hangfire;
-using Hangfire.Dashboard.Management.Metadata;
+﻿using Hangfire;
 using Hangfire.Server;
 using HangfireService.Core.Jobs.Interfaces;
-using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Jobs;
-using HangfireService.Core.Models.Options;
 using HangfireService.Core.Service;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System.ComponentModel;
 
 namespace HangfireService.Core.Jobs;
 
-[ManagementPage("OnlineCountJob", queue: "statistical")]
 internal class OnlineCountJob : BaseJob, IScheduledJob
 {
     private readonly OnlineCountService _onlineCountService;
