@@ -2,21 +2,12 @@
 using Hangfire;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Service;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using HangfireService.Core.Jobs.Interfaces;
-using Hangfire.Dashboard.Management.Metadata;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace HangfireService.Core.Jobs;
-
-[ManagementPage("CustomerAutoLockJob", queue: "statistical")]
 public class CustomerAutoLockJob : BaseJob, IScheduledJob
 {
     private readonly CustomerAutoLockService _customerAutoLockService;

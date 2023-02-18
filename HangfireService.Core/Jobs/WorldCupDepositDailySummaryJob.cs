@@ -18,7 +18,7 @@ namespace HangfireService.Core.Jobs
     /// <summary>
     /// 世界杯，計算玩家每日充值金額，與派發票券
     /// </summary>
-    [ManagementPage("depositDailySummaryJob", queue: " worldcupdepositdailysummary")]
+    [ManagementPage("depositDailySummaryJob", queue: "default")]
     public class WorldCupDepositDailySummaryJob : BaseJob, IScheduledJob
     {
         private readonly WorldCupDepositDailySummaryService _worldCupDepositDailySummaryService;

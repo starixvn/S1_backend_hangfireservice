@@ -2,19 +2,11 @@
 using Hangfire;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Service;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using HangfireService.Core.Jobs.Interfaces;
-using Hangfire.Dashboard.Management.Metadata;
 using Microsoft.Extensions.Logging;
 
 namespace HangfireService.Core.Jobs;
-
-[ManagementPage("CustClosingBalanceJob", queue: "statistical")]
 public class CustClosingBalanceJob : BaseJob, IScheduledJob
 {
     private readonly CustClosingBalanceService _custClosingBalanceService;
