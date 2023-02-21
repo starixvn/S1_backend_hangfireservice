@@ -28,14 +28,14 @@ public class LeaderBoardJob : BaseJob, IScheduledJob
         try
         {
             var option = JsonConvert.DeserializeObject<LeaderBoardOption>(jobOption.Parameters);
-            await _leaderBoardService.RunJobAsync(jobName, option);
+            var result  = await _leaderBoardService.RunJobAsync(jobName, option);
+            return $"{jobName} success count: {result}";
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, ex.Message, $"{DateTime.Now:HH:mm:ss} || {jobName} exception......");
-            return false;
+            return $"{jobName} Exception: {ex.Message}";
         }
         _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} End......");
-        return true;
     }
 }
