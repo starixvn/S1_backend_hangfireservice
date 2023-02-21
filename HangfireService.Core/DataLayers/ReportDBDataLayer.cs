@@ -141,7 +141,7 @@ namespace HangfireService.Core.DataLayers
 
         #region Statistical-LeaderBoard
 
-        public async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetTpBetRecordForLeadBoard(int isRelay, LeaderBoardOption option)
+        public async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetTpBetRecordForLeadBoard(LeaderBoardOption option)
             => await _dbClient.QueryAsync<GetTpBetRecordForLeadBoardDto>(option.SPName,
                 new
                 {
@@ -150,7 +150,6 @@ namespace HangfireService.Core.DataLayers
                     StartDate = option.StartTime,
                     EndDate = option.EndTime,
                     TimeZone = option.TimeZoom,
-                    Is14 = isRelay
                 },
                 commandTimeout: 0);
 
