@@ -27,20 +27,21 @@ public class LeaderBoardService
     private async Task<int> LeaderBoardStatistics(LeaderBoardOption option, string jobName)
     {
         var leaderBoardList = await GetTpBetRecordForLeadBoard(option);
+        var dd = leaderBoardList.ToDictionary(x => $"{x.CategoryId}_{x.CustId}", x => x);
         foreach (var extraPoint in await GetLeaderBoardExtraPoint(option))
         {
-            var target = leaderBoardList.First(i => i.CustId == extraPoint.CustId && i.CategoryId == extraPoint.CategoryId);
-            if (target != null)
+            var key = $"{extraPoint.CategoryId}_{extraPoint.CustId}";
+            if (dd.ContainsKey(key))
             {
-                target.Turnover += extraPoint.Turnover;
-                target.WinlostAmount += extraPoint.WinlostAmount;
+                dd[key].Turnover += extraPoint.Turnover;
+                dd[key].WinlostAmount += extraPoint.WinlostAmount;
             }
             else
             {
-                leaderBoardList = leaderBoardList.Concat(new[] { extraPoint }) ;
+                dd.Add(key, extraPoint);
             }           
         }
-        return await SetLeaderBoard(leaderBoardList, jobName);
+        return await SetLeaderBoard(dd.Values, jobName);
     }
 
     private async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetTpBetRecordForLeadBoard(LeaderBoardOption option)
