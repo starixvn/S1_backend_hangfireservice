@@ -19,13 +19,12 @@ public class LeaderBoardService
         _logger = provider.GetRequiredService<ILogger<BaseJob>>();
     }
 
-    public async Task RunJobAsync(string jobName, LeaderBoardOption option)
+    public async Task<int> RunJobAsync(string jobName, LeaderBoardOption option)
     {
-        await LeaderBoardStatistics(option, jobName);
-        await Task.CompletedTask;
+       return await LeaderBoardStatistics(option, jobName);      
     }
 
-    private async Task LeaderBoardStatistics(LeaderBoardOption option, string jobName)
+    private async Task<int> LeaderBoardStatistics(LeaderBoardOption option, string jobName)
     {
         var leaderBoardList = GetTpBetRecordForLeadBoard(0, option).Result.ToList();
         var dd = leaderBoardList.ToDictionary(x => $"{x.CategoryId}_{x.CustId}", x => x);
@@ -55,8 +54,7 @@ public class LeaderBoardService
                 leaderBoardList.Add(extraPoint);
             }           
         }
-        await SetLeaderBoard(leaderBoardList, jobName);
-        await Task.CompletedTask;
+        return await SetLeaderBoard(leaderBoardList, jobName);
     }
 
     private async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetTpBetRecordForLeadBoard(int isRelay, LeaderBoardOption option)
@@ -69,19 +67,21 @@ public class LeaderBoardService
             await _reportDBDataLayer.GetLeaderBoardExtraPoint(option, option.ExtraPointSP);
     }
 
-    private async Task SetLeaderBoard(IEnumerable<GetTpBetRecordForLeadBoardDto> leadBoardDtos, string jobName)
+    private async Task<int> SetLeaderBoard(IEnumerable<GetTpBetRecordForLeadBoardDto> leadBoardDtos, string jobName)
     {
         await using var conn = _mainDBDataLayer.GetMySqlConnection();
         conn.Open();
         var trans = await conn.BeginTransactionAsync();
+        var result = 0;
         try
         {
-            var result = 0;
+            
             result += await _mainDBDataLayer.SetLeaderBoard(leadBoardDtos, trans);
             if (result == leadBoardDtos.Count())
             {
                 await trans.CommitAsync();
             }
+            
         }
         catch (Exception ex)
         {
@@ -93,5 +93,6 @@ public class LeaderBoardService
             await conn.CloseAsync();
             await conn.DisposeAsync();
         }
+        return result;
     }
 }
