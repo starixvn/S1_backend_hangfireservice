@@ -5,6 +5,8 @@ using HangfireService.Core.Service;
 using System.ComponentModel;
 using HangfireService.Core.Models.Jobs;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using HangfireService.Core.Models.Options;
 
 namespace HangfireService.Core.Jobs;
 public class LeaderBoardJob : BaseJob, IScheduledJob
@@ -25,7 +27,8 @@ public class LeaderBoardJob : BaseJob, IScheduledJob
         _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
         try
         {
-            await _leaderBoardService.RunJobAsync(jobName);
+            var option = JsonConvert.DeserializeObject<LeaderBoardOption>(jobOption.Parameters);
+            await _leaderBoardService.RunJobAsync(jobName, option);
         }
         catch (Exception ex)
         {
