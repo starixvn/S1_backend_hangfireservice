@@ -197,7 +197,26 @@ namespace HangfireService.Core.DataLayers
             _logger.LogDebug($"{name} {sw.Elapsed:c}");
             return result;
         }
-        
+
+        public async Task<int> ExecuteAsync(string name, IDbTransaction trans, object parameters = null)
+        {
+            var sw = Stopwatch.StartNew();
+            int result;
+            try
+            {
+                result = await trans.Connection.ExecuteAsync(name, param: parameters, commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, name);
+                throw;
+            }
+
+            LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
+            _logger.LogDebug($"{name} {sw.Elapsed:c}");
+            return result;
+        }
+
         public int Execute(string name, IDbTransaction trans, object parameters = null)
         {
             var sw = Stopwatch.StartNew();

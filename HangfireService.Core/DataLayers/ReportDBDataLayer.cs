@@ -2,6 +2,7 @@
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
+using HangfireService.Core.Models.Options;
 
 namespace HangfireService.Core.DataLayers
 {
@@ -140,31 +141,28 @@ namespace HangfireService.Core.DataLayers
 
         #region Statistical-LeaderBoard
 
-        public async Task<IEnumerable<LeaderboardEventDto>> GetLeaderBoardEvent()
-            => await _dbClient.QueryAsync<LeaderboardEventDto>("Service_LeaderboardEvent_Get");
-
-        public async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetTpBetRecordForLeadBoard(int isRelay, LeaderboardEventDto eventDto)
-            => await _dbClient.QueryAsync<GetTpBetRecordForLeadBoardDto>(eventDto.SPName,
+        public async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetTpBetRecordForLeadBoard(int isRelay, LeaderBoardOption option)
+            => await _dbClient.QueryAsync<GetTpBetRecordForLeadBoardDto>(option.SPName,
                 new
                 {
-                    SiteId = eventDto.SiteId,
-                    EventCode = eventDto.EventCode,
-                    StartDate = eventDto.StartTime,
-                    EndDate = eventDto.EndTime,
-                    TimeZone = eventDto.TimeZoom,
+                    SiteId = option.SiteId,
+                    EventCode = option.EventCode,
+                    StartDate = option.StartTime,
+                    EndDate = option.EndTime,
+                    TimeZone = option.TimeZoom,
                     Is14 = isRelay
                 },
                 commandTimeout: 0);
 
-        public async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetLeaderBoardExtraPoint(LeaderboardEventDto eventDto,string sp)
+        public async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetLeaderBoardExtraPoint(LeaderBoardOption option, string sp)
             => await _dbClient.QueryAsync<GetTpBetRecordForLeadBoardDto>(sp,
         new
         {
-            SiteId = eventDto.SiteId,
-            EventCode = eventDto.EventCode,
-            StartDate = eventDto.StartTime,
-            EndDate = eventDto.EndTime,
-            TimeZone = eventDto.TimeZoom
+            SiteId = option.SiteId,
+            EventCode = option.EventCode,
+            StartDate = option.StartTime,
+            EndDate = option.EndTime,
+            TimeZone = option.TimeZoom
         },
         commandTimeout: 0);
         #endregion
