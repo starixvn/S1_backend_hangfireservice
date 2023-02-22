@@ -164,7 +164,7 @@ namespace HangfireService.Core.Jobs
                             }
                             break;
                         default:
-                            _logger.LogError($"遊戲: {tpName}, Type 尚不支援: {data.Type}");
+                            _logger.LogWarning($"遊戲: {tpName}, Type 尚不支援: {data.Type}");
                             break;
                     }
                 }
