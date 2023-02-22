@@ -12,6 +12,10 @@ namespace HangfireService.Core.ThirdParty
 {
     internal class RedTigerTpHelper : BaseTpHelper, IFinanceTpHelper
     {
+        public bool CheckTransId => false;
+
+        public TimeOption TimeOptionId => TimeOption.SettledTime;
+
         public int TpId => 38;
 
         private readonly ReportDBDataLayer _reportDbDataLayer;
@@ -96,6 +100,28 @@ namespace HangfireService.Core.ThirdParty
                 _logger.LogError($"[{checkOption.BeginTime:yyyy-MM-dd}]:{ToJson(data)}");
             }
             return checkResult;
+        }
+
+        public async Task<IEnumerable<BettransCheckTransIdData>> GetBettransCheckTransIdData(FinanceCheckTransIdOption checkOption)
+        {
+            var BeginTime = checkOption.BeginTime.GetUnixTime();
+            var EndTime = checkOption.EndTime.GetUnixTime() - 1;
+            var bettrans = await _dbClient.QueryAsync<BettransCheckTransIdData>("Finance_BettransRng_RedTiger_Check_TransId_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
+
+            return (from item in bettrans
+                    select new BettransCheckTransIdData
+                    {
+                        TpId = TpId,
+                        TransId = item.TransId,
+                        CurrencyId = item.CurrencyId,
+                        Stake = item.Stake,
+                        ValidBet = item.ValidBet,
+                        Payout = 0,
+                        WinlostAmount = item.WinlostAmount,
+                        Revenue = 0,
+                        ProgressiveBet = item.ProgressiveBet,
+                        ProgressiveWin = item.ProgressiveWin,
+                    }).ToList();
         }
     }
 }

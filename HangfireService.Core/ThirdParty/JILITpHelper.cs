@@ -12,6 +12,10 @@ namespace HangfireService.Core.ThirdParty
 {
     public class JILITpHelper : BaseTpHelper, IFinanceTpHelper
     {
+        public bool CheckTransId => false;
+
+        public TimeOption TimeOptionId => TimeOption.SettledTime;
+
         public int TpId => 32;
 
         private readonly ReportDBDataLayer _reportDbDataLayer;

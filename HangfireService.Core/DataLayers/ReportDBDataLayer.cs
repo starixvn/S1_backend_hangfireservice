@@ -70,6 +70,11 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Query<TpBetRecordCheck>("Finance_TpBetRecord_Check_Get", parameters: new { BeginTime, EndTime }, commandTimeout: 120);
         }
 
+        public IEnumerable<TpBetRecordCheckTransId> GetTpBetRecordCheckTransIdData(DateTime BeginTime, DateTime EndTime, int TpId, TimeOption TimeOption = 0)
+        {
+            return _dbClient.Query<TpBetRecordCheckTransId>("Finance_TpBetRecord_Check_TransId_Get", parameters: new { _BeginTime = BeginTime, _EndTime = EndTime, _TpId = TpId, _TimeOption = TimeOption }, commandTimeout: 120);
+        }
+
         public IEnumerable<TpBetRecordCheck> GetTpBetRecordCheckSettlementTypeByTpId(int TpId, DateTime BeginTime, DateTime EndTime)
         {
             return _dbClient.Query<TpBetRecordCheck>("Finance_TpBetRecord_Check_SettlementType_ByTpId_Get", parameters: new { _TpId = TpId, _BeginTime = BeginTime, _EndTime = EndTime }, commandTimeout: 120);
@@ -94,22 +99,22 @@ namespace HangfireService.Core.DataLayers
         {
             return _dbClient.Query<TpCurrency>("Service_TpCurrency_Get", parameters: new { TpId });
         }
-        
-         public Task<IEnumerable<Banner>> GetBanner()
+
+        public Task<IEnumerable<Banner>> GetBanner()
         {
             return _dbClient.QueryAsync<Banner>("Service_BannerExpired_Get");
         }
-        
+
         public IEnumerable<TpBettingCheckModel> GetTpBettingCheck()
         {
             return _dbClient.Query<TpBettingCheckModel>("Service_TpBettingMonitor_Get");
         }
-        
-        public IEnumerable<TpLastBetting> GetLastBettingTime(DateTime startTime , DateTime endTime)
+
+        public IEnumerable<TpLastBetting> GetLastBettingTime(DateTime startTime, DateTime endTime)
         {
-            return _dbClient.Query<TpLastBetting>("Service_TpLastBetting_Get", parameters: new { _StartTime = startTime, _EndTime = endTime});
+            return _dbClient.Query<TpLastBetting>("Service_TpLastBetting_Get", parameters: new { _StartTime = startTime, _EndTime = endTime });
         }
-        
+
         public IEnumerable<OTPCheck> GetOTPCheckList()
         {
             return _dbClient.Query<OTPCheck>("Service_OTPLog_Check");
