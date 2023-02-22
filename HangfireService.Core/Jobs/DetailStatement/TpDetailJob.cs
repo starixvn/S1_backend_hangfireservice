@@ -12,6 +12,7 @@ using Hangfire;
 using HangfireService.Core.Models.Options;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
+using Hangfire.Dashboard.Management.Pages;
 
 namespace HangfireService.Core.Jobs
 {
@@ -22,7 +23,7 @@ namespace HangfireService.Core.Jobs
 
         private readonly Dictionary<int, IDetailTpHelper> _tpHandler = new();
 
-        private static List<JobOption>? _tpDetailJobList;
+        private static List<JobOption> _tpDetailJobList;
 
         public TpDetailJob(IServiceProvider provider) : base(provider)
         {
@@ -39,6 +40,12 @@ namespace HangfireService.Core.Jobs
         [DisplayName("{0}")]
         public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
         {
+            // 處理透過web介面手動新增的RecurringJob名稱
+            if (context.BackgroundJob.Job.ToString().Equals("TpDetailJob.Run", StringComparison.OrdinalIgnoreCase))
+            {
+                jobName = context.Connection.GetRecurringJobs().First(item => item.LastJobId == context.BackgroundJob.Id).Id;
+            }
+
             //避免執行太久拿到重複資料，每次進來先暫停Job狀態
             MyJobManager.Pause(jobName);        
             try
