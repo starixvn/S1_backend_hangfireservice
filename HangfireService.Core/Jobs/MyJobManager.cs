@@ -67,7 +67,8 @@ namespace HangfireService.Core.Jobs
         public static void Pause(string jobName)
         {
             using var connection = JobStorage.Current.GetConnection();
-            if (!connection.GetRecurringJob(jobName).PauseState)
+            var job = connection.GetRecurringJob(jobName);
+            if (job != null && !job.PauseState)
             {
                 connection.SetPauseState(jobName, true);
             }
@@ -76,7 +77,8 @@ namespace HangfireService.Core.Jobs
         public static void Start(string jobName)
         {
             using var connection = JobStorage.Current.GetConnection();
-            if (connection.GetRecurringJob(jobName).PauseState)
+            var job = connection.GetRecurringJob(jobName);
+            if (job != null && job.PauseState)
             {
                 connection.SetPauseState(jobName, false);
             }
