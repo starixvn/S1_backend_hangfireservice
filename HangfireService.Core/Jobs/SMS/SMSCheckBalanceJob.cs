@@ -34,7 +34,7 @@ namespace HangfireService.Core.Jobs.SMS
             _smsConfig = iConfiguration.GetSection("SMSConfig").Get<Dictionary<string, SMSOption>>();
             _letsTalkGroupName = iConfiguration.GetValue<string>("LetsTalkConfig:SNS:LetsTalkGroupName");
             _commonServiceHost = iConfiguration.GetValue<string>("AiLabServiceHost:CommonServiceHost");
-            MyJobManager.GetJobGroups()?.TryGetValue("SMS", out _jobList);
+            MyJobManager.GetJobGroups()?.TryGetValue("Check", out _jobList);
         }
 
         private async Task<bool> NxCloudGetBalance(SMSOption smsOption)

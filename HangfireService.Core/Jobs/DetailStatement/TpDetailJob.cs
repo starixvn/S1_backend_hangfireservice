@@ -28,7 +28,7 @@ namespace HangfireService.Core.Jobs
         {
             LogContext.PushProperty("ClassName", GetType().Name);
             _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
-            MyJobManager.GetJobGroups()?.TryGetValue("TpDetail", out _tpDetailJobList);
+            MyJobManager.GetJobGroups()?.TryGetValue("Default", out _tpDetailJobList);
 
             foreach (var tp in provider.GetServices<IDetailTpHelper>())
             {
@@ -79,7 +79,7 @@ namespace HangfireService.Core.Jobs
         public object Run(PerformContext context = null, IJobCancellationToken cancellationToken = null,
             [DisplayData("JobName", ConvertType = typeof(TpDetailJobList))]string jobName = null,
             [DisplayData("LiminNum", defaultValue:"1000")]string liminNum = "1000",
-            [DisplayData("TaskCount", defaultValue:"2")]string taskCount = "2")
+            [DisplayData("TaskCount", defaultValue:"4")]string taskCount = "4")
         {
             if (!_tpDetailJobList.Any())
             {
