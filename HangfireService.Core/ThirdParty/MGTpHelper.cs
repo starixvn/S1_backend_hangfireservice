@@ -1,4 +1,5 @@
 ﻿using HangfireService.Core.DataLayers;
+using HangfireService.Core.Extensions;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
@@ -11,6 +12,10 @@ namespace HangfireService.Core.ThirdParty
 {
     public class MGTpHelper : BaseTpHelper, IFinanceTpHelper
     {
+        public bool CheckTransId => false;
+
+        public TimeOption TimeOptionId => TimeOption.SettledTime;
+
         public int TpId { get; } = 34;
 
         private readonly ReportDBDataLayer _reportDbDataLayer;
@@ -146,6 +151,42 @@ namespace HangfireService.Core.ThirdParty
                 _logger.LogError($"[{checkOption.BeginTime:yyyy-MM-dd}]:{ToJson(data)}");
             }
             return checkResult;
+        }
+
+        public async Task<IEnumerable<BettransCheckTransIdData>> GetBettransCheckTransIdData(FinanceCheckTransIdOption checkOption)
+        {
+            var BeginTime = checkOption.BeginTime.GetUnixTime().GetTicksFormUnixTime();
+            var EndTime = checkOption.EndTime.GetUnixTime().GetTicksFormUnixTime();
+
+            var tasks = new List<Task<IEnumerable<BettransCheckTransIdData>>>
+            {
+                _dbClient.QueryAsync<BettransCheckTransIdData>("Finance_BettransRng_MG_Check_TransId_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }),
+            };
+
+            tasks.AddRange(_partitionService.QueryAsync<BettransCheckTransIdData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransLC_MG_Check_TransId_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }));
+
+            await Task.WhenAll(tasks);
+
+            var CheckData = new List<BettransCheckTransIdData>();
+            foreach (var item in tasks)
+            {
+                CheckData.AddRange(item.Result);
+            }
+
+            return (from bettrans in CheckData
+                    select new BettransCheckTransIdData
+                    {
+                        TpId = TpId,
+                        TransId = bettrans.TransId,
+                        CurrencyId = bettrans.CurrencyId,
+                        Stake = bettrans.Stake,
+                        ValidBet = bettrans.ValidBet,
+                        Payout = 0,
+                        WinlostAmount = bettrans.WinlostAmount,
+                        Revenue = 0,
+                        ProgressiveBet = bettrans.ProgressiveBet,
+                        ProgressiveWin = bettrans.ProgressiveWin,
+                    }).ToList();
         }
     }
 }

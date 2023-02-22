@@ -11,6 +11,10 @@ namespace HangfireService.Core.ThirdParty
 {
     internal class APTpHelper : BaseTpHelper, IFinanceTpHelper
     {
+        public bool CheckTransId => false;
+
+        public TimeOption TimeOptionId => TimeOption.SettledTime;
+
         public int TpId => 39;
 
         private readonly ReportDBDataLayer _reportDbDataLayer;
@@ -71,6 +75,37 @@ namespace HangfireService.Core.ThirdParty
                 tpDaily.WinlostAmount *= rate;
             }
             return tpDailyList;
+        }
+
+        public async Task<IEnumerable<BettransCheckTransIdData>> GetBettransCheckTransIdData(FinanceCheckTransIdOption checkOption)
+        {
+            var BeginTime = checkOption.BeginTime.GetUnixTime();
+            var EndTime = checkOption.EndTime.GetUnixTime() - 1;
+
+            var tasks = new List<Task<IEnumerable<BettransCheckTransIdData>>>();
+            tasks.AddRange(_partitionService.QueryAsync<BettransCheckTransIdData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransRng_AP_Check_TransId_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }));
+            await Task.WhenAll(tasks);
+
+            var CheckData = new List<BettransCheckTransIdData>();
+            foreach (var item in tasks)
+            {
+                CheckData.AddRange(item.Result);
+            }
+
+            return (from bettrans in CheckData
+                    select new BettransCheckTransIdData
+                    {
+                        TpId = TpId,
+                        TransId = bettrans.TransId,
+                        CurrencyId = bettrans.CurrencyId,
+                        Stake = bettrans.Stake,
+                        ValidBet = bettrans.ValidBet,
+                        Payout = 0,
+                        WinlostAmount = bettrans.WinlostAmount,
+                        Revenue = 0,
+                        ProgressiveBet = 0,
+                        ProgressiveWin = 0,
+                    }).ToList();
         }
     }
 }

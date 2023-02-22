@@ -12,11 +12,16 @@ namespace HangfireService.Core.ThirdParty
 {
     internal class One789TpHelper : BaseTpHelper, IFinanceTpHelper
     {
+        public bool CheckTransId => true;
+
+        public TimeOption TimeOptionId => TimeOption.TransTime;
+
         public int TpId => 23;
 
         private readonly ReportDBDataLayer _reportDbDataLayer;
         private readonly IEnumerable<TpCurrency> _tpCurrency;
         private readonly MySqlClient _dbClient;
+        private readonly MySqlClient _wagerClient;
         private readonly FincanceService _fincanceService;
 
         public One789TpHelper(IServiceProvider provider) : base(provider)
@@ -26,6 +31,8 @@ namespace HangfireService.Core.ThirdParty
             _tpCurrency = _reportDbDataLayer.GetTpCurrency(TpId);
 
             _dbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Report);
+
+            _wagerClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Wager);
 
             _fincanceService = provider.GetRequiredService<FincanceService>();
         }
@@ -38,7 +45,7 @@ namespace HangfireService.Core.ThirdParty
             var tasks = new List<Task<IEnumerable<BettransCheckData>>>
             {
                 _dbClient.QueryAsync<BettransCheckData>("Finance_BettransLT_One789_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120),
-                _dbClient.QueryAsync<BettransCheckData>("Finance_BettransLT_One789_789_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120),
+                //_dbClient.QueryAsync<BettransCheckData>("Finance_BettransLT_One789_789_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120),
                 _dbClient.QueryAsync<BettransCheckData>("Finance_BettransLC_One789_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 180)
             };
 
@@ -130,6 +137,42 @@ namespace HangfireService.Core.ThirdParty
                 _logger.LogError($"[{checkOption.BeginTime:yyyy-MM-dd}]:{ToJson(data)}");
             }
             return checkResult;
+        }
+
+        public async Task<IEnumerable<BettransCheckTransIdData>> GetBettransCheckTransIdData(FinanceCheckTransIdOption checkOption)
+        {
+            var BeginTime = checkOption.BeginTime.GetUnixTime();
+            var EndTime = checkOption.EndTime.GetUnixTime();
+
+            var tasks = new List<Task<IEnumerable<BettransCheckTransIdData>>>
+            {
+                _wagerClient.QueryAsync<BettransCheckTransIdData>("Finance_TpWagerOne789_LC_Check_TransId_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }),
+                _wagerClient.QueryAsync<BettransCheckTransIdData>("Finance_TpWagerOne789_LT_Check_TransId_Get", new { _BeginTime = BeginTime, _EndTime = EndTime })
+            };
+
+            await Task.WhenAll(tasks);
+
+            var CheckData = new List<BettransCheckTransIdData>();
+            foreach (var item in tasks)
+            {
+                CheckData.AddRange(item.Result);
+            }
+
+            return (from bettrans in CheckData
+                    let exchangeRate = _tpCurrency.First(c => c.CurrencyId == bettrans.CurrencyId).ExchangeRate
+                    select new BettransCheckTransIdData
+                    {
+                        TpId = TpId,
+                        TransId = bettrans.TransId,
+                        CurrencyId = bettrans.CurrencyId,
+                        Stake = bettrans.Stake * exchangeRate,
+                        ValidBet = bettrans.ValidBet * exchangeRate,
+                        Payout = 0,
+                        WinlostAmount = bettrans.WinlostAmount * exchangeRate,
+                        Revenue = 0,
+                        ProgressiveBet = 0,
+                        ProgressiveWin = 0,
+                    }).ToList();
         }
     }
 }
