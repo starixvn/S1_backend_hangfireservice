@@ -146,8 +146,8 @@ namespace HangfireService.Core.ThirdParty
 
             var tasks = new List<Task<IEnumerable<BettransCheckTransIdData>>>
             {
-                _wagerClient.QueryAsync<BettransCheckTransIdData>("Finance_TpWagerOne789_LC_Check_TransId_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }),
-                _wagerClient.QueryAsync<BettransCheckTransIdData>("Finance_TpWagerOne789_LT_Check_TransId_Get", new { _BeginTime = BeginTime, _EndTime = EndTime })
+                _wagerClient.QueryAsync<BettransCheckTransIdData>("Finance_TpWagerOne789_LC_Check_TransId_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120),
+                _wagerClient.QueryAsync<BettransCheckTransIdData>("Finance_TpWagerOne789_LT_Check_TransId_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120)
             };
 
             await Task.WhenAll(tasks);
