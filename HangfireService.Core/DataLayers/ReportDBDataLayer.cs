@@ -2,6 +2,7 @@
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
+using HangfireService.Core.Models.Options;
 
 namespace HangfireService.Core.DataLayers
 {
@@ -69,6 +70,11 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Query<TpBetRecordCheck>("Finance_TpBetRecord_Check_Get", parameters: new { BeginTime, EndTime }, commandTimeout: 120);
         }
 
+        public IEnumerable<TpBetRecordCheckTransId> GetTpBetRecordCheckTransIdData(DateTime BeginTime, DateTime EndTime, int TpId, TimeOption TimeOption = 0)
+        {
+            return _dbClient.Query<TpBetRecordCheckTransId>("Finance_TpBetRecord_Check_TransId_Get", parameters: new { _BeginTime = BeginTime, _EndTime = EndTime, _TpId = TpId, _TimeOption = TimeOption }, commandTimeout: 120);
+        }
+
         public IEnumerable<TpBetRecordCheck> GetTpBetRecordCheckSettlementTypeByTpId(int TpId, DateTime BeginTime, DateTime EndTime)
         {
             return _dbClient.Query<TpBetRecordCheck>("Finance_TpBetRecord_Check_SettlementType_ByTpId_Get", parameters: new { _TpId = TpId, _BeginTime = BeginTime, _EndTime = EndTime }, commandTimeout: 120);
@@ -93,22 +99,22 @@ namespace HangfireService.Core.DataLayers
         {
             return _dbClient.Query<TpCurrency>("Service_TpCurrency_Get", parameters: new { TpId });
         }
-        
-         public Task<IEnumerable<Banner>> GetBanner()
+
+        public Task<IEnumerable<Banner>> GetBanner()
         {
             return _dbClient.QueryAsync<Banner>("Service_BannerExpired_Get");
         }
-        
+
         public IEnumerable<TpBettingCheckModel> GetTpBettingCheck()
         {
             return _dbClient.Query<TpBettingCheckModel>("Service_TpBettingMonitor_Get");
         }
-        
-        public IEnumerable<TpLastBetting> GetLastBettingTime(DateTime startTime , DateTime endTime)
+
+        public IEnumerable<TpLastBetting> GetLastBettingTime(DateTime startTime, DateTime endTime)
         {
-            return _dbClient.Query<TpLastBetting>("Service_TpLastBetting_Get", parameters: new { _StartTime = startTime, _EndTime = endTime});
+            return _dbClient.Query<TpLastBetting>("Service_TpLastBetting_Get", parameters: new { _StartTime = startTime, _EndTime = endTime });
         }
-        
+
         public IEnumerable<OTPCheck> GetOTPCheckList()
         {
             return _dbClient.Query<OTPCheck>("Service_OTPLog_Check");
@@ -140,33 +146,29 @@ namespace HangfireService.Core.DataLayers
 
         #region Statistical-LeaderBoard
 
-        public async Task<IEnumerable<LeaderboardEventDto>> GetLeaderBoardEvent()
-            => await _dbClient.QueryAsync<LeaderboardEventDto>("Service_LeaderboardEvent_Get");
-
-        public async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetTpBetRecordForLeadBoard(int isRelay, LeaderboardEventDto eventDto)
-            => await _dbClient.QueryAsync<GetTpBetRecordForLeadBoardDto>(eventDto.SPName,
+        public async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetTpBetRecordForLeadBoard(LeaderBoardOption option)
+            => await _dbClient.QueryAsync<GetTpBetRecordForLeadBoardDto>(option.SPName,
                 new
                 {
-                    SiteId = eventDto.SiteId,
-                    EventCode = eventDto.EventCode,
-                    StartDate = eventDto.StartTime,
-                    EndDate = eventDto.EndTime,
-                    TimeZone = eventDto.TimeZoom,
-                    Is14 = isRelay
+                    SiteId = option.SiteId,
+                    EventCode = option.EventCode,
+                    StartDate = option.StartTime,
+                    EndDate = option.EndTime,
+                    TimeZone = option.TimeZoom,
                 },
-                commandTimeout: 0);
+                commandTimeout: 60);
 
-        public async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetLeaderBoardExtraPoint(LeaderboardEventDto eventDto,string sp)
+        public async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetLeaderBoardExtraPoint(LeaderBoardOption option, string sp)
             => await _dbClient.QueryAsync<GetTpBetRecordForLeadBoardDto>(sp,
         new
         {
-            SiteId = eventDto.SiteId,
-            EventCode = eventDto.EventCode,
-            StartDate = eventDto.StartTime,
-            EndDate = eventDto.EndTime,
-            TimeZone = eventDto.TimeZoom
+            SiteId = option.SiteId,
+            EventCode = option.EventCode,
+            StartDate = option.StartTime,
+            EndDate = option.EndTime,
+            TimeZone = option.TimeZoom
         },
-        commandTimeout: 0);
+        commandTimeout: 60);
         #endregion
 
         public IEnumerable<dynamic> GetRelayData(string sp, object parameters, int timeoutSeconds)

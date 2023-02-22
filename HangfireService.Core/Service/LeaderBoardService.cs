@@ -1,8 +1,8 @@
 ﻿using HangfireService.Core.DataLayers;
 using HangfireService.Core.Jobs;
 using HangfireService.Core.Models.DBs;
+using HangfireService.Core.Models.Options;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
 
 namespace HangfireService.Core.Service;
 
@@ -19,80 +19,69 @@ public class LeaderBoardService
         _logger = provider.GetRequiredService<ILogger<BaseJob>>();
     }
 
-    public async Task RunJobAsync(string jobName)
+    public async Task<int> RunJobAsync(string jobName, LeaderBoardOption option)
     {
-        foreach (var @event in await GetLeaderBoardEvent())
-            await LeaderBoardStatistics(@event, jobName);
-        await SetLeaderBoardEventOverTime();
-        await Task.CompletedTask;
+       return await LeaderBoardStatistics(option, jobName);      
     }
 
-    private async Task<IEnumerable<LeaderboardEventDto>> GetLeaderBoardEvent()
-        => await _reportDBDataLayer.GetLeaderBoardEvent();
-
-    private async Task LeaderBoardStatistics(LeaderboardEventDto @event,string jobName)
+    private async Task<int> LeaderBoardStatistics(LeaderBoardOption option, string jobName)
     {
-        var leaderBoardList = GetTpBetRecordForLeadBoard(0, @event).Result.ToList();
+        var leaderBoardList = await GetTpBetRecordForLeadBoard(option);
         var dd = leaderBoardList.ToDictionary(x => $"{x.CategoryId}_{x.CustId}", x => x);
-
-        foreach (var relayItem in await GetTpBetRecordForLeadBoard(1, @event))
+        foreach (var extraPoint in await GetLeaderBoardExtraPoint(option))
         {
-            if (dd.ContainsKey($"{relayItem.CategoryId}_{relayItem.CustId}"))
+            var key = $"{extraPoint.CategoryId}_{extraPoint.CustId}";
+            if (dd.ContainsKey(key))
             {
-                dd[$"{relayItem.CategoryId}_{relayItem.CustId}"].Turnover += relayItem.Turnover;
-                dd[$"{relayItem.CategoryId}_{relayItem.CustId}"].WinlostAmount += relayItem.WinlostAmount;
+                dd[key].Turnover += extraPoint.Turnover;
+                dd[key].WinlostAmount += extraPoint.WinlostAmount;
             }
             else
-                leaderBoardList.Add(relayItem);
-        }
-
-        foreach (var extraPoint in await GetLeaderBoardExtraPoint(@event))
-        {
-            if (dd.ContainsKey($"{extraPoint.CategoryId}_{extraPoint.CustId}"))
             {
-                dd[$"{extraPoint.CategoryId}_{extraPoint.CustId}"].Turnover += extraPoint.Turnover;
-                dd[$"{extraPoint.CategoryId}_{extraPoint.CustId}"].WinlostAmount += extraPoint.WinlostAmount;
-            }
-            else
-                leaderBoardList.Add(extraPoint);
+                dd.Add(key, extraPoint);
+            }           
         }
-        await SetLeaderBoard(leaderBoardList, jobName);
-        await Task.CompletedTask;
+        return await SetLeaderBoard(dd.Values, jobName);
     }
 
-    private async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetTpBetRecordForLeadBoard(int isRelay, LeaderboardEventDto eventDto)
-    => await _reportDBDataLayer.GetTpBetRecordForLeadBoard(isRelay, eventDto);
-
-    private async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetLeaderBoardExtraPoint(LeaderboardEventDto eventDto)
+    private async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetTpBetRecordForLeadBoard(LeaderBoardOption option)
     {
-        if (!string.IsNullOrWhiteSpace(eventDto.ExtraPointSP))
-            return await _reportDBDataLayer.GetLeaderBoardExtraPoint(eventDto, eventDto.ExtraPointSP);
-        else
-            return await _reportDBDataLayer.GetLeaderBoardExtraPoint(eventDto, "Service_LeaderboardExtraPoint_Get");
+        return await _reportDBDataLayer.GetTpBetRecordForLeadBoard(option);
     }
 
-    private async Task SetLeaderBoard(IEnumerable<GetTpBetRecordForLeadBoardDto> leadBoardDtos,string jobName)
+    private async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetLeaderBoardExtraPoint(LeaderBoardOption option)
     {
-        //至多重新執行 N 次
-        int RtyTimes = 2;
-        for (int i = 0; i < RtyTimes; ++i)
-        {
-            try
-            {
-                await _mainDBDataLayer.SetLeaderBoard(leadBoardDtos);
-                break;
-            }
-            catch (Exception ex)
-            {
-                if (i == RtyTimes - 1)
-                {
-                    _logger.LogError(ex, ex.Message, $"{DateTime.Now:HH:mm:ss} || {jobName} exception......");
-                    break;
-                }
-            }
-        }
+        return string.IsNullOrWhiteSpace(option.ExtraPointSP) ?
+            await _reportDBDataLayer.GetLeaderBoardExtraPoint(option, "Service_LeaderboardExtraPoint_Get") :
+            await _reportDBDataLayer.GetLeaderBoardExtraPoint(option, option.ExtraPointSP);
     }
 
-    private async Task<int> SetLeaderBoardEventOverTime()
- => await _mainDBDataLayer.SetLeaderBoardEventOverTime();
+    private async Task<int> SetLeaderBoard(IEnumerable<GetTpBetRecordForLeadBoardDto> leadBoardDtos, string jobName)
+    {
+        await using var conn = _mainDBDataLayer.GetMySqlConnection();
+        conn.Open();
+        var trans = await conn.BeginTransactionAsync();
+        var result = 0;
+        try
+        {
+            
+            result += await _mainDBDataLayer.SetLeaderBoard(leadBoardDtos, trans);
+            if (result == leadBoardDtos.Count())
+            {
+                await trans.CommitAsync();
+            }
+            
+        }
+        catch (Exception ex)
+        {
+            await trans.RollbackAsync();
+            _logger.LogError(ex, ex.Message, $"{DateTime.Now:HH:mm:ss} || {jobName} SetLeaderBoard exception......");
+        }
+        finally
+        {
+            await conn.CloseAsync();
+            await conn.DisposeAsync();
+        }
+        return result;
+    }
 }

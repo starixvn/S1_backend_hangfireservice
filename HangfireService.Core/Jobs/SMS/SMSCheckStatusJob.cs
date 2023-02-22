@@ -40,7 +40,7 @@ namespace HangfireService.Core.Jobs.SMS
             _awsSnsHelper = provider.GetRequiredService<AWSCloudWatchLogsHelper>();
             var iConfiguration = provider.GetRequiredService<IConfiguration>();
             _smsConfig = iConfiguration.GetSection("SMSConfig").Get<Dictionary<string, SMSOption>>();
-            MyJobManager.GetJobGroups()?.TryGetValue("SMS", out _jobList);
+            MyJobManager.GetJobGroups()?.TryGetValue("Check", out _jobList);
             _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
             _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
             _providerHandler = new Dictionary<string, Func<OTPCheck, Task<OTPCheckResult>>>()

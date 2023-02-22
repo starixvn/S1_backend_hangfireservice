@@ -12,6 +12,7 @@ using Hangfire;
 using HangfireService.Core.Models.Options;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
+using Hangfire.Dashboard.Management.Pages;
 
 namespace HangfireService.Core.Jobs
 {
@@ -20,15 +21,15 @@ namespace HangfireService.Core.Jobs
     {
         private readonly MainDBDataLayer _mainDBDataLayer;
 
-        private readonly Dictionary<int, IDetailTpHelper> _tpHandler = new Dictionary<int, IDetailTpHelper>();
+        private readonly Dictionary<int, IDetailTpHelper> _tpHandler = new();
 
-        private static List<JobOption>? _tpDetailJobList;
+        private static List<JobOption> _tpDetailJobList;
 
         public TpDetailJob(IServiceProvider provider) : base(provider)
         {
             LogContext.PushProperty("ClassName", GetType().Name);
             _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
-            MyJobManager.GetJobGroups()?.TryGetValue("TpDetail", out _tpDetailJobList);
+            MyJobManager.GetJobGroups()?.TryGetValue("Default", out _tpDetailJobList);
 
             foreach (var tp in provider.GetServices<IDetailTpHelper>())
             {
@@ -39,6 +40,14 @@ namespace HangfireService.Core.Jobs
         [DisplayName("{0}")]
         public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
         {
+            // 處理透過web介面手動新增的RecurringJob名稱
+            if (context.BackgroundJob.Job.ToString().Equals("TpDetailJob.Run", StringComparison.OrdinalIgnoreCase))
+            {
+                jobName = context.Connection.GetRecurringJobs().First(item => item.LastJobId == context.BackgroundJob.Id).Id;
+            }
+
+            //避免執行太久拿到重複資料，每次進來先暫停Job狀態
+            MyJobManager.Pause(jobName);        
             try
             {
                 var option = JsonConvert.DeserializeObject<TpDetailOption>(jobOption.Parameters);
@@ -65,19 +74,19 @@ namespace HangfireService.Core.Jobs
                 _logger.LogError(ex, ex.Message);
                 return JsonConvert.SerializeObject(ex);
             }
+            finally
+            {
+                //重新啟動Job
+                MyJobManager.Start(jobName);
+            }
         }
 
         [Job]
         [DisplayName("Run {2} by ManagementPage")]
-        public object Run(
-            PerformContext? context = null,
-            IJobCancellationToken? cancellationToken = null,
-            [DisplayData("JobName", ConvertType = typeof(TpDetailJobList))]
-                    string? jobName = null,
-            [DisplayData("LiminNum", defaultValue:"1000")]
-                    string liminNum = "1000",
-            [DisplayData("TaskCount", defaultValue:"2")]
-            string taskCount = "2")
+        public object Run(PerformContext context = null, IJobCancellationToken cancellationToken = null,
+            [DisplayData("JobName", ConvertType = typeof(TpDetailJobList))]string jobName = null,
+            [DisplayData("LiminNum", defaultValue:"1000")]string liminNum = "1000",
+            [DisplayData("TaskCount", defaultValue:"4")]string taskCount = "4")
         {
             if (!_tpDetailJobList.Any())
             {
@@ -93,12 +102,12 @@ namespace HangfireService.Core.Jobs
 
         private class TpDetailJobList : IInputDataList
         {
-            public Dictionary<string, string>? GetData()
+            public Dictionary<string, string> GetData()
             {
                 return _tpDetailJobList?.Where(i => i.ClassName == "TpDetailJob").ToDictionary(f => f.JobName, f => f.JobName);
             }
 
-            public string? GetDefaultValue()
+            public string GetDefaultValue()
             {
                 return null;
             }

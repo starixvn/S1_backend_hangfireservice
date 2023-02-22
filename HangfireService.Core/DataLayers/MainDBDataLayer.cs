@@ -319,11 +319,8 @@ namespace HangfireService.Core.DataLayers
 
         #region Statistical-LeaderBoard
 
-        public async Task SetLeaderBoard(IEnumerable<GetTpBetRecordForLeadBoardDto> leadBoardDtos)
-            => await _dbClient.ExecuteAsync("Service_LeaderboardV2_Set", leadBoardDtos);
-
-        public async Task<int> SetLeaderBoardEventOverTime()
-            => await _dbClient.ExecuteAsync("Service_LeaderboardOverTime_Set");
+        public async Task<int> SetLeaderBoard(IEnumerable<GetTpBetRecordForLeadBoardDto> leadBoardDtos, IDbTransaction trans)
+            => await _dbClient.ExecuteAsync("Service_LeaderboardV2_Set", trans, leadBoardDtos);
 
         #endregion
 
