@@ -26,39 +26,28 @@ public class LeaderBoardService
 
     private async Task<int> LeaderBoardStatistics(LeaderBoardOption option, string jobName)
     {
-        var leaderBoardList = GetTpBetRecordForLeadBoard(0, option).Result.ToList();
+        var leaderBoardList = await GetTpBetRecordForLeadBoard(option);
         var dd = leaderBoardList.ToDictionary(x => $"{x.CategoryId}_{x.CustId}", x => x);
-
-        foreach (var relayItem in await GetTpBetRecordForLeadBoard(1, option))
-        {
-            if (dd.ContainsKey($"{relayItem.CategoryId}_{relayItem.CustId}"))
-            {
-                dd[$"{relayItem.CategoryId}_{relayItem.CustId}"].Turnover += relayItem.Turnover;
-                dd[$"{relayItem.CategoryId}_{relayItem.CustId}"].WinlostAmount += relayItem.WinlostAmount;
-            }
-            else
-            {
-                leaderBoardList.Add(relayItem);
-            }
-        }
-
         foreach (var extraPoint in await GetLeaderBoardExtraPoint(option))
         {
-            if (dd.ContainsKey($"{extraPoint.CategoryId}_{extraPoint.CustId}"))
+            var key = $"{extraPoint.CategoryId}_{extraPoint.CustId}";
+            if (dd.ContainsKey(key))
             {
-                dd[$"{extraPoint.CategoryId}_{extraPoint.CustId}"].Turnover += extraPoint.Turnover;
-                dd[$"{extraPoint.CategoryId}_{extraPoint.CustId}"].WinlostAmount += extraPoint.WinlostAmount;
+                dd[key].Turnover += extraPoint.Turnover;
+                dd[key].WinlostAmount += extraPoint.WinlostAmount;
             }
             else
             {
-                leaderBoardList.Add(extraPoint);
+                dd.Add(key, extraPoint);
             }           
         }
-        return await SetLeaderBoard(leaderBoardList, jobName);
+        return await SetLeaderBoard(dd.Values, jobName);
     }
 
-    private async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetTpBetRecordForLeadBoard(int isRelay, LeaderBoardOption option)
-        => await _reportDBDataLayer.GetTpBetRecordForLeadBoard(isRelay, option);
+    private async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetTpBetRecordForLeadBoard(LeaderBoardOption option)
+    {
+        return await _reportDBDataLayer.GetTpBetRecordForLeadBoard(option);
+    }
 
     private async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetLeaderBoardExtraPoint(LeaderBoardOption option)
     {
