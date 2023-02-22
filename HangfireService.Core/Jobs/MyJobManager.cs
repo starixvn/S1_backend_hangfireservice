@@ -73,6 +73,15 @@ namespace HangfireService.Core.Jobs
             }
         }
 
+        public static void Start(string jobName)
+        {
+            using var connection = JobStorage.Current.GetConnection();
+            if (connection.GetRecurringJob(jobName).PauseState)
+            {
+                connection.SetPauseState(jobName, false);
+            }
+        }
+
         [DisplayName("{0} restart after {1} hours, because {2}.")]
         public static void RestartByHours(string jobName, int pauseHours, string reason)
         {
