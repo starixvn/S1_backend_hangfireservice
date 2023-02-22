@@ -36,6 +36,5 @@ public class LeaderBoardJob : BaseJob, IScheduledJob
             _logger.LogError(ex, ex.Message, $"{DateTime.Now:HH:mm:ss} || {jobName} exception......");
             return $"{jobName} Exception: {ex.Message}";
         }
-        _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} End......");
     }
 }

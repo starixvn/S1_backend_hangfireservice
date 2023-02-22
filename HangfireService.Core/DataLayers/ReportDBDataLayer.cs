@@ -156,7 +156,7 @@ namespace HangfireService.Core.DataLayers
                     EndDate = option.EndTime,
                     TimeZone = option.TimeZoom,
                 },
-                commandTimeout: 0);
+                commandTimeout: 60);
 
         public async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetLeaderBoardExtraPoint(LeaderBoardOption option, string sp)
             => await _dbClient.QueryAsync<GetTpBetRecordForLeadBoardDto>(sp,
@@ -168,7 +168,7 @@ namespace HangfireService.Core.DataLayers
             EndDate = option.EndTime,
             TimeZone = option.TimeZoom
         },
-        commandTimeout: 0);
+        commandTimeout: 60);
         #endregion
 
         public IEnumerable<dynamic> GetRelayData(string sp, object parameters, int timeoutSeconds)
