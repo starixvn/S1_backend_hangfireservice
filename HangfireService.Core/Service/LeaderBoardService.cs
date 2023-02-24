@@ -42,7 +42,7 @@ public class LeaderBoardService
                 dd.Add(key, extraPoint);
             }           
         }
-        var result = dd.Values.Select(i => i);
+        var result = dd.Values.Select(i => i).ToList();
         return await SetLeaderBoard(result, jobName);
     }
 
