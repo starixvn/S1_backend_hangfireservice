@@ -4,6 +4,8 @@ using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Options;
 using Microsoft.Extensions.Logging;
 
+using Newtonsoft.Json;
+
 namespace HangfireService.Core.Service;
 
 public class LeaderBoardService
@@ -27,8 +29,10 @@ public class LeaderBoardService
     private async Task<int> LeaderBoardStatistics(LeaderBoardOption option, string jobName)
     {
         var leaderBoardList = await GetTpBetRecordForLeadBoard(option);
+        _logger.LogInformation("leaderBoardList:" + JsonConvert.SerializeObject(leaderBoardList));
         var dd = leaderBoardList.ToDictionary(x => $"{x.CategoryId}_{x.CustId}", x => x);
         var extraPointList = await GetLeaderBoardExtraPoint(option);
+        _logger.LogInformation("extraPointList:" + JsonConvert.SerializeObject(extraPointList));
         foreach (var extraPoint in extraPointList)
         {
             var key = $"{extraPoint.CategoryId}_{extraPoint.CustId}";
@@ -42,7 +46,8 @@ public class LeaderBoardService
                 dd.Add(key, extraPoint);
             }           
         }
-        var result = dd.Values.Select(i => i).ToList();
+        var result = dd.Select(i => i.Value).ToList();
+        _logger.LogInformation("result:" + JsonConvert.SerializeObject(result));
         return await SetLeaderBoard(result, jobName);
     }
 
