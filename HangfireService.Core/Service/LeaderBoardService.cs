@@ -28,7 +28,8 @@ public class LeaderBoardService
     {
         var leaderBoardList = await GetTpBetRecordForLeadBoard(option);
         var dd = leaderBoardList.ToDictionary(x => $"{x.CategoryId}_{x.CustId}", x => x);
-        foreach (var extraPoint in await GetLeaderBoardExtraPoint(option))
+        var extraPointList = await GetLeaderBoardExtraPoint(option);
+        foreach (var extraPoint in extraPointList)
         {
             var key = $"{extraPoint.CategoryId}_{extraPoint.CustId}";
             if (dd.ContainsKey(key))
@@ -41,7 +42,8 @@ public class LeaderBoardService
                 dd.Add(key, extraPoint);
             }           
         }
-        return await SetLeaderBoard(dd.Values, jobName);
+        var result = dd.Values.Select(i => i);
+        return await SetLeaderBoard(result, jobName);
     }
 
     private async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetTpBetRecordForLeadBoard(LeaderBoardOption option)
