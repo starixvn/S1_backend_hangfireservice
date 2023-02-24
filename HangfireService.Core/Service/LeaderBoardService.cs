@@ -73,7 +73,8 @@ public class LeaderBoardService
         {
             
             result += await _mainDBDataLayer.SetLeaderBoard(leadBoardDtos, trans);
-            if (result == leadBoardDtos.Count())
+            _logger.LogInformation($"result:{result} || leadBoardDtos count:{leadBoardDtos.Count()}");
+            if (result > 0)
             {
                 await trans.CommitAsync();
             }
