@@ -29,11 +29,8 @@ public class LeaderBoardService
     private async Task<int> LeaderBoardStatistics(LeaderBoardOption option, string jobName)
     {
         var leaderBoardList = await GetTpBetRecordForLeadBoard(option);
-        _logger.LogInformation("leaderBoardList:" + JsonConvert.SerializeObject(leaderBoardList));
         var dd = leaderBoardList.ToDictionary(x => $"{x.CategoryId}_{x.CustId}", x => x);
-        var extraPointList = await GetLeaderBoardExtraPoint(option);
-        _logger.LogInformation("extraPointList:" + JsonConvert.SerializeObject(extraPointList));
-        foreach (var extraPoint in extraPointList)
+        foreach (var extraPoint in await GetLeaderBoardExtraPoint(option))
         {
             var key = $"{extraPoint.CategoryId}_{extraPoint.CustId}";
             if (dd.ContainsKey(key))
@@ -46,9 +43,7 @@ public class LeaderBoardService
                 dd.Add(key, extraPoint);
             }           
         }
-        var result = dd.Select(i => i.Value).ToList();
-        _logger.LogInformation("result:" + JsonConvert.SerializeObject(result));
-        return await SetLeaderBoard(result, jobName);
+        return await SetLeaderBoard(dd.Values, jobName);
     }
 
     private async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetTpBetRecordForLeadBoard(LeaderBoardOption option)
@@ -73,10 +68,11 @@ public class LeaderBoardService
         {
             
             result += await _mainDBDataLayer.SetLeaderBoard(leadBoardDtos, trans);
-            _logger.LogInformation($"result:{result} || leadBoardDtos count:{leadBoardDtos.Count()}");
             if (result > 0)
             {
                 await trans.CommitAsync();
+                //用List的數量才是最後成功的筆數
+                result = leadBoardDtos.Count();
             }
             
         }
