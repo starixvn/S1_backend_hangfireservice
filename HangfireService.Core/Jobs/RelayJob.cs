@@ -59,7 +59,7 @@ namespace HangfireService.Core.Jobs
                             result += await ExcuteRelay(option, hours, nextHours);
                             hours = nextHours;
                         }
-                       
+
                         date = date.AddDays(1);
                     }
                 }
@@ -69,8 +69,8 @@ namespace HangfireService.Core.Jobs
                 }
 
                 //洗舊資料用
-                if (jobName.Contains("TpBetRecordSummary-Days") && option.StartTime == option.EndTime 
-                    && option.StartTime >= new DateTime(2022,01,01))
+                if (jobName.Contains("TpBetRecordSummary-Days") && option.StartTime == option.EndTime
+                    && option.StartTime >= new DateTime(2022, 01, 01))
                 {
                     var lastDay = option.StartTime.ToString("yyyy-MM-dd");
                     var nextDay = option.StartTime.AddDays(-1).ToString("yyyy-MM-dd");
@@ -82,8 +82,8 @@ namespace HangfireService.Core.Jobs
                        TimeSpan.FromSeconds(5));
                 }
 
-                return option.ExecuteType == ExecuteType.Days ? 
-                    $"{jobName}.({option.StartTime:yyyy-MM-dd} ~ {option.EndTime:yyyy-MM-dd}) success count: {result}":
+                return option.ExecuteType == ExecuteType.Days ?
+                    $"{jobName}.({option.StartTime:yyyy-MM-dd} ~ {option.EndTime:yyyy-MM-dd}) success count: {result}" :
                     $"{jobName}.({option.StartTime:yyyy-MM-dd HH:mm} ~ {option.EndTime:yyyy-MM-dd HH:mm}) success count: {result}"; ;
             }
             catch (Exception ex)
@@ -107,13 +107,15 @@ namespace HangfireService.Core.Jobs
                 EndTime,
                 SummaryTypeList = option.SummaryType
             };
+
             var relayData = _reportDBDataLayer.GetRelayData(option.GetSP, parameters, option.TimeoutSeconds);
 
-            await using var conn = _mainDBDataLayer.GetMySqlConnection();
-            conn.Open();
-            var trans = await conn.BeginTransactionAsync();
             if (relayData.Any())
             {
+                await using var conn = _mainDBDataLayer.GetMySqlConnection();
+                conn.Open();
+                var trans = await conn.BeginTransactionAsync();
+
                 //清除舊資料
                 _mainDBDataLayer.DeleteRelayData(option.DeleteSP, parameters, trans);
                 try
@@ -130,21 +132,21 @@ namespace HangfireService.Core.Jobs
                         throw;
                     }
                 }
-            }    
 
-            if (result > 0)
-            {
-                trans.Commit();
-                await conn.CloseAsync();
-                await conn.DisposeAsync();
+                //二次結算有可能會造成Get跟Insert數量不一樣，所以result > 0 就可以commit
+                if (result > 0)
+                {
+                    trans.Commit();
+                    await conn.CloseAsync();
+                    await conn.DisposeAsync();
+                }
+                else
+                {
+                    await trans.DisposeAsync();
+                    await conn.CloseAsync();
+                    await conn.DisposeAsync();
+                }
             }
-            else
-            {
-                await trans.DisposeAsync();
-                await conn.CloseAsync();
-                await conn.DisposeAsync();
-            }
-
             return result;
         }
 
@@ -168,7 +170,7 @@ namespace HangfireService.Core.Jobs
 
 
             //TpBetRecord only 14day
-            if (jobName.Contains("TpBetRecordRelay") )
+            if (jobName.Contains("TpBetRecordRelay"))
             {
                 var last14 = DateTime.UtcNow.Date.AddDays(-14);
                 if (start < last14 || end < last14)
@@ -182,8 +184,8 @@ namespace HangfireService.Core.Jobs
             jobOption.Parameters = jobOption.Parameters.Update("StartTime", StartTime);
             jobOption.Parameters = jobOption.Parameters.Update("EndTime", EndTime);
             var result = ExecuteAsync($"Execute.{jobName}.({StartTime} ~ {EndTime})", jobOption, context, cancellationToken).Result;
-            
-          
+
+
             return result;
         }
 
