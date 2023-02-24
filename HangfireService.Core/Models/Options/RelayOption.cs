@@ -46,8 +46,8 @@
             }
 
             var now = DateTime.UtcNow;
-            var lastHour = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0);
-            return (lastHour.AddHours(Subtract), lastHour);
+            var nextHour = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0).AddHours(1);
+            return (nextHour.AddHours(Subtract), nextHour);
         }
     }
 

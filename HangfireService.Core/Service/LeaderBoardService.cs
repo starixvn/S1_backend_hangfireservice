@@ -4,6 +4,8 @@ using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Options;
 using Microsoft.Extensions.Logging;
 
+using Newtonsoft.Json;
+
 namespace HangfireService.Core.Service;
 
 public class LeaderBoardService
@@ -66,9 +68,11 @@ public class LeaderBoardService
         {
             
             result += await _mainDBDataLayer.SetLeaderBoard(leadBoardDtos, trans);
-            if (result == leadBoardDtos.Count())
+            if (result > 0)
             {
                 await trans.CommitAsync();
+                //用List的數量才是最後成功的筆數
+                result = leadBoardDtos.Count();
             }
             
         }
