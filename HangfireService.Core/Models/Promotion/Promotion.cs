@@ -57,12 +57,12 @@ namespace HangfireService.Core.Models.Promotion
         public int SiteId { get; set; }
         public int CurrencyId { get; set; }
         public string BonusCode { get; set; }
-        public string BonusType { get; set; }
+        public int BonusType { get; set; }
         public string BonusName { get; set; }
         public DateTime? StartTime { get; set; }
         public DateTime? EndTime { get; set; }
-        public int TotalClaimants { get; set; }
-        public decimal TotalClaimedAmount { get; set; }
+        public decimal TotalDeposit { get; set; }
+        public decimal TotalWithdrawal { get; set; }
         public decimal GGR { get; set; }
     }
 }

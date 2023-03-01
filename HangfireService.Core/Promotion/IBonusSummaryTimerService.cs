@@ -4,9 +4,7 @@ namespace HangfireService.Core.Promotion
 {
     public interface IBonusSummaryTimerService
     {
-        Task<int> GetWorkerId(int type);
         BonusSummaryTimer GetBonusSummaryTimer(int type);
-        Task<int> SetWorkerId(int type, string memo, int id);
-        int SetBonusSummaryTimer(int type, DateTime time);
+        Task<int> SetWorkerTimer(int type, string memo, int id , DateTime? time);
     }
 }

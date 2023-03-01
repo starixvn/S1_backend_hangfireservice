@@ -17,24 +17,14 @@ namespace HangfireService.Core.Promotion
             _reportDb = sqlClients.FirstOrDefault(a => a.DataBase == DataBase.Report);
         }
 
-        public async Task<int> GetWorkerId(int type)
+        public async Task<int> SetWorkerTimer(int type, string memo, int id ,DateTime? time)
         {
-            return await _reportDb.QueryFirstAsync<int>("Service_BonusSummaryTimerId_Get", new { _Type = type });
-        }
-
-        public async Task<int> SetWorkerId(int type, string memo, int id)
-        {
-            return await _mainDb.ExecuteAsync("Service_BonusSummaryTimerId_Set", new { _Type = type, _Memo = memo, _Id = id });
+            return await _mainDb.ExecuteAsync("Service_Timer_Set", new { _Type = type, _Memo = memo, _Id = id , _StartTime = time });
         }
 
         public BonusSummaryTimer GetBonusSummaryTimer(int type)
         {
-            return _reportDb.QueryFirst<BonusSummaryTimer>("Service_BonusSummaryTimer_Get", new { _Type = type });
-        }
-
-        public int SetBonusSummaryTimer(int type, DateTime time)
-        {
-            return _mainDb.Execute("Service_BonusSummaryTimer_Set" , new { _Type = type , _Time = time});
+            return _reportDb.QueryFirst<BonusSummaryTimer>("Service_Timer_Get", new { _Type = type });
         }
     }
 }

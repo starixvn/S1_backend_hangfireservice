@@ -27,7 +27,7 @@ namespace HangfireService.Core.Promotion
                 if (ManualOption != null) 
                     id = ManualOption.Id;
                 else 
-                    id = await _timerService.GetWorkerId((int)WorkerType);
+                    id = _timerService.GetBonusSummaryTimer((int)WorkerType).Id;
 
                 var dto = await _promotionService.GetSummaryDataById("Service_OtherSummary_Get", id);
                 var adjustmentInfo = dto.ToList();
@@ -54,7 +54,7 @@ namespace HangfireService.Core.Promotion
                     if (result > 1 && ManualOption == null)
                     {
                         var lastId = adjustmentInfo.Max(a => a.Id);
-                        await _timerService.SetWorkerId((int)WorkerType, "AdjustmentInfo", lastId);
+                        await _timerService.SetWorkerTimer((int)WorkerType, "AdjustmentInfo", lastId , null);
                     }
                 }
                 return true;

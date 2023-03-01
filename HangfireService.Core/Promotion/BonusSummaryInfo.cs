@@ -45,20 +45,14 @@ namespace HangfireService.Core.Promotion
                     BonusName = a.BonusName ?? "",
                     StartTime = a.StartTime,
                     EndTime = a.EndTime,
-                    TotalClaimants = a.TotalClaimants,
-                    TotalClaimedAmount = a.TotalClaimedAmount,
-                    //todo
-                    GGR = 0
+                    TotalDeposit = a.TotalDeposit,
+                    TotalWithdrawal = a.TotalWithdrawal,
+                    GGR = a.GGR
                 });
-            
-                var result = await _promotionService.InsertBonusSummaryInfo(bonusSummaryInfo);
-                if (result > 1)
-                {
-                    _timerService.SetBonusSummaryTimer((int)WorkerType, endTime);
-                    return true;
-                }
+                
+                await _promotionService.InsertBonusSummaryInfo(bonusSummaryInfo);
             }
-            _timerService.SetBonusSummaryTimer((int)WorkerType, endTime);
+            await _timerService.SetWorkerTimer((int)WorkerType,"BonusSummaryDetail", -1 , endTime);
             return true;
         }
     }

@@ -23,7 +23,7 @@ namespace HangfireService.Core.Promotion
             if (ManualOption != null) 
                 id = ManualOption.Id;
             else 
-                id = await _timerService.GetWorkerId((int)WorkerType);
+                id = _timerService.GetBonusSummaryTimer((int)WorkerType).Id;
 
             var dto = await _promotionService.GetSummaryDataById("Service_ReferralFreeCreditSummary_Get", id);
             var referralFreeCredit = dto.ToList();
@@ -49,7 +49,7 @@ namespace HangfireService.Core.Promotion
                 if (result > 1 && ManualOption == null)
                 {
                     var lastId = referralFreeCredit.Max(a => a.Id);
-                    await _timerService.SetWorkerId((int)WorkerType, "ReferralLog", lastId);
+                    await _timerService.SetWorkerTimer((int)WorkerType, "ReferralLog", lastId , null);
                 }
             }
             return true;
