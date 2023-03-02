@@ -12,7 +12,7 @@ namespace HangfireService.Core.DataLayers
 
         public ReportDBDataLayer(IServiceProvider provider)
         {
-            _dbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Main);
+            _dbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Report);
         }
 
         public IEnumerable<ThirdPartyModel> GetAllTpList()
