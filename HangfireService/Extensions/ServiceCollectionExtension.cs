@@ -25,7 +25,7 @@ namespace HangfireService.Extensions
             var serviceType = Environment.GetEnvironmentVariable("ServiceType") ?? configuration.GetValue<string>("ServiceType");
             return services
             .AddSingleton(param => new MySqlClient(configuration.GetConnectionString($"{serviceType}_MainDB"), logger, DataBase.Main))
-            .AddSingleton(param => new MySqlClient(configuration.GetConnectionString($"{serviceType}_MainDB"), logger, DataBase.Report))
+            .AddSingleton(param => new MySqlClient(configuration.GetConnectionString($"{serviceType}_ReportDB"), logger, DataBase.Report))
             .AddSingleton(param => new MySqlClient(configuration.GetConnectionString($"{serviceType}_WagerDB"), logger, DataBase.Wager));
         }
 
