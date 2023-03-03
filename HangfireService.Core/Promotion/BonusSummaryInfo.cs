@@ -33,6 +33,7 @@ namespace HangfireService.Core.Promotion
             
             var dto = await _promotionService.GetBonusSummaryDetailByTime("Service_BonusSummaryDetail_Get", startTime, endTime);
             var referral = dto.ToList();
+            var insertResult = 0;
             if (referral.Any())
             {
                 var bonusSummaryInfo = referral.Select(a => new InsertBonusSummaryInfoDto
@@ -44,15 +45,17 @@ namespace HangfireService.Core.Promotion
                     BonusType = a.BonusType,
                     BonusName = a.BonusName ?? "",
                     StartTime = a.StartTime,
-                    EndTime = a.EndTime,
-                    TotalDeposit = a.TotalDeposit,
-                    TotalWithdrawal = a.TotalWithdrawal,
-                    GGR = a.GGR
+                    EndTime = a.EndTime
                 });
                 
-                await _promotionService.InsertBonusSummaryInfo(bonusSummaryInfo);
+                insertResult = await _promotionService.InsertBonusSummaryInfo(bonusSummaryInfo);
             }
-            await _timerService.SetWorkerTimer((int)WorkerType,"BonusSummaryDetail", -1 , endTime);
+
+            if (insertResult > 0)
+            {
+                await _timerService.SetWorkerTimer((int)WorkerType,"BonusSummaryDetail", -1 , endTime);
+            }
+           
             return true;
         }
     }
