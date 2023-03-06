@@ -12,6 +12,10 @@ namespace HangfireService.Core.ThirdParty
 {
     internal class WMTpHelper : BaseTpHelper, IFinanceTpHelper
     {
+        public bool CheckTransId => true;
+
+        public TimeOption TimeOptionId => TimeOption.SettledTime;
+
         public int TpId => 20;
 
         private readonly ReportDBDataLayer _reportDbDataLayer;
@@ -40,7 +44,8 @@ namespace HangfireService.Core.ThirdParty
 
             // bettrans 資料時間可能會有跨天的問題
             // 因使用transtime檢查會使tpbetrecord 下注跨天計算有問題，暫時調整為settletime比對確保tpbetrecord與wager金額相符，但會造成bettrans跨天計算有問題，後續如有bettrans & 第三方不符，請先手動檢查bettrans & wager (bettime)下注時間撈取總計檢查
-            var bettrans = await _dbClient.QueryAsync<BettransCheckData>("Finance_BettransLC_WM_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
+            var bettransData = await _dbClient.QueryAsync<BettransCheckData>("Finance_BettransLC_WM_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
+            var bettrans = bettransData.Where(x => x.Stake != 0 && x.WinlostAmount != 0);
             foreach (var item in bettrans)
             {
                 item.ValidBet = item.Stake;
@@ -111,6 +116,29 @@ namespace HangfireService.Core.ThirdParty
                 _logger.LogError($"[{checkOption.BeginTime:yyyy-MM-dd}]:{ToJson(data)}");
             }
             return checkResult;
+        }
+
+        public async Task<IEnumerable<BettransCheckTransIdData>> GetBettransCheckTransIdData(FinanceCheckTransIdOption checkOption)
+        {
+            var BeginTime = checkOption.BeginTime.GetUnixTime();
+            var EndTime = checkOption.EndTime.GetUnixTime() - 1;
+            var bettrans = await _wagerClient.QueryAsync<BettransCheckTransIdData>("Finance_TpWagerWM_Check_TransId_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
+
+            return (from item in bettrans
+                    let exchangeRate = _tpCurrency.First(c => c.CurrencyId == item.CurrencyId).ExchangeRate
+                    select new BettransCheckTransIdData
+                    {
+                        TpId = TpId,
+                        TransId = item.TransId,
+                        CurrencyId = item.CurrencyId,
+                        Stake = item.Stake * exchangeRate,
+                        ValidBet = item.ValidBet * exchangeRate,
+                        Payout = 0,
+                        WinlostAmount = item.WinlostAmount * exchangeRate,
+                        Revenue = 0,
+                        ProgressiveBet = item.ProgressiveBet * exchangeRate,
+                        ProgressiveWin = item.ProgressiveWin * exchangeRate,
+                    }).ToList();
         }
     }
 }

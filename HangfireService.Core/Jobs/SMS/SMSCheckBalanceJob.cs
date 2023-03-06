@@ -10,16 +10,20 @@ using System.Net;
 using HangfireService.Core.Helpers;
 using HangfireService.Core.Models.Options;
 using Microsoft.Extensions.Configuration;
+using Hangfire.Dashboard.Management.Metadata;
+using Hangfire.Dashboard.Management.Support;
 
-namespace HangfireService.Core.Jobs
+namespace HangfireService.Core.Jobs.SMS
 {
+    [ManagementPage("SMSCheckBalance", queue: "check")]
     public class SMSCheckBalanceJob : BaseJob, IScheduledJob
     {
         protected readonly HttpHelper _httpHelper;
         private readonly SecureHelper _secureHelper;
-        private readonly Dictionary<string, SMSBlanceCheckOption> _smsConfig;
+        private readonly Dictionary<string, SMSOption> _smsConfig;
         private readonly string _letsTalkGroupName;
         private readonly string _commonServiceHost;
+        private static List<JobOption> _jobList;
 
         public SMSCheckBalanceJob(IServiceProvider provider) : base(provider)
         {
@@ -27,12 +31,13 @@ namespace HangfireService.Core.Jobs
             _httpHelper = provider.GetRequiredService<HttpHelper>();
             _secureHelper = provider.GetRequiredService<SecureHelper>();
             var iConfiguration = provider.GetRequiredService<IConfiguration>();
-            _smsConfig = iConfiguration.GetSection("SMSConfig").Get<Dictionary<string, SMSBlanceCheckOption>>();
-            _letsTalkGroupName = iConfiguration.GetValue<string>("LetsTalkConfig:LetsTalkGroupName");
+            _smsConfig = iConfiguration.GetSection("SMSConfig").Get<Dictionary<string, SMSOption>>();
+            _letsTalkGroupName = iConfiguration.GetValue<string>("LetsTalkConfig:SNS:LetsTalkGroupName");
             _commonServiceHost = iConfiguration.GetValue<string>("AiLabServiceHost:CommonServiceHost");
+            MyJobManager.GetJobGroups()?.TryGetValue("Check", out _jobList);
         }
 
-        private async Task<bool> NxCloudGetBalance(SMSBlanceCheckOption smsOption)
+        private async Task<bool> NxCloudGetBalance(SMSOption smsOption)
         {
             try
             {
@@ -78,7 +83,7 @@ namespace HangfireService.Core.Jobs
 
         }
 
-        private async Task<bool> SkyLineGetBalance(SMSBlanceCheckOption smsOption)
+        private async Task<bool> SkyLineGetBalance(SMSOption smsOption)
         {
             var account = smsOption.KEY1;
             var passWord = smsOption.KEY2;
@@ -115,7 +120,7 @@ namespace HangfireService.Core.Jobs
             return false;
         }
 
-        private async Task<bool> SandLesTalkMessage(SMSBlanceCheckOption smsOption, object? balance)
+        private async Task<bool> SandLesTalkMessage(SMSOption smsOption, object balance)
         {
             try
             {
@@ -138,7 +143,7 @@ namespace HangfireService.Core.Jobs
             return true;
         }
 
-        private static string MakeAlertMessage(SMSBlanceCheckOption smsOption, string balance)
+        private static string MakeAlertMessage(SMSOption smsOption, string balance)
         {
             var message =
                     $"* SMS Balance Alert * \r\n" +
@@ -182,6 +187,37 @@ namespace HangfireService.Core.Jobs
 
             return "true";
 
+        }
+
+
+        [Job]
+        [DisplayName("Run {2} by ManagementPage")]
+        public object Run(
+            PerformContext context = null,
+            IJobCancellationToken cancellationToken = null,
+            [DisplayData("JobName", ConvertType = typeof(JobList))] string jobName = null)
+        {
+            if (!_jobList.Any())
+            {
+                return null;
+            }
+            var jobOption = _jobList.First(i => i.JobName == jobName);
+
+            return ExecuteAsync($"Execute.{jobName}", jobOption, context, cancellationToken).Result;
+        }
+
+        private class JobList : IInputDataList
+        {
+            public Dictionary<string, string> GetData()
+            {
+                return _jobList?
+                    .Where(i => i.JobName.Contains("SMSCheckBalance"))
+                    .ToDictionary(f => f.JobName, f => f.JobName);
+            }
+            public string GetDefaultValue()
+            {
+                return null;
+            }
         }
     }
 }

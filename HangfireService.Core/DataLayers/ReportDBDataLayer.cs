@@ -2,6 +2,7 @@
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
+using HangfireService.Core.Models.Options;
 
 namespace HangfireService.Core.DataLayers
 {
@@ -32,11 +33,6 @@ namespace HangfireService.Core.DataLayers
         public Task<IEnumerable<TpGameTypeModel>> GetGameTypeByCategoryId(int CategoryId)
         {
             return _dbClient.QueryAsync<TpGameTypeModel>("Service_GameTypeByCategoryId_Get", parameters: new DynamicParameters(new { CategoryId }));
-        }
-
-        public Task<IEnumerable<TpSettlePendingModel>> GetTpSettlePendingSportByTpGameType(int TpGameType, long BeginTime, long EndTime)
-        {
-            return _dbClient.QueryAsync<TpSettlePendingModel>("Service_TpSettlePending_Sport_Bettrans_Get", parameters: new DynamicParameters(new { TpGameType, BeginTime, EndTime }), commandTimeout: 120);
         }
 
         public Task<IEnumerable<TpSettlePendingModel>> GetTpSettlePendingLiveCasinoByTpGameType(int TpGameType, long BeginTime, long EndTime)
@@ -74,14 +70,19 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Query<TpBetRecordCheck>("Finance_TpBetRecord_Check_Get", parameters: new { BeginTime, EndTime }, commandTimeout: 120);
         }
 
+        public IEnumerable<TpBetRecordCheckTransId> GetTpBetRecordCheckTransIdData(DateTime BeginTime, DateTime EndTime, int TpId, TimeOption TimeOption = 0)
+        {
+            return _dbClient.Query<TpBetRecordCheckTransId>("Finance_TpBetRecord_Check_TransId_Get", parameters: new { _BeginTime = BeginTime, _EndTime = EndTime, _TpId = TpId, _TimeOption = TimeOption }, commandTimeout: 120);
+        }
+
         public IEnumerable<TpBetRecordCheck> GetTpBetRecordCheckSettlementTypeByTpId(int TpId, DateTime BeginTime, DateTime EndTime)
         {
             return _dbClient.Query<TpBetRecordCheck>("Finance_TpBetRecord_Check_SettlementType_ByTpId_Get", parameters: new { _TpId = TpId, _BeginTime = BeginTime, _EndTime = EndTime }, commandTimeout: 120);
         }
 
-        public IEnumerable<TpBetRecordCheck> GetTpBetRecordCheckTransTimeDataByTpId(int TpId, DateTime BeginTime, DateTime EndTime)
+        public IEnumerable<TpBetRecordCheck> GetTpBetRecordCheckDataByTpId(int TpId, DateTime BeginTime, DateTime EndTime, TicketStatusExcludeOption TicketStatusExcludeOption = 0, TimeOption TimeOption = 0)
         {
-            return _dbClient.Query<TpBetRecordCheck>("Finance_TpBetRecord_Check_TransTime_ByTpId_Get", parameters: new { _TpId = TpId, _BeginTime = BeginTime, _EndTime = EndTime }, commandTimeout: 120);
+            return _dbClient.Query<TpBetRecordCheck>("Finance_TpBetRecord_Check_ByTpId_Get", parameters: new { _TpId = TpId, _BeginTime = BeginTime, _EndTime = EndTime, _TicketStatusExcludeOption = TicketStatusExcludeOption, _TimeOption = TimeOption }, commandTimeout: 120);
         }
 
         public IEnumerable<TpBetRecordCheck> GetTpBetRecordCheckByGameType(int TpId, int GameType, DateTime BeginTime, DateTime EndTime)
@@ -99,9 +100,82 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Query<TpCurrency>("Service_TpCurrency_Get", parameters: new { TpId });
         }
 
+        public Task<IEnumerable<Banner>> GetBanner()
+        {
+            return _dbClient.QueryAsync<Banner>("Service_BannerExpired_Get");
+        }
+
+        public IEnumerable<TpBettingCheckModel> GetTpBettingCheck()
+        {
+            return _dbClient.Query<TpBettingCheckModel>("Service_TpBettingMonitor_Get");
+        }
+
+        public IEnumerable<TpLastBetting> GetLastBettingTime(DateTime startTime, DateTime endTime)
+        {
+            return _dbClient.Query<TpLastBetting>("Service_TpLastBetting_Get", parameters: new { _StartTime = startTime, _EndTime = endTime });
+        }
+
+        public IEnumerable<OTPCheck> GetOTPCheckList()
+        {
+            return _dbClient.Query<OTPCheck>("Service_OTPLog_Check");
+        }
+
+        public Customer GetCustInfo(int CustId)
+        {
+            return _dbClient.QueryFirst<Customer>("Customer_Get", parameters: new { CustId });
+        }
+
+        #region Statistical-Online Count
+
+        public async Task<IEnumerable<OnlineCountDto>> GetOnlineCount()
+            => await _dbClient.QueryAsync<OnlineCountDto>("Service_OnlineUsers_Get_V2", commandTimeout: 120);
+
+        #endregion
+
+        #region Statistical-Customer Auto Lock
+
+        public async Task<IEnumerable<DormantSettingDto>> GetDormantSetting()
+            => await _dbClient.QueryAsync<DormantSettingDto>("Service_DormantSetting_Get");
+
+        public async Task<IEnumerable<DormantCustomerDto>> GetDormantCustomer(int siteId, int days, string statusStr)
+           => await _dbClient.QueryAsync<DormantCustomerDto>("Service_DormantAccount_Get",
+               parameters: new { SiteId = siteId, Day = days, StatusList = statusStr },
+               commandTimeout: 180);
+
+        #endregion
+
+        #region Statistical-LeaderBoard
+
+        public async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetTpBetRecordForLeadBoard(LeaderBoardOption option)
+            => await _dbClient.QueryAsync<GetTpBetRecordForLeadBoardDto>(option.SPName,
+                new
+                {
+                    SiteId = option.SiteId,
+                    EventCode = option.EventCode,
+                    StartDate = option.StartTime,
+                    EndDate = option.EndTime,
+                    TimeZone = option.TimeZoom,
+                },
+                commandTimeout: 60);
+
+        public async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetLeaderBoardExtraPoint(LeaderBoardOption option, string sp)
+            => await _dbClient.QueryAsync<GetTpBetRecordForLeadBoardDto>(sp,
+        new
+        {
+            SiteId = option.SiteId,
+            EventCode = option.EventCode,
+            StartDate = option.StartTime,
+            EndDate = option.EndTime,
+            TimeZone = option.TimeZoom
+        },
+        commandTimeout: 60);
+        #endregion
+
         public IEnumerable<dynamic> GetRelayData(string sp, object parameters, int timeoutSeconds)
         {
             return _dbClient.Query(sp, parameters: parameters, commandTimeout: timeoutSeconds);
         }
+
+
     }
 }

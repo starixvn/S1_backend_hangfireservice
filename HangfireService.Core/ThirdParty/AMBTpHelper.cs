@@ -11,6 +11,10 @@ namespace HangfireService.Core.ThirdParty
 {
     internal class AMBTpHelper : BaseTpHelper, IFinanceTpHelper
     {
+        public bool CheckTransId => false;
+
+        public TimeOption TimeOptionId => TimeOption.SettledTime;
+
         public int TpId => 30;
         private readonly ReportDBDataLayer _reportDbDataLayer;
         private readonly IEnumerable<TpCurrency> _tpCurrency;
@@ -62,7 +66,7 @@ namespace HangfireService.Core.ThirdParty
                     CurrencyId = _tpCurrency.First(c => c.TpCurrencyId == i.Key).CurrencyId,
                     Stake = i.Sum(i => i.Stake),
                     ValidBet = i.Sum(i => i.ValidBet),
-                    Payout = i.Sum(i => i.Stake + i.WinlostAmount),
+                    Payout = 0,
                     WinlostAmount = i.Sum(i => i.WinlostAmount),
                     Revenue = i.Sum(i => i.Revenue),
                     ProgressiveBet = 0,
@@ -79,7 +83,7 @@ namespace HangfireService.Core.ThirdParty
                 tpDaily.Stake *= rate;
                 tpDaily.ValidBet *= rate;
                 tpDaily.WinlostAmount *= rate;
-                tpDaily.Payout *= rate;
+                tpDaily.Payout = 0;
                 tpDaily.Revenue *= rate;
             }
             return tpDailyList;

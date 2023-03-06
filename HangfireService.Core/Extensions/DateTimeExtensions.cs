@@ -1,4 +1,6 @@
-﻿namespace HangfireService.Core.Extensions
+﻿using System.Globalization;
+
+namespace HangfireService.Core.Extensions
 {
     public static class DateTimeExtensions
     {
@@ -20,6 +22,16 @@
                 0
             );
             return new DateTimeOffset(time).ToUnixTimeSeconds();
+        }
+
+        public static long GetUnixTime(this DateTime datetime)
+        {
+            return new DateTimeOffset(datetime, new TimeSpan(0, 0, 0)).ToUnixTimeSeconds();
+        }
+
+        public static long GetTicksFormUnixTime(this long unixtime)
+        {
+            return DateTimeOffset.FromUnixTimeSeconds(unixtime).Ticks;
         }
 
         public static string GetPartitionKey(this DateTime partitionTime)

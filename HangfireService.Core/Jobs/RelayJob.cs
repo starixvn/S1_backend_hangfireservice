@@ -12,6 +12,7 @@ using HangfireService.Core.Models.Options;
 using Hangfire.Dashboard.Management.Support;
 using HangfireService.Core.Extensions;
 using HangfireService.Core.Helpers;
+using MySql.Data.MySqlClient;
 
 namespace HangfireService.Core.Jobs
 {
@@ -38,17 +39,27 @@ namespace HangfireService.Core.Jobs
             try
             {
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
-                var option = JsonConvert.DeserializeObject<RelayOption>(JsonConvert.SerializeObject(jobOption.Parameters));
+                var option = JsonConvert.DeserializeObject<RelayOption>(jobOption.Parameters);
                 var result = 0;
 
                 if (option.ExecuteType == ExecuteType.Days)
                 {
-                    //逐日進行
+                    //先逐日進行
                     var date = option.StartTime;
                     while (date <= option.EndTime)
                     {
-                        _logger.LogInformation($"{jobName} ExcuteRelay Date:{date::yyyy-MM-dd}");
-                        result += await ExcuteRelay(option, date, date.AddDays(1));
+                        _logger.LogInformation($"{jobName} || Excute Summary Date:{date:yyyy-MM-dd}");
+                        //再用每小時執行
+                        var hours = date;//每日00:00
+                        var end = date.AddDays(1);//每日24:00
+                        while (hours < end)
+                        {
+                            var nextHours = hours.AddHours(1);
+                            _logger.LogInformation($"{jobName} || Excute Summary Hour:{hours:yyyy-MM-dd HH:mm} ~ {nextHours:HH:mm}");
+                            result += await ExcuteRelay(option, hours, nextHours);
+                            hours = nextHours;
+                        }
+
                         date = date.AddDays(1);
                     }
                 }
@@ -57,13 +68,29 @@ namespace HangfireService.Core.Jobs
                     result += await ExcuteRelay(option, option.StartTime, option.EndTime);
                 }
 
-                return $"{jobName}.({option.StartTime:yyyy-MM-dd HH:mm} ~ {option.EndTime:yyyy-MM-dd HH:mm}) success count: {result}";
+                //洗舊資料用
+                if (jobName.Contains("TpBetRecordSummary-Days") && option.StartTime == option.EndTime
+                    && option.StartTime >= new DateTime(2022, 01, 01))
+                {
+                    var lastDay = option.StartTime.ToString("yyyy-MM-dd");
+                    var nextDay = option.StartTime.AddDays(-1).ToString("yyyy-MM-dd");
+                    jobOption.Parameters = jobOption.Parameters.Update("StartTime", nextDay);
+                    jobOption.Parameters = jobOption.Parameters.Update("EndTime", value: nextDay);
+                    var newJobName = jobName.Replace(lastDay, nextDay);
+                    BackgroundJob.Schedule(
+                      () => ExecuteAsync(newJobName, jobOption, null, null),
+                       TimeSpan.FromSeconds(5));
+                }
+
+                return option.ExecuteType == ExecuteType.Days ?
+                    $"{jobName}.({option.StartTime:yyyy-MM-dd} ~ {option.EndTime:yyyy-MM-dd}) success count: {result}" :
+                    $"{jobName}.({option.StartTime:yyyy-MM-dd HH:mm} ~ {option.EndTime:yyyy-MM-dd HH:mm}) success count: {result}"; ;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
                 BackgroundJob.Schedule(
-                    () => ExecuteAsync(jobName, jobOption, null, null),
+                   () => ExecuteAsync(jobName, jobOption, null, null),
                     TimeSpan.FromMinutes(5));
                 _telegramBotHelper.SendMessage($"{jobName} 執行發生錯誤，五分鐘後重試。");
                 return JsonConvert.SerializeObject(ex);
@@ -74,57 +101,52 @@ namespace HangfireService.Core.Jobs
         private async Task<int> ExcuteRelay(RelayOption option, DateTime StartTime, DateTime EndTime)
         {
             var result = 0;
-            var StartIndex = 0;
-            var PageSize = option.LiminNum;
-
             var parameters = new
             {
                 StartTime,
                 EndTime,
-                StartIndex,
-                PageSize,
+                SummaryTypeList = option.SummaryType
             };
-            var relayData = _reportDBDataLayer.GetRelayData(option.GetSP, parameters, option.TimeoutSeconds);       
-            var forContinue = relayData.Count() == PageSize;
 
-            using var conn = _mainDBDataLayer.GetMySqlConnection();
-            conn.Open();
-            var trans = conn.BeginTransaction();
+            var relayData = _reportDBDataLayer.GetRelayData(option.GetSP, parameters, option.TimeoutSeconds);
+
             if (relayData.Any())
             {
+                await using var conn = _mainDBDataLayer.GetMySqlConnection();
+                conn.Open();
+                var trans = await conn.BeginTransactionAsync();
+
                 //清除舊資料
                 _mainDBDataLayer.DeleteRelayData(option.DeleteSP, parameters, trans);
-                
-                //寫入資料
-                result += _mainDBDataLayer.InsertRelayData(option.InsertSP, relayData, trans);
-            }
-
-            //處理分頁資料
-            while (forContinue)
-            {
-                StartIndex += PageSize;
-                relayData = _reportDBDataLayer.GetRelayData(option.GetSP, new
+                try
                 {
-                    StartTime,
-                    EndTime,
-                    StartIndex,
-                    PageSize,
-                }, option.TimeoutSeconds);
-                forContinue = relayData.Count() == PageSize;
-                
-                //寫入分頁其餘資料
-                result += _mainDBDataLayer.InsertRelayData(option.InsertSP, relayData, trans);                                      
-            }
+                    //寫入資料
+                    result += _mainDBDataLayer.InsertRelayData(option.InsertSP, relayData, trans);
+                }
+                catch (MySqlException mySqlEx)
+                {
+                    //Saba二次結算會造成Duplicatekey，先記錄就好不中斷relay流程，讓每日排程更新資料
+                    _logger.LogWarning(mySqlEx, mySqlEx.Message);
+                    if (mySqlEx.Number != 1062)
+                    {
+                        throw;
+                    }
+                }
 
-            if (result > 0)
-            {
-                trans.Commit();
+                //二次結算有可能會造成Get跟Insert數量不一樣，所以result > 0 就可以commit
+                if (result > 0)
+                {
+                    trans.Commit();
+                    await conn.CloseAsync();
+                    await conn.DisposeAsync();
+                }
+                else
+                {
+                    await trans.DisposeAsync();
+                    await conn.CloseAsync();
+                    await conn.DisposeAsync();
+                }
             }
-            else
-            {
-                trans.Dispose();
-            }
-
             return result;
         }
 
@@ -136,8 +158,7 @@ namespace HangfireService.Core.Jobs
             IJobCancellationToken cancellationToken = null,
             [DisplayData("JobName", ConvertType = typeof(JobList))] string jobName = null,
             [DisplayData("BeginDate", placeholderText: "yyyy-MM-dd")] string beginDate = null,
-            [DisplayData("EndDate", placeholderText: "yyyy-MM-dd")] string endDate = null,
-            [DisplayData("LiminNum", defaultValue:"2000")]string liminNum = "2000")
+            [DisplayData("EndDate", placeholderText: "yyyy-MM-dd")] string endDate = null)
         {
             if (!_jobList.Any())
             {
@@ -149,7 +170,7 @@ namespace HangfireService.Core.Jobs
 
 
             //TpBetRecord only 14day
-            if (jobName.Contains("TpBetRecordRelay") )
+            if (jobName.Contains("TpBetRecordRelay"))
             {
                 var last14 = DateTime.UtcNow.Date.AddDays(-14);
                 if (start < last14 || end < last14)
@@ -160,17 +181,19 @@ namespace HangfireService.Core.Jobs
 
             var StartTime = start.ToString("yyyy-MM-dd");
             var EndTime = end.ToString("yyyy-MM-dd");
-            jobOption.Parameters.Update("StartTime", StartTime);
-            jobOption.Parameters.Update("EndDate", EndTime);
-            jobOption.Parameters.Update("LiminNum", liminNum);
-            return ExecuteAsync($"Execute.{jobName}.({StartTime} ~ {EndTime})", jobOption, context, cancellationToken).Result;
+            jobOption.Parameters = jobOption.Parameters.Update("StartTime", StartTime);
+            jobOption.Parameters = jobOption.Parameters.Update("EndTime", EndTime);
+            var result = ExecuteAsync($"Execute.{jobName}.({StartTime} ~ {EndTime})", jobOption, context, cancellationToken).Result;
+
+
+            return result;
         }
 
         private class JobList : IInputDataList
         {
             public Dictionary<string, string> GetData()
             {
-                return _jobList?.Where(i => i.JobName.Contains("Relay-Days"))
+                return _jobList?.Where(i => i.JobName.Contains("Relay-Days") || i.JobName.Contains("Summary-Days"))
                     .ToDictionary(f => f.JobName, f => f.JobName);
             }
             public string GetDefaultValue()
