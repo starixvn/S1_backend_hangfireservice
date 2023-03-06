@@ -2,6 +2,7 @@ using System.Diagnostics;
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.Models.Promotion;
 using Microsoft.Extensions.Logging;
+using MySqlX.XDevAPI.Common;
 
 namespace HangfireService.Core.Promotion
 {
@@ -29,7 +30,7 @@ namespace HangfireService.Core.Promotion
                 else 
                     id = _timerService.GetBonusSummaryTimer((int)WorkerType).Id;
 
-                var dto = await _promotionService.GetSummaryDataById("Service_OtherSummary_Get", id);
+                var dto = _promotionService.GetSummaryDataById("Service_OtherSummary_Get", id, out var maxCheckId);
                 var adjustmentInfo = dto.ToList();
             
                 if (adjustmentInfo.Any())
@@ -51,11 +52,10 @@ namespace HangfireService.Core.Promotion
                     });
             
                     var result = await _promotionService.InsertBonusSummaryDetail(bonusSummaryDetail);
-                    if (result > 1 && ManualOption == null)
-                    {
-                        var lastId = adjustmentInfo.Max(a => a.Id);
-                        await _timerService.SetWorkerTimer((int)WorkerType, "AdjustmentInfo", lastId , null);
-                    }
+                }
+                if (maxCheckId > 1 && ManualOption == null)
+                {
+                    await _timerService.SetWorkerTimer((int)WorkerType, "AdjustmentInfo", maxCheckId, null);
                 }
                 return true;
             }
