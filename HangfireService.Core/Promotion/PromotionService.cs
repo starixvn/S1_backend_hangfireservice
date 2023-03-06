@@ -1,7 +1,9 @@
+using Dapper;
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Promotion;
 using Newtonsoft.Json;
+using System.Data;
 
 namespace HangfireService.Core.Promotion
 {
@@ -19,6 +21,17 @@ namespace HangfireService.Core.Promotion
         public async Task<IEnumerable<GetBonusSummaryDataByIdDto>> GetSummaryDataById(string sp, int id)
         {
             return await _reportDb.QueryAsync<GetBonusSummaryDataByIdDto>(sp, new { _Id = id });
+        }
+
+        public IEnumerable<GetBonusSummaryDataByIdDto> GetSummaryDataById(string sp, int id, out int maxCheckId)
+        {
+            maxCheckId = 0;
+            var p = new DynamicParameters();
+            p.Add("_Id", id);
+            p.Add("_MaxCheckId", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            var data = _reportDb.Query<GetBonusSummaryDataByIdDto>(sp, p);
+            maxCheckId = p.Get<int?>("_MaxCheckId") ?? 0;
+            return data;
         }
 
         public async Task<IEnumerable<GetBonusSummaryDataByTimeDto>> GetSummaryDataByTime(string sp, DateTime startTime, DateTime endTime)
