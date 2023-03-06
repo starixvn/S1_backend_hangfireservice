@@ -1,8 +1,6 @@
-using System.Diagnostics;
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.Models.Promotion;
 using Microsoft.Extensions.Logging;
-using MySqlX.XDevAPI.Common;
 
 namespace HangfireService.Core.Promotion
 {
