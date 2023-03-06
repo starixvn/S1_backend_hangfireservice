@@ -61,8 +61,5 @@ namespace HangfireService.Core.Models.Promotion
         public string BonusName { get; set; }
         public DateTime? StartTime { get; set; }
         public DateTime? EndTime { get; set; }
-        public decimal TotalDeposit { get; set; }
-        public decimal TotalWithdrawal { get; set; }
-        public decimal GGR { get; set; }
     }
 }

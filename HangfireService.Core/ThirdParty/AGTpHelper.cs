@@ -11,6 +11,10 @@ namespace HangfireService.Core.ThirdParty
 {
     internal class AGTpHelper : BaseTpHelper, IFinanceTpHelper
     {
+        public bool CheckTransId => false;
+
+        public TimeOption TimeOptionId => TimeOption.SettledTime;
+
         public int TpId => 3;
 
         private readonly ReportDBDataLayer _reportDbDataLayer;
@@ -32,7 +36,7 @@ namespace HangfireService.Core.ThirdParty
         public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
         {
             var BeginTime = checkOption.BeginTime.GetUnixTimeByDay();
-            var EndTime = checkOption.EndTime.GetUnixTimeByDay();
+            var EndTime = checkOption.EndTime.GetUnixTimeByDay() - 1;
             var bettrans = await _wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerAG_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
             foreach (var item in bettrans)
             {
@@ -53,7 +57,7 @@ namespace HangfireService.Core.ThirdParty
             foreach (var tpDaily in tpDailyList)
             {
                 var rate = _tpCurrency.First(c => c.CurrencyId == tpDaily.CurrencyId).ExchangeRate;
-                tpDaily.Stake = Math.Round(tpDaily.Stake , 2, MidpointRounding.AwayFromZero) * rate;
+                tpDaily.Stake = Math.Round(tpDaily.Stake, 2, MidpointRounding.AwayFromZero) * rate;
                 tpDaily.ValidBet = Math.Round(tpDaily.ValidBet, 2, MidpointRounding.AwayFromZero) * rate;
                 tpDaily.Payout = Math.Round(tpDaily.Payout, 2, MidpointRounding.AwayFromZero) * rate;
                 tpDaily.WinlostAmount = Math.Round(tpDaily.WinlostAmount, 2, MidpointRounding.AwayFromZero) * rate;

@@ -3,7 +3,12 @@ using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Options;
 using MySql.Data.MySqlClient;
+using MySqlX.XDevAPI.Common;
+using OfficeOpenXml.FormulaParsing.Excel.Operators;
 using System.Data;
+using System.Security.Policy;
+using HangfireService.Core.Service;
+
 
 namespace HangfireService.Core.DataLayers
 {
@@ -58,7 +63,7 @@ namespace HangfireService.Core.DataLayers
         #endregion
 
         #region Archive
-       
+
         public int DeleteArchive(string sp, dynamic parameters, IDbTransaction trans)
         {
             return _dbClient.Execute(sp, trans, parameters);
@@ -234,6 +239,35 @@ namespace HangfireService.Core.DataLayers
         }
         #endregion
 
+		public async Task<int> ExpiredBanner(string bannerName, int siteId, int currencyId)
+        {
+            return await _dbClient.ExecuteAsync("Service_BannerExpired_Set", new
+            {
+                _BannerName = bannerName,
+                _SiteId = siteId,
+                _CurrencyId = currencyId
+            });
+        }    
+        
+        public int SetLastBettingTime(int siteId, int currencyId, int tpId , int gameType , DateTime? lastBettingTime , bool isExecute)
+        {
+            var parameters = new
+            {
+                _SiteId = siteId,
+                _CurrencyId = currencyId,
+                _TpId = tpId,
+                _GameType = gameType,
+                _LastBettingTime = lastBettingTime,
+                _IsExecute = isExecute
+            };
+            return _dbClient.Execute("Service_TpBettingMonitorSetting_Set", parameters);
+        }
+        
+        public IEnumerable<TpMaintain> GetTpMaintainList(int siteId)
+        {
+            return _dbClient.Query<TpMaintain>("TpMaintain_Get", new DynamicParameters(new { SiteId = siteId }));
+        }
+
         #region BonusSummary
 
         public int BonusSummaryPromotionSet(DateTime startTime , DateTime endTime , IDbTransaction trans)
@@ -276,7 +310,7 @@ namespace HangfireService.Core.DataLayers
         #endregion
         
         public int InsertRelayData(string sp, object parameters, IDbTransaction trans)
-        {        
+        {
             return _dbClient.Execute(sp, trans, parameters);
         }
 
@@ -284,6 +318,71 @@ namespace HangfireService.Core.DataLayers
         {
             return _dbClient.Execute(sp, trans, parameters);
         }
+
+        public int SetOTPStatus(OTPCheckResult result)
+        {
+            return _dbClient.Execute("Service_OTPLog_Set", result);
+        }
+
+        #region Statistical-Online Count
+
+        public async Task<int> SetOnlineCount(IEnumerable<OnlineCountDto> onlineCountDtos)
+            => await _dbClient.ExecuteAsync("Service_OnlineCount_Set_V2", onlineCountDtos);
+
+        #endregion
+
+        #region Statistical-Customer Auto Lock
+
+        public async Task<int> SetCustomerStatus(int custId, int status)
+            => await _dbClient.ExecuteAsync("Service_LockDormantAccount_Set", new { CustId = custId, Status = status });
+
+        public async Task<int> SetCustNotes(int custId, string note, string @operator)
+            => await _dbClient.ExecuteAsync("Admin_CustNotes_Ins", new { CustId = custId, Note = note, Operator = @operator });
+
+        public async Task<int> SetDormantSetting(int siteId)
+            => await _dbClient.ExecuteAsync("Service_DormantSetting_Set", new { SiteId = siteId });
+
+        #endregion
+
+        #region Statistical-Cust Closing Balance
+
+        public async Task<int> SetCustClosingBalance()
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add("TotalCount", dbType: DbType.Int32, direction: ParameterDirection.InputOutput);
+
+            await _dbClient.ExecuteAsync("Service_CustClosingBalance_Set", parameters);
+
+            return parameters.Get<int?>("TotalCount") ?? 0;
+        }
+
+        #endregion
+
+        #region Statistical-LeaderBoard
+
+        public async Task<int> SetLeaderBoard(IEnumerable<GetTpBetRecordForLeadBoardDto> leadBoardDtos, IDbTransaction trans)
+            => await _dbClient.ExecuteAsync("Service_LeaderboardV2_Set", trans, leadBoardDtos);
+
+        #endregion
+
+        /// <summary>
+        /// 新增玩家充值總帳
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public Task<int> InsertDailyExchangeRate(MpaUpdateExchangeRateService.DailyExchangeRateResponse data)
+        {
+            return _dbClient.ExecuteAsync("Service_ExchangeRate_Set", new
+            {
+                _RateDate = data.RateDate,
+                _CurrencyId = data.CurrencyId,
+                _CurrencyName = data.CurrencyName,
+                _TargetCurrencyId = data.TargetCurrencyId,
+                _TargetCurrencyName = data.TargetCurrencyName,
+                _TargetCurrencyRate = data.TargetCurrencyRate
+            });
+        }
+
     }
 }
 

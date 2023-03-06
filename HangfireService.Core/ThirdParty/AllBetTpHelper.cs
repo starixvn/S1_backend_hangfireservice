@@ -12,6 +12,10 @@ namespace HangfireService.Core.ThirdParty
 {
     internal class AllBetTpHelper : BaseTpHelper, IFinanceTpHelper
     {
+        public bool CheckTransId => false;
+
+        public TimeOption TimeOptionId => TimeOption.TransTime;
+
         public int TpId => 12;
 
         private readonly ReportDBDataLayer _reportDbDataLayer;
@@ -67,7 +71,7 @@ namespace HangfireService.Core.ThirdParty
         public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, List<TpBetRecordCheck> tpBetRecord, List<BettransCheckData> bettransList, List<TpDailySummaryCheckData> tpDailyList)
         {
             // 對方報表API為下注時間 需改用TpBetRecord.TransTime檢查
-            tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckTransTimeDataByTpId(TpId, checkOption.BeginTime.AddHours(utcTime), checkOption.EndTime.AddHours(utcTime)).ToList();
+            tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckDataByTpId(TpId, checkOption.BeginTime.AddHours(utcTime), checkOption.EndTime.AddHours(utcTime), TicketStatusExcludeOption.Cancel, TimeOption.TransTime).ToList();
 
             // 第三方資料 ValidBet 設為 結算資料 ValidBet，因第三方資料無法計算出ValidBet
             foreach (var tpDailyData in tpDailyList)

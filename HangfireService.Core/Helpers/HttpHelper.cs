@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
 using Serilog.Context;
 using System.Net;
 using System.Net.Http.Headers;
@@ -12,9 +12,14 @@ namespace HangfireService.Core.Helpers
         private readonly HttpClient client;
         public static string proxyHost;
         public static int proxyPort;
+        private readonly ILogger<HttpHelper> _logger;
 
-        public HttpHelper(IHttpClientFactory clientFactory, IConfiguration configuration)
+        public HttpHelper(IServiceProvider provider)
         {
+            var configuration = provider.GetRequiredService<IConfiguration>(); 
+            var clientFactory = provider.GetRequiredService<IHttpClientFactory>();
+            _logger = provider.GetRequiredService<ILogger<HttpHelper>>();
+
             if (configuration.GetValue<string>("ProxyHost") != null)
             {
                 client = clientFactory.CreateClient("with_proxy");
@@ -28,8 +33,10 @@ namespace HangfireService.Core.Helpers
         public HttpClient GetClient() => client;
 
         public HttpClient GetClientWithHandler(HttpClientHandler handler) => new HttpClient(handler);
+
         public async Task<string> HttpPostAsync(string url, Dictionary<string, string> headerParams, string parameters, string contentType)
         {
+            LogContext.PushProperty("RequestId", Guid.NewGuid().ToString());
             LogContext.PushProperty("HttpHelper.Request.URL", url);
             HttpClientHandler handler = null;
             if (!string.IsNullOrEmpty(proxyHost))
@@ -51,15 +58,20 @@ namespace HangfireService.Core.Helpers
             {
                 client.DefaultRequestHeaders.Add(param.Key, param.Value);
             }
+
+            _logger.LogInformation($"HttpHelper.Request.BODY:{parameters}");
+
             using var data = new StringContent(parameters, Encoding.UTF8, contentType);
             using var response = await client.PostAsync(url, data);
 
-            string result = response.Content.ReadAsStringAsync().Result;
+            var result = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation($"HttpHelper.Request.Response:{result}");
             return result;
         }
 
         public async Task<HttpResponseMessage> HttpPost1Async(string url, Dictionary<string, string> headerParams, string parameters, string contentType)
         {
+            LogContext.PushProperty("RequestId", Guid.NewGuid().ToString());
             LogContext.PushProperty("HttpHelper.Request.URL", url);
             HttpClientHandler handler = null;
             if (!string.IsNullOrEmpty(proxyHost))
@@ -84,12 +96,20 @@ namespace HangfireService.Core.Helpers
                     client.DefaultRequestHeaders.Add(param.Key, param.Value);
                 }
             }
+
+            _logger.LogInformation($"HttpHelper.Request.BODY:{parameters}");
+            
             using var data = new StringContent(parameters, Encoding.UTF8, contentType);
             var response = await client.PostAsync(url, data);
+            var result = await response.Content.ReadAsStringAsync();
+
+            _logger.LogInformation($"HttpHelper.Request.Response:{result}");
             return response;
         }
+
         public async Task<HttpResponseMessage> HttpFromPostAsync(string url, Dictionary<string, string> headerParams, Dictionary<string, string> parameters, string contentType)
         {
+            LogContext.PushProperty("RequestId", Guid.NewGuid().ToString());
             LogContext.PushProperty("HttpHelper.Request.URL", url);
             HttpClientHandler handler = null;
             if (!string.IsNullOrEmpty(proxyHost))
@@ -114,9 +134,14 @@ namespace HangfireService.Core.Helpers
                     client.DefaultRequestHeaders.Add(param.Key, param.Value);
                 }
             }
-            using var data = new HttpRequestMessage(HttpMethod.Post, url) { Content = new FormUrlEncodedContent(parameters) };
 
+            _logger.LogInformation($"HttpHelper.Request.BODY:{string.Join(",", parameters.Select(i => $"{i.Key}={i.Value}"))}");
+
+            using var data = new HttpRequestMessage(HttpMethod.Post, url) { Content = new FormUrlEncodedContent(parameters) };
             var response = await client.SendAsync(data);
+            var result = await response.Content.ReadAsStringAsync();
+
+            _logger.LogInformation($"HttpHelper.Request.Response:{result}");
             return response;
 
         }

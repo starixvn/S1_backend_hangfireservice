@@ -27,7 +27,7 @@ namespace HangfireService.Core.Service
             _tpCheckMerchantConfig = iConfiguration.GetSection("TpCheckMerchantBalanceConfig").Get<Dictionary<string, PtCheckMerchantBalanceOption>>();
             _commonServiceHost = iConfiguration.GetValue<string>("AiLabServiceHost:CommonServiceHost");
             _tpServiceHost = iConfiguration.GetValue<string>("AiLabServiceHost:TpServiceHost");
-            _letsTalkGroupName = iConfiguration.GetValue<string>("LetsTalkConfig:LetsTalkGroupName");
+            _letsTalkGroupName = iConfiguration.GetValue<string>("LetsTalkConfig:SNS:LetsTalkGroupName");
             _httpHelper = provider.GetRequiredService<HttpHelper>();
             _logger = provider.GetRequiredService<ILogger<BaseJob>>();
             _tpIdMapToSiteName = new Dictionary<int, string>()
@@ -71,8 +71,14 @@ namespace HangfireService.Core.Service
                 {
                     var content = await httpResponse.Content.ReadAsStringAsync();
                     var merchantBalanceResponse = JsonConvert.DeserializeObject<MerchantBalanceResponse>(content);
-                    var merchantBalance = merchantBalanceResponse.ResponseData.MerchantBalance;
-                    if (merchantBalance < config.LessThanBalance) await SandLesTalkMessage(config, merchantBalanceResponse); //餘額低於最低限制，就發通知給客服
+                    if (merchantBalanceResponse.ErrorCode == 0)
+                    {
+                        var merchantBalance = merchantBalanceResponse.ResponseData.MerchantBalance;
+                        if (merchantBalance < config.LessThanBalance)
+                        {
+                            await SandLesTalkMessage(config, merchantBalanceResponse); //餘額低於最低限制，就發通知給客服
+                        }                       
+                    }         
                 }
             }
             catch (Exception ex)

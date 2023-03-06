@@ -40,7 +40,7 @@ namespace HangfireService.Core.Jobs
             {
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
                 
-                var option = JsonConvert.DeserializeObject<BonusSummaryOption>(JsonConvert.SerializeObject(jobOption.Parameters));
+                var option = JsonConvert.DeserializeObject<BonusSummaryOption>(jobOption.Parameters);
                 
                 if (option.WorkerType is WorkerType.Referral or WorkerType.ReferralFreeCredit or WorkerType.VipUpgrade or WorkerType.Other or WorkerType.BonusSummaryInfo)
                 {

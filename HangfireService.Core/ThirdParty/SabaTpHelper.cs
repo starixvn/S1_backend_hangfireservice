@@ -32,44 +32,46 @@ namespace HangfireService.Core.ThirdParty
         {
             var result = new List<bool>();
 
+
             //要注意第三方api可否接受Parallel，不支援可改用foreach
-            Parallel.ForEach(todoList,
+            Parallel.ForEach(
+                todoList,
                 new ParallelOptions() { MaxDegreeOfParallelism = option.TaskCount },
                 todo =>
-            {
-                try
-                {
-                    if (todo.GameType == 80)//LG虛擬體育目前無api，在ThirdPartyBetHistory處理細單，所以直接更新成功
                     {
-                        var ignore = UpdateTpDetailTodo(new TpBetRecordDetail(todo)
+                        try
                         {
-                            IsSuccess = true
-                        }).Result;
-                        result.Add(ignore);
-                    }
-                    else
-                    { 
-                        var detail = GetBetDetail(todo).Result;
-                        if (detail.IsSuccess)
-                        {
-                            //成功新增Detail
-                            var insert = AddTpBetRecordDetail(detail).Result;
-                            result.Add(insert);
+                            if (todo.GameType == 80)//LG虛擬體育目前無api，在ThirdPartyBetHistory處理細單，所以直接更新成功
+                            {
+                                var ignore = UpdateTpDetailTodo(new TpBetRecordDetail(todo)
+                                {
+                                    IsSuccess = true
+                                }).Result;
+                                result.Add(ignore);
+                            }
+                            else
+                            {
+                                var detail = GetBetDetail(todo).Result;
+                                if (detail.IsSuccess)
+                                {
+                                    //成功新增Detail
+                                    var insert = AddTpBetRecordDetail(detail).Result;
+                                    result.Add(insert);
+                                }
+                                else
+                                {
+                                    //失敗更新todo status
+                                    var update = UpdateTpDetailTodo(detail).Result;
+                                    result.Add(update);
+                                }
+                            }
                         }
-                        else
+                        catch (Exception e)
                         {
-                            //失敗更新todo status
-                            var update = UpdateTpDetailTodo(detail).Result;
-                            result.Add(update);
+                            _logger.LogError(e, e.Message);
+                            result.Add(false);
                         }
-                    }
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError(e, e.Message);
-                    result.Add(false);
-                }
-            });
+                    });
 
             return result;
         }
