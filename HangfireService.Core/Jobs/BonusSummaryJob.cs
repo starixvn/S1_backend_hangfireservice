@@ -42,7 +42,7 @@ namespace HangfireService.Core.Jobs
                 
                 var option = JsonConvert.DeserializeObject<BonusSummaryOption>(jobOption.Parameters);
                 
-                if (option.WorkerType is WorkerType.Referral or WorkerType.ReferralFreeCredit or WorkerType.VipUpgrade or WorkerType.Other or WorkerType.BonusSummaryInfo)
+                if (option.WorkerType is WorkerType.Referral or WorkerType.ReferralFreeCredit or WorkerType.VipUpgrade or WorkerType.Other )
                 {
                     var promotion = _promotion.Single(a => a.WorkerType == option.WorkerType);
                     
