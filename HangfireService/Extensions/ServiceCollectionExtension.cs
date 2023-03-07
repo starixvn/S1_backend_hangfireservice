@@ -133,9 +133,7 @@ namespace HangfireService.Extensions
                 .AddSingleton<PromotionSummaryBase>(
                     _ => new VipUpgradePromotion(timerService, promotionService, WorkerType.VipUpgrade, vLogger))
                 .AddSingleton<PromotionSummaryBase>(
-                    _ => new OtherPromotion(timerService, promotionService, WorkerType.Other, oLogger))
-                .AddSingleton<PromotionSummaryBase>(
-                _ => new BonusSummaryInfo(timerService, promotionService, WorkerType.BonusSummaryInfo));
+                    _ => new OtherPromotion(timerService, promotionService, WorkerType.Other, oLogger));
             return services;
         }
 
