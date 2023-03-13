@@ -9,7 +9,7 @@ namespace HangfireService.Core.ThirdParty
 {
     public class SabaTpHelper : BaseTpHelper, IDetailTpHelper
     {
-        public int TpId { get; } = 1;
+        public int TpId { get; } = 41;
 
         private readonly Dictionary<int, ThirdPartyModel> _thirdPartyModel;
         private readonly List<int> _kenoGameTypeList;
