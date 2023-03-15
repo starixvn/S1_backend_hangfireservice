@@ -150,7 +150,18 @@ namespace HangfireService.Core.Jobs
 
                 if (!string.IsNullOrEmpty(option.InsertSP))
                 {
-                    var insertResult = _mainDBDataLayer.InsertArchive(option.InsertSP, data, trans);
+                    var insertSP = option.InsertSP;
+                    if (insertSP == "Archive_TpBetRecord_Ins")
+                    {
+                        var dataDic = (IReadOnlyDictionary<string, object>)data;
+                        var settledTime = (DateTime)dataDic.GetValueOrDefault("SettledTime");
+                        var yyyymm = int.Parse(settledTime.ToString("yyyyMM"));
+                        if (yyyymm > 202302)
+                        {
+                            insertSP = "Archive_TpBetRecord_Ins_V2";
+                        }                        
+                    }
+                    var insertResult = _mainDBDataLayer.InsertArchive(insertSP, data, trans);
                     doDelete = insertResult > 0;
                 }
 
