@@ -126,8 +126,7 @@ namespace HangfireService.Core.Service
                         response = response.Where(x => _includeCurrencyName.Contains(x.TargetCurrencyName)).ToList();
                         response.ForEach(x =>
                         {
-                            if ((x.CurrencyId == 15 && x.TargetCurrencyId == 15) ||
-                                (x.CurrencyId == 51 && x.TargetCurrencyId == 51))
+                            if (x.CurrencyId is 15 or 51)
                             {
                                 x.TargetCurrencyRate /= 1000;
                             }
