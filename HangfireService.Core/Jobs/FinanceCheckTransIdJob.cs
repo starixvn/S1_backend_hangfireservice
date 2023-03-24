@@ -68,6 +68,9 @@ namespace HangfireService.Core.Jobs
                     {
                         tpBetRecordList = tpBetRecordList.Where(x => x.TicketStatus != 6);
                     }
+                    else if(tpId == 6){
+                        tpBetRecordList = tpBetRecordList.Where(x => x.SettlementType != 0);
+                    }
                     var bettransList = await tpHelper.GetBettransCheckTransIdData(checkOption);
                     var checkResult = tpHelper.CheckTransIdData(checkOption, tpBetRecordList.ToList(), bettransList.ToList());
                     if (checkResult.Any())
