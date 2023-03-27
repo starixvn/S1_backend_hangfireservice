@@ -94,9 +94,10 @@ namespace HangfireService.Core.ThirdParty
         public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, List<TpBetRecordCheck> tpBetRecord, List<BettransCheckData> bettransList, List<TpDailySummaryCheckData> tpDailyList)
         {
             // 暫時僅檢查Lottery
-            var tpBetRecordSlot = _reportDbDataLayer.GetTpBetRecordCheckByGameType(TpId, 11, checkOption.BeginTime, checkOption.EndTime).ToList();
+            tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckDataByTpId(TpId, checkOption.BeginTime, checkOption.EndTime, TicketStatusExcludeOption.CancelAndUnsettle, TimeOption.SettledTime).ToList();
 
             // 排除Slot計算
+            List<TpBetRecordCheck> tpBetRecordSlot = _reportDbDataLayer.GetTpBetRecordCheckByGameType(TpId, 11, checkOption.BeginTime, checkOption.EndTime).ToList();
             if (tpBetRecordSlot.Count > 0)
             {
                 foreach (var tpBetData in tpBetRecord.ToList())
