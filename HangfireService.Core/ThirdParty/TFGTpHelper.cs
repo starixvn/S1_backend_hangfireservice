@@ -45,7 +45,6 @@ namespace HangfireService.Core.ThirdParty
                 item.TpId = TpId;
                 item.Stake *= rate;
                 item.ValidBet *= rate;
-                item.Payout *= rate;
                 item.WinlostAmount *= rate;
             }
             return bettrans;
