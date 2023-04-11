@@ -162,14 +162,14 @@ namespace HangfireService.Core.Jobs
                 var isEndTime = DateTime.TryParse(beginDate, out var endTime);
                 if (isStartTime && isEndTime)
                 {
-                    jobOption.Parameters.Update("StartTime", beginDate);
-                    jobOption.Parameters.Update("EndTime", endDate);
+                    jobOption.Parameters = jobOption.Parameters.Update("StartTime", beginDate);
+                    jobOption.Parameters = jobOption.Parameters.Update("EndTime", endDate);
                 }
                 return await ExecuteAsync($"Execute.{jobName}.({startTime} ~ {endTime})", jobOption, context, cancellationToken);
             }
             else
             {
-                jobOption.Parameters.Update("Id", id);
+                jobOption.Parameters = jobOption.Parameters.Update("Id", id);
                 return await ExecuteAsync($"Execute.{jobName}.((Id:{id})", jobOption, context, cancellationToken);
             } 
         }

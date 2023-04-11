@@ -115,6 +115,11 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Query<TpLastBetting>("Service_TpLastBetting_Get", parameters: new { _StartTime = startTime, _EndTime = endTime });
         }
 
+        public IEnumerable<dynamic> GetRelayData(string sp, object parameters, int timeoutSeconds)
+        {
+            return _dbClient.Query(sp, parameters: parameters, commandTimeout: timeoutSeconds);
+        }
+
         public IEnumerable<OTPCheck> GetOTPCheckList()
         {
             return _dbClient.Query<OTPCheck>("Service_OTPLog_Check");
@@ -138,44 +143,11 @@ namespace HangfireService.Core.DataLayers
             => await _dbClient.QueryAsync<DormantSettingDto>("Service_DormantSetting_Get");
 
         public async Task<IEnumerable<DormantCustomerDto>> GetDormantCustomer(int siteId, int days, string statusStr)
-           => await _dbClient.QueryAsync<DormantCustomerDto>("Service_DormantAccount_Get",
+           => await _dbClient.QueryAsync<DormantCustomerDto>("Service_DormantAccount_Get_V2",
                parameters: new { SiteId = siteId, Day = days, StatusList = statusStr },
                commandTimeout: 180);
 
         #endregion
-
-        #region Statistical-LeaderBoard
-
-        public async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetTpBetRecordForLeadBoard(LeaderBoardOption option)
-            => await _dbClient.QueryAsync<GetTpBetRecordForLeadBoardDto>(option.SPName,
-                new
-                {
-                    SiteId = option.SiteId,
-                    EventCode = option.EventCode,
-                    StartDate = option.StartTime,
-                    EndDate = option.EndTime,
-                    TimeZone = option.TimeZoom,
-                },
-                commandTimeout: 60);
-
-        public async Task<IEnumerable<GetTpBetRecordForLeadBoardDto>> GetLeaderBoardExtraPoint(LeaderBoardOption option, string sp)
-            => await _dbClient.QueryAsync<GetTpBetRecordForLeadBoardDto>(sp,
-        new
-        {
-            SiteId = option.SiteId,
-            EventCode = option.EventCode,
-            StartDate = option.StartTime,
-            EndDate = option.EndTime,
-            TimeZone = option.TimeZoom
-        },
-        commandTimeout: 60);
-        #endregion
-
-        public IEnumerable<dynamic> GetRelayData(string sp, object parameters, int timeoutSeconds)
-        {
-            return _dbClient.Query(sp, parameters: parameters, commandTimeout: timeoutSeconds);
-        }
-
 
     }
 }

@@ -9,7 +9,7 @@ namespace HangfireService.Core.ThirdParty
 {
     public class SabaTpHelper : BaseTpHelper, IDetailTpHelper
     {
-        public int TpId { get; } = 1;
+        public int TpId { get; } = 41;
 
         private readonly Dictionary<int, ThirdPartyModel> _thirdPartyModel;
         private readonly List<int> _kenoGameTypeList;
@@ -21,10 +21,9 @@ namespace HangfireService.Core.ThirdParty
 
             _kenoGameTypeList = new List<int>
             {
-                5,  // 202 OW Keno
-                19, // 220 OW Lottery
-                20, // 223 OW Togel 4D
-                23  // 222 OW Table Game
+                73,  // 202 OW Keno
+                74, // 220 OW Lottery               
+                75  // 222 OW Table Game
             };
         }
 

@@ -103,10 +103,10 @@ namespace HangfireService.Extensions
                 .AddSingleton<CustomerService>()
                 .AddSingleton<PtMerchantBalanceCheckService>()
                 .AddSingleton<WorldCupDepositDailySummaryService>()
+                .AddSingleton<MpaUpdateExchangeRateService>()
                 .AddSingleton<OnlineCountService>()
                 .AddSingleton<CustomerAutoLockService>()
                 .AddSingleton<CustClosingBalanceService>()
-                .AddSingleton<LeaderBoardService>()
                 .AddSingleton<MpaUpdateExchangeRateService>()
                 .AddSingleton<ConfigService>();
         }

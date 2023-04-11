@@ -27,10 +27,10 @@ builder.Host.UseSerilog((context, Configuration) =>
 
 builder.Services
     .AddDatabaseConnection(builder.Configuration)
-    .RegisterServices(builder.Configuration) 
+    .RegisterServices(builder.Configuration)
     .RegisterPromotion()
     .RegisterScheduledJobs(builder.Configuration)
-    .AddHangfireService(builder.Configuration)
+    .AddHangfireService(builder.Configuration)  
     .RegisterTpHelper()
     .AddOption();
 
