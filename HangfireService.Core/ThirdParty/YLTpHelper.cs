@@ -1,5 +1,4 @@
 ﻿using HangfireService.Core.DataLayers;
-using HangfireService.Core.Extensions;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
@@ -47,6 +46,11 @@ namespace HangfireService.Core.ThirdParty
             var bettrans = await _dbClient.QueryAsync<BettransCheckData>("Finance_BettransFish_YL_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
             foreach (var item in bettrans)
             {
+                if (!_isoCodeList.ContainsKey(item.TpCurrencyId))
+                {
+                    continue;
+                }
+
                 item.TpId = TpId;
                 item.CurrencyId = _isoCodeList[item.TpCurrencyId];
             }
