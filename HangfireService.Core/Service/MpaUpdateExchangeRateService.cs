@@ -124,6 +124,30 @@ namespace HangfireService.Core.Service
                         var content = await httpResponse.Content.ReadAsStringAsync();
                         var response = JsonConvert.DeserializeObject<List<DailyExchangeRateResponse>>(content);
                         response = response.Where(x => _includeCurrencyName.Contains(x.TargetCurrencyName)).ToList();
+
+                        //新增KHUSD的資料
+                        response.FindAll(y => y.TargetCurrencyId == 3).ForEach(x =>
+                        {
+                            response.Add(new DailyExchangeRateResponse()
+                            {
+                                CurrencyName = x.CurrencyName,
+                                CurrencyId = x.CurrencyId,
+                                TargetCurrencyName = "KHUSD",
+                                TargetCurrencyRate = x.TargetCurrencyRate,
+                            });
+                        });
+
+                        response.FindAll(y => y.CurrencyId == 3).ForEach(x =>
+                        {
+                            response.Add(new DailyExchangeRateResponse()
+                            {
+                                CurrencyName = "KHUSD",
+                                CurrencyId = 72,
+                                TargetCurrencyName = x.TargetCurrencyName,
+                                TargetCurrencyRate = x.TargetCurrencyRate,
+                            });
+                        });
+
                         response.ForEach(x =>
                         {
                             if (x.CurrencyId is 15 or 51)
@@ -200,6 +224,7 @@ namespace HangfireService.Core.Service
                         "IDR" => 15,
                         "VND" => 51,
                         "INR" => 61,
+                        "KHUSD" => 72,
                         "BDT" => 74,
                         _ => 0
                     };
