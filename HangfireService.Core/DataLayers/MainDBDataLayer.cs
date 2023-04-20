@@ -357,14 +357,7 @@ namespace HangfireService.Core.DataLayers
         }
 
         #endregion
-
-        #region Statistical-LeaderBoard
-
-        public async Task<int> SetLeaderBoard(IEnumerable<GetTpBetRecordForLeadBoardDto> leadBoardDtos, IDbTransaction trans)
-            => await _dbClient.ExecuteAsync("Service_LeaderboardV2_Set", trans, leadBoardDtos);
-
-        #endregion
-
+        
         /// <summary>
         /// 新增玩家充值總帳
         /// </summary>
