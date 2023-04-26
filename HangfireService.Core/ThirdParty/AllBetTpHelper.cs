@@ -39,7 +39,7 @@ namespace HangfireService.Core.ThirdParty
         public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
         {
             var BeginTime = (long)(checkOption.BeginTime.AddHours(utcTime).Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
-            var EndTime = (long)(checkOption.EndTime.AddHours(utcTime).Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+            var EndTime = (long)(checkOption.EndTime.AddHours(utcTime).AddSeconds(-1).Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
             var bettrans = await _wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerAllBet_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
             foreach (var item in bettrans)
             {
