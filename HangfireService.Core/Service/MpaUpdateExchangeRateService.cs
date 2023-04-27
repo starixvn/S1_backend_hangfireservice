@@ -153,17 +153,17 @@ namespace HangfireService.Core.Service
             return isSuccess;
         }
 
-        private record FakeCurrencyInfo(int CurrecnyId, string CurrencyName);
+        private record FakeCurrencyInfo(int CurrencyId, string CurrencyName);
 
         private static void AddFakeCurrency(List<DailyExchangeRateResponse> response)
         {
-            // 以後要做假幣別匯率，KEY 是你想要 Copy 哪個幣別，OtherCurrencyInfo 是新幣別 ID 跟名稱
-            var otherCurrency = new Dictionary<int, FakeCurrencyInfo>()
+            // 以後要做假幣別匯率，KEY 是你想要 Copy 哪個幣別，FakeCurrencyInfo 是新幣別 ID 跟名稱
+            var fakeCurrencyInfos = new Dictionary<int, FakeCurrencyInfo>()
             {
                 { 3, new FakeCurrencyInfo(72, "KHUSD") } // USD COPY TO KHUSD
             };
 
-            foreach (var currencyInfo in otherCurrency)
+            foreach (var currencyInfo in fakeCurrencyInfos)
             {
                 foreach (var item in response.FindAll(y => y.TargetCurrencyId == currencyInfo.Key))
                 {
@@ -181,7 +181,7 @@ namespace HangfireService.Core.Service
                     response.Add(new DailyExchangeRateResponse()
                     {
                         CurrencyName = currencyInfo.Value.CurrencyName,
-                        CurrencyId = currencyInfo.Value.CurrecnyId,
+                        CurrencyId = currencyInfo.Value.CurrencyId,
                         TargetCurrencyName = item.TargetCurrencyName,
                         TargetCurrencyRate = item.TargetCurrencyRate,
                     });
