@@ -125,28 +125,7 @@ namespace HangfireService.Core.Service
                         var response = JsonConvert.DeserializeObject<List<DailyExchangeRateResponse>>(content);
                         response = response.Where(x => _includeCurrencyName.Contains(x.TargetCurrencyName)).ToList();
 
-                        //新增KHUSD的資料
-                        response.FindAll(y => y.TargetCurrencyId == 3).ForEach(x =>
-                        {
-                            response.Add(new DailyExchangeRateResponse()
-                            {
-                                CurrencyName = x.CurrencyName,
-                                CurrencyId = x.CurrencyId,
-                                TargetCurrencyName = "KHUSD",
-                                TargetCurrencyRate = x.TargetCurrencyRate,
-                            });
-                        });
-
-                        response.FindAll(y => y.CurrencyId == 3).ForEach(x =>
-                        {
-                            response.Add(new DailyExchangeRateResponse()
-                            {
-                                CurrencyName = "KHUSD",
-                                CurrencyId = 72,
-                                TargetCurrencyName = x.TargetCurrencyName,
-                                TargetCurrencyRate = x.TargetCurrencyRate,
-                            });
-                        });
+                        AddFakeCurrency(response);
 
                         response.ForEach(x =>
                         {
@@ -172,6 +151,42 @@ namespace HangfireService.Core.Service
             }
 
             return isSuccess;
+        }
+
+        private record FakeCurrencyInfo(int CurrecnyId, string CurrencyName);
+
+        private static void AddFakeCurrency(List<DailyExchangeRateResponse> response)
+        {
+            // 以後要做假幣別匯率，KEY 是你想要 Copy 哪個幣別，OtherCurrencyInfo 是新幣別 ID 跟名稱
+            var otherCurrency = new Dictionary<int, FakeCurrencyInfo>()
+            {
+                { 3, new FakeCurrencyInfo(72, "KHUSD") } // USD COPY TO KHUSD
+            };
+
+            foreach (var currencyInfo in otherCurrency)
+            {
+                foreach (var item in response.FindAll(y => y.TargetCurrencyId == currencyInfo.Key))
+                {
+                    response.Add(new DailyExchangeRateResponse()
+                    {
+                        CurrencyName = item.CurrencyName,
+                        CurrencyId = item.CurrencyId,
+                        TargetCurrencyName = currencyInfo.Value.CurrencyName,
+                        TargetCurrencyRate = item.TargetCurrencyRate,
+                    });
+                }
+
+                foreach (var item in response.FindAll(y => y.CurrencyId == currencyInfo.Key))
+                {
+                    response.Add(new DailyExchangeRateResponse()
+                    {
+                        CurrencyName = currencyInfo.Value.CurrencyName,
+                        CurrencyId = currencyInfo.Value.CurrecnyId,
+                        TargetCurrencyName = item.TargetCurrencyName,
+                        TargetCurrencyRate = item.TargetCurrencyRate,
+                    });
+                }
+            }
         }
 
         #region Model
