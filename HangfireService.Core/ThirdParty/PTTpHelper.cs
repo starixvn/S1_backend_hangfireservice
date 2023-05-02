@@ -50,6 +50,11 @@ namespace HangfireService.Core.ThirdParty
 
             foreach (var item in _tpCurrency)
             {
+                if (!_currencyTimeZoneList.ContainsKey(item.CurrencyId))
+                {
+                    continue;
+                }
+
                 // 依各幣別轉換時間
                 var timeZone = _currencyTimeZoneList[item.CurrencyId];
                 var Begin = BeginTime.ToOffset(timeZone).ToUnixTimeSeconds();
