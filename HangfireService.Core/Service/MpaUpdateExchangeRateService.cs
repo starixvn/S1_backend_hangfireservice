@@ -124,6 +124,9 @@ namespace HangfireService.Core.Service
                         var content = await httpResponse.Content.ReadAsStringAsync();
                         var response = JsonConvert.DeserializeObject<List<DailyExchangeRateResponse>>(content);
                         response = response.Where(x => _includeCurrencyName.Contains(x.TargetCurrencyName)).ToList();
+
+                        AddFakeCurrency(response);
+
                         response.ForEach(x =>
                         {
                             if (x.CurrencyId is 15 or 51)
@@ -148,6 +151,42 @@ namespace HangfireService.Core.Service
             }
 
             return isSuccess;
+        }
+
+        private record FakeCurrencyInfo(int CurrencyId, string CurrencyName);
+
+        private static void AddFakeCurrency(List<DailyExchangeRateResponse> response)
+        {
+            // 以後要做假幣別匯率，KEY 是你想要 Copy 哪個幣別，FakeCurrencyInfo 是新幣別 ID 跟名稱
+            var fakeCurrencyInfos = new Dictionary<int, FakeCurrencyInfo>()
+            {
+                { 3, new FakeCurrencyInfo(72, "KHUSD") } // USD COPY TO KHUSD
+            };
+
+            foreach (var currencyInfo in fakeCurrencyInfos)
+            {
+                foreach (var item in response.FindAll(y => y.TargetCurrencyId == currencyInfo.Key))
+                {
+                    response.Add(new DailyExchangeRateResponse()
+                    {
+                        CurrencyName = item.CurrencyName,
+                        CurrencyId = item.CurrencyId,
+                        TargetCurrencyName = currencyInfo.Value.CurrencyName,
+                        TargetCurrencyRate = item.TargetCurrencyRate,
+                    });
+                }
+
+                foreach (var item in response.FindAll(y => y.CurrencyId == currencyInfo.Key))
+                {
+                    response.Add(new DailyExchangeRateResponse()
+                    {
+                        CurrencyName = currencyInfo.Value.CurrencyName,
+                        CurrencyId = currencyInfo.Value.CurrencyId,
+                        TargetCurrencyName = item.TargetCurrencyName,
+                        TargetCurrencyRate = item.TargetCurrencyRate,
+                    });
+                }
+            }
         }
 
         #region Model
@@ -200,6 +239,7 @@ namespace HangfireService.Core.Service
                         "IDR" => 15,
                         "VND" => 51,
                         "INR" => 61,
+                        "KHUSD" => 72,
                         "BDT" => 74,
                         _ => 0
                     };
