@@ -13,6 +13,7 @@ namespace HangfireService.Core.ThirdParty
     public class ATTpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => false;
+        public bool BindCommonCurrency => true;
 
         public TimeOption TimeOptionId => TimeOption.TransTime;
 
@@ -50,7 +51,9 @@ namespace HangfireService.Core.ThirdParty
             var CheckData = new List<BettransCheckData>();
             foreach (var item in tasks)
             {
-                CheckData.AddRange(item.Result);
+                var data = item.Result;
+                data = ProcessBettransSubCurrencyToMainCurrency(data);
+                CheckData.AddRange(data);
             }
 
             //使用TpCurrencyId組合Slot跟Fish資料

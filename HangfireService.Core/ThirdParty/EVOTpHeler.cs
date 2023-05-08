@@ -13,6 +13,7 @@ namespace HangfireService.Core.ThirdParty
     internal class EVOTpHeler : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => true;
+        public bool BindCommonCurrency => true;
 
         public TimeOption TimeOptionId => TimeOption.SettledTime;
 
@@ -69,8 +70,10 @@ namespace HangfireService.Core.ThirdParty
 
         public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, List<TpBetRecordCheck> tpBetRecord, List<BettransCheckData> bettransList, List<TpDailySummaryCheckData> tpDailyList)
         {
+
             // 排除promo
             tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckDataByTpId(TpId, checkOption.BeginTime, checkOption.EndTime, TicketStatusExcludeOption.Promo, TimeOption.SettledTime).ToList();
+            tpBetRecord = ProcessTpBetRecordSubCurrencyToMainCurrency(tpBetRecord);
 
             var checkResult = new List<FinanceCheckResult>();
             if (bettransList.Any())

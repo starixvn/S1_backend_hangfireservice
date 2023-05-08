@@ -13,7 +13,7 @@ namespace HangfireService.Core.ThirdParty
     internal class TCGTpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => false;
-
+        public bool BindCommonCurrency => true;
         public TimeOption TimeOptionId => TimeOption.SettledTime;
 
         public int TpId => 33;
@@ -50,7 +50,9 @@ namespace HangfireService.Core.ThirdParty
             var CheckData = new List<BettransCheckData>();
             foreach (var item in tasks)
             {
-                CheckData.AddRange(item.Result);
+                var data = item.Result;
+                data = ProcessBettransSubCurrencyToMainCurrency(data);
+                CheckData.AddRange(data);
             }
 
             //使用CurrencyId組合資料
@@ -91,6 +93,7 @@ namespace HangfireService.Core.ThirdParty
         {
             // 改用TpBetRecord.TransTime檢查
             tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckDataByTpId(TpId, checkOption.BeginTime, checkOption.EndTime, TicketStatusExcludeOption.Cancel, TimeOption.TransTime).ToList();
+            tpBetRecord = ProcessTpBetRecordSubCurrencyToMainCurrency(tpBetRecord);
 
             var checkResult = new List<FinanceCheckResult>();
             if (bettransList.Any())

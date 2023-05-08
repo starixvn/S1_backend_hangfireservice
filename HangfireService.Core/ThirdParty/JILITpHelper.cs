@@ -13,6 +13,7 @@ namespace HangfireService.Core.ThirdParty
     public class JILITpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => false;
+        public bool BindCommonCurrency => true;
 
         public TimeOption TimeOptionId => TimeOption.SettledTime;
 
@@ -48,7 +49,9 @@ namespace HangfireService.Core.ThirdParty
             var CheckData = new List<BettransCheckData>();
             foreach (var item in tasks)
             {
-                CheckData.AddRange(item.Result);
+                var data = item.Result;
+                data = ProcessBettransSubCurrencyToMainCurrency(data);
+                CheckData.AddRange(data);
             }
 
             return CheckData
@@ -85,6 +88,7 @@ namespace HangfireService.Core.ThirdParty
         {
             // 排除invalid資料
             tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckSettlementTypeByTpId(TpId, checkOption.BeginTime, checkOption.EndTime).ToList();
+            tpBetRecord = ProcessTpBetRecordSubCurrencyToMainCurrency(tpBetRecord);
 
             var checkResult = new List<FinanceCheckResult>();
             if (bettransList.Any())

@@ -18,7 +18,7 @@ namespace HangfireService.Core.ThirdParty
     internal class SexyTpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => false;
-
+        public bool BindCommonCurrency => true;
         public TimeOption TimeOptionId => TimeOption.TransTime;
 
         public int TpId => 15;
@@ -44,6 +44,7 @@ namespace HangfireService.Core.ThirdParty
             var BeginTime = checkOption.BeginTime.GetUnixTimeByDay();
             var EndTime = checkOption.EndTime.GetUnixTimeByDay() - 1;
             var bettrans = await _dbClient.QueryAsync<BettransCheckData>("Finance_BettransLC_AWC_Sexy_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
+            bettrans = ProcessBettransSubCurrencyToMainCurrency(bettrans);
             foreach (var item in bettrans)
             {
                 item.TpId = TpId;
@@ -69,6 +70,7 @@ namespace HangfireService.Core.ThirdParty
         {
             // 對方報表API為下注時間 需改用TpBetRecord.TransTime檢查
             tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckDataByTpId(TpId, checkOption.BeginTime, checkOption.EndTime, TicketStatusExcludeOption.Cancel, TimeOption.TransTime).ToList();
+            tpBetRecord = ProcessTpBetRecordSubCurrencyToMainCurrency(tpBetRecord);
 
             var checkResult = new List<FinanceCheckResult>();
             if (bettransList.Any())

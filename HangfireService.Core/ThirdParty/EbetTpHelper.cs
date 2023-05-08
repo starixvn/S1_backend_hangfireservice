@@ -13,6 +13,7 @@ namespace HangfireService.Core.ThirdParty
     public class EbetTpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => false;
+        public bool BindCommonCurrency => true;
 
         public TimeOption TimeOptionId => TimeOption.SettledTime;
 

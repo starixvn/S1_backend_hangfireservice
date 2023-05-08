@@ -16,6 +16,7 @@ namespace HangfireService.Core.ThirdParty
     internal class SkywindHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => false;
+        public bool BindCommonCurrency => true;
 
         public TimeOption TimeOptionId => TimeOption.SettledTime;
 

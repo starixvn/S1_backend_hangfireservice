@@ -13,7 +13,7 @@ namespace HangfireService.Core.ThirdParty
     internal class KMTpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => false;
-
+        public bool BindCommonCurrency => true;
         public TimeOption TimeOptionId => TimeOption.SettledTime;
 
         public int TpId => 11;

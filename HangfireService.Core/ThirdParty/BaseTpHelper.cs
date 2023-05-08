@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Text;
 using Serilog.Context;
+using HangfireService.Core.Models.Finance;
 
 namespace HangfireService.Core.ThirdParty
 {
@@ -111,7 +112,87 @@ namespace HangfireService.Core.ThirdParty
             {
                 NullValueHandling = NullValueHandling.Ignore
             });
-        }                    
+        }
+
+        public List<TpBetRecordCheck> ProcessTpBetRecordSubCurrencyToMainCurrency(List<TpBetRecordCheck> tpBetRecordData)
+        {
+            var mainCurrencyId = 3;
+            var subCurrencyId = 72;
+            bool hasMainCurrency = tpBetRecordData.Any(c => c.CurrencyId == mainCurrencyId);
+            bool hasSubCurrency = tpBetRecordData.Any(c => c.CurrencyId == subCurrencyId);
+
+            if (!hasMainCurrency && hasSubCurrency)
+            {
+                // 無主幣別資料將子幣別取代為主幣別
+                ReplaceSubCurrencyWithMainCurrency(tpBetRecordData, mainCurrencyId, subCurrencyId);
+            }
+            else if (hasMainCurrency && hasSubCurrency)
+            {
+                // 加總
+                AggregateCurrencyData(tpBetRecordData, mainCurrencyId, subCurrencyId);
+            }
+            return tpBetRecordData;
+        }
+
+        private void ReplaceSubCurrencyWithMainCurrency(List<TpBetRecordCheck> tpBetRecordData, int mainCurrencyId, int subCurrencyId)
+        {
+            TpBetRecordCheck subCurrencyRecord = tpBetRecordData.FirstOrDefault(i => i.CurrencyId == subCurrencyId);
+            subCurrencyRecord.CurrencyId = mainCurrencyId;
+        }
+
+        private void AggregateCurrencyData(List<TpBetRecordCheck> tpBetRecordData, int mainCurrencyId, int subCurrencyId)
+        {
+            TpBetRecordCheck mainCurrencyRecord = tpBetRecordData.FirstOrDefault(i => i.CurrencyId == mainCurrencyId);
+            TpBetRecordCheck subCurrencyRecord = tpBetRecordData.FirstOrDefault(i => i.CurrencyId == subCurrencyId);
+
+            mainCurrencyRecord.Stake += subCurrencyRecord.Stake;
+            mainCurrencyRecord.ValidBet += subCurrencyRecord.ValidBet;
+            mainCurrencyRecord.WinlostAmount += subCurrencyRecord.WinlostAmount;
+            mainCurrencyRecord.Revenue += subCurrencyRecord.Revenue;
+            mainCurrencyRecord.ProgressiveBet += subCurrencyRecord.ProgressiveBet;
+            mainCurrencyRecord.ProgressiveWin += subCurrencyRecord.ProgressiveWin;
+        }
+
+        public IEnumerable<BettransCheckData> ProcessBettransSubCurrencyToMainCurrency(IEnumerable<BettransCheckData> bettransCheckData)
+        {
+            var mainCurrencyId = 3;
+            var subCurrencyId = 72;
+            bool hasMainCurrency = bettransCheckData.Any(c => c.CurrencyId == mainCurrencyId);
+            bool hasSubCurrency = bettransCheckData.Any(c => c.CurrencyId == subCurrencyId);
+
+            if (!hasMainCurrency && hasSubCurrency)
+            {
+                // 無主幣別資料將子幣別取代為主幣別
+                ReplaceBettransSubCurrencyWithMainCurrency(bettransCheckData, mainCurrencyId, subCurrencyId);
+            }
+            else if (hasMainCurrency && hasSubCurrency)
+            {
+                // 加總
+                AggregateBettransCurrencyData(bettransCheckData, mainCurrencyId, subCurrencyId);
+            }
+
+            return bettransCheckData.Where(x => x.CurrencyId != 72);
+        }
+
+        private void ReplaceBettransSubCurrencyWithMainCurrency(IEnumerable<BettransCheckData> bettransCheckData, int mainCurrencyId, int subCurrencyId)
+        {
+            BettransCheckData subCurrencyRecord = bettransCheckData.FirstOrDefault(i => i.CurrencyId == subCurrencyId);
+            subCurrencyRecord.CurrencyId = mainCurrencyId;
+        }
+
+        private void AggregateBettransCurrencyData(IEnumerable<BettransCheckData> bettransCheckData, int mainCurrencyId, int subCurrencyId)
+        {
+            BettransCheckData mainCurrencyRecord = bettransCheckData.FirstOrDefault(i => i.CurrencyId == mainCurrencyId);
+            BettransCheckData subCurrencyRecord = bettransCheckData.FirstOrDefault(i => i.CurrencyId == subCurrencyId);
+
+            mainCurrencyRecord.Stake += subCurrencyRecord.Stake;
+            mainCurrencyRecord.ValidBet += subCurrencyRecord.ValidBet;
+            mainCurrencyRecord.WinlostAmount += subCurrencyRecord.WinlostAmount;
+            mainCurrencyRecord.Payout += subCurrencyRecord.Payout;
+            mainCurrencyRecord.Revenue += subCurrencyRecord.Revenue;
+            mainCurrencyRecord.ProgressiveBet += subCurrencyRecord.ProgressiveBet;
+            mainCurrencyRecord.ProgressiveWin += subCurrencyRecord.ProgressiveWin;
+        }
     }
 
 }
