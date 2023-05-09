@@ -32,7 +32,7 @@ pipeline {
                     sh 'aws configure set region ap-southeast-1'
                     sh 'aws configure set output json'
 
-                    sh 'dotnet run -- "${pulumi_env} ${pulumi_project} ${version}"'  
+                    sh 'dotnet run -- ${pulumi_env} ${pulumi_project} ${version} false'  
                 }          
             }
         }
