@@ -25,14 +25,14 @@ pipeline {
                 AWS_SECRET_ACCESS_KEY = 'scXiLGdt8G24qFXD9P71Jk1UncsU0NmfV0hS3C97'
             }
             steps {
-                sh 'cd ${pulumi_deploy_path}'
+                dir('${pulumi_deploy_path}') {
+                    sh 'aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}'
+                    sh 'aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY}'
+                    sh 'aws configure set region ap-southeast-1'
+                    sh 'aws configure set output json'
 
-                sh 'aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}'
-                sh 'aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY}'
-                sh 'aws configure set region ap-southeast-1'
-                sh 'aws configure set output json'
-
-                sh 'dotnet run ${pulumi_env} ${pulumi_project} ${version}'                
+                    sh 'dotnet run ${pulumi_env} ${pulumi_project} ${version}'  
+                }          
             }
         }
     }
