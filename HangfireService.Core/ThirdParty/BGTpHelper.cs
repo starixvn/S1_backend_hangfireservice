@@ -93,6 +93,9 @@ internal class BGTpHelper : BaseTpHelper, IFinanceTpHelper
     public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, List<TpBetRecordCheck> tpBetRecord, List<BettransCheckData> bettransList, List<TpDailySummaryCheckData> tpDailyList)
     {
         var checkResult = new List<FinanceCheckResult>();
+
+        tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckDataByTpId(TpId, checkOption.BeginTime, checkOption.EndTime, TicketStatusExcludeOption.Cancel, TimeOption.TransTime).ToList();
+
         tpBetRecord = ConvertTpBetRecordUSD(tpBetRecord);
         if (bettransList.Any())
         {
