@@ -4,9 +4,9 @@ pipeline {
         registry = '13.213.82.69/hangfireservice/hangfireservice'
         pulumi_env = 'DEV'
         pulumi_project = 'Hangfire'
-        pulumi_deploy_path = ${env.ECS_Deploy_Path}
-        AWS_ACCESS_KEY_ID     = ${env.AWS_AILAB_EC2_AccessKey}
-        AWS_SECRET_ACCESS_KEY = ${env.AWS_AILAB_EC2_SecretKey}
+        pulumi_deploy_path = env.ECS_Deploy_Path
+        AWS_ACCESS_KEY_ID     = env.AWS_AILAB_EC2_AccessKey
+        AWS_SECRET_ACCESS_KEY = env.AWS_AILAB_EC2_SecretKey
     }
     stages {
         stage('Build') {
