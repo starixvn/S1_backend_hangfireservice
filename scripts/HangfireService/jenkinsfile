@@ -21,8 +21,8 @@ pipeline {
                 pulumi_env = 'DEV'
                 pulumi_project = 'Hangfire'
                 pulumi_deploy_path = '/jenkins/workspace/AWS.Deploy.FargateService/ECS-Service-Deploy'
-                AWS_ACCESS_KEY_ID     = credentials('AKIA3CXJE5UPUBU2H3XE')
-                AWS_SECRET_ACCESS_KEY = credentials('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')
+                AWS_ACCESS_KEY_ID     = 'AKIA3CXJE5UPUBU2H3XE'
+                AWS_SECRET_ACCESS_KEY = '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'
             }
             steps {
                 sh 'cd ${pulumi_deploy_path}'
