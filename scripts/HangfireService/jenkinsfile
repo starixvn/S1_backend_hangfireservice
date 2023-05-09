@@ -4,9 +4,6 @@ pipeline {
         registry = '13.213.82.69/hangfireservice/hangfireservice'
         pulumi_env = 'DEV'
         pulumi_project = 'Hangfire'
-        pulumi_deploy_path = env.ECS_Deploy_Path
-        AWS_ACCESS_KEY_ID     = env.AWS_AILAB_EC2_AccessKey
-        AWS_SECRET_ACCESS_KEY = env.AWS_AILAB_EC2_SecretKey
     }
     stages {
         stage('Build') {
@@ -23,10 +20,10 @@ pipeline {
         stage('Deploy') {
             agent { node { label 'Build' } }
             steps {
-                sh 'cd ${pulumi_deploy_path}'
+                sh 'cd ${env.ECS_Deploy_Path}'
 
-                sh 'aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}'
-                sh 'aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY}'
+                sh 'aws configure set aws_access_key_id ${env.AWS_AILAB_EC2_AccessKey}'
+                sh 'aws configure set aws_secret_access_key ${env.AWS_AILAB_EC2_SecretKey}'
                 sh 'aws configure set region ap-southeast-1'
                 sh 'aws configure set output json'
 
