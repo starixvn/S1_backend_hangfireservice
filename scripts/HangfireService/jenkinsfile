@@ -19,14 +19,14 @@ pipeline {
             agent { node { label 'Build' } }
             environment {
                 pulumi_env = 'DEV'
-                pulumi_project = 'Hangfire'
-                pulumi_deploy_path = '/jenkins/workspace/AWS.Deploy.FargateService/ECS-Service-Deploy/'
+                pulumi_project = 'Hangfire'    
                 AWS_ACCESS_KEY_ID     = 'AKIA3CXJE5UPUBU2H3XE'
                 AWS_SECRET_ACCESS_KEY = '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'
             }
             steps {
-                dir('${pulumi_deploy_path}') {
+                dir('/jenkins/workspace/AWS.Deploy.FargateService/ECS-Service-Deploy/') {
                     sh 'pwd'
+                    sh 'ls'
                     sh 'aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}'
                     sh 'aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY}'
                     sh 'aws configure set region ap-southeast-1'
