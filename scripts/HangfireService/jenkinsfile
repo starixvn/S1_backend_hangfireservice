@@ -13,6 +13,8 @@ pipeline {
                 /*sh 'sudo docker build -f ./HangfireService/Dockerfile -t ${registry}:${version} .'
                 sh 'sudo docker push ${registry}:${version}'
                 sh 'sudo docker rmi ${registry}:${version}'*/
+                dir('/jenkins/workspace/AWS.Deploy.FargateService/ECS-Service-Deploy/'){
+                }
             }
         }
         stage('Deploy') {
@@ -24,16 +26,14 @@ pipeline {
                 AWS_SECRET_ACCESS_KEY = 'scXiLGdt8G24qFXD9P71Jk1UncsU0NmfV0hS3C97'
             }
             steps {
-                dir('/jenkins/workspace/AWS.Deploy.FargateService/ECS-Service-Deploy/') {
-                    sh 'pwd'
-                    sh 'ls'
-                    sh 'aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}'
-                    sh 'aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY}'
-                    sh 'aws configure set region ap-southeast-1'
-                    sh 'aws configure set output json'
+                 sh 'pwd'
+                 sh 'ls'
+                 sh 'aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}'
+                 sh 'aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY}'
+                 sh 'aws configure set region ap-southeast-1'
+                 sh 'aws configure set output json'
 
-                    sh 'dotnet run -- ${pulumi_env} ${pulumi_project} ${version} false'  
-                }          
+                 sh 'dotnet run -- ${pulumi_env} ${pulumi_project} ${version} false'        
             }
         }
     }
