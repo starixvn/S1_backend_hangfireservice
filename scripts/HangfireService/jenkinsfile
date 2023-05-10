@@ -16,7 +16,7 @@ pipeline {
             }
         }
         stage('Deploy') {
-            agent { node { label 'master' } }
+            agent { node { label 'Build' } }
             environment {
                 pulumi_env = 'DEV'
                 pulumi_project = 'Hangfire'    
