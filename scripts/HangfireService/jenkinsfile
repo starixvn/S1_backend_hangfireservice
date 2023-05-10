@@ -23,7 +23,8 @@ pipeline {
         stage('Deploy') {
             agent { node { label 'master' } }          
             steps {
-                dir('/jenkins/workspace/AWS.Deploy.FargateService/ECS-Service-Deploy/') {
+                 {
+                    sh 'cd /jenkins/workspace/AWS.Deploy.FargateService/ECS-Service-Deploy/'
                     sh 'pwd'
                     sh 'ls'
                     sh 'aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}'
