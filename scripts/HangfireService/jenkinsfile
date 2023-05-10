@@ -16,7 +16,8 @@ pipeline {
                 sh 'sudo docker rmi ${registry}:${version}'*/
             }
         }
-         stage('Check User') {
+        stage('Check User') {
+            agent any
             steps {
                 sh 'whoami'
             }
