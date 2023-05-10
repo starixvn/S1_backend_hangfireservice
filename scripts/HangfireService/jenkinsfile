@@ -5,10 +5,6 @@ pipeline {
             agent { node { label 'Build' } }
             environment {
                 registry = '13.213.82.69/hangfireservice/hangfireservice'
-                pulumi_env = 'DEV'
-                pulumi_project = 'Hangfire'    
-                AWS_ACCESS_KEY_ID     = 'AKIA3CXJE5UPUBU2H3XE'
-                AWS_SECRET_ACCESS_KEY = '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'
             }
             steps {
                 script {
@@ -21,6 +17,12 @@ pipeline {
         }
         stage('Deploy') {
             agent { node { label 'master' } }
+            environment {
+                pulumi_env = 'DEV'
+                pulumi_project = 'Hangfire'    
+                AWS_ACCESS_KEY_ID     = 'AKIA3CXJE5UPUBU2H3XE'
+                AWS_SECRET_ACCESS_KEY = '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'
+            }
             steps {
                 dir('/jenkins/workspace/AWS.Deploy.FargateService/ECS-Service-Deploy/') {
                     sh 'pwd'
