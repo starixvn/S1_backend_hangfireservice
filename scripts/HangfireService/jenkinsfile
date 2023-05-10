@@ -1,5 +1,6 @@
 pipeline {
     agent none
+    
     stages {
         stage('Build') {
             agent { node { label 'Build' } }
@@ -15,6 +16,11 @@ pipeline {
                 sh 'sudo docker rmi ${registry}:${version}'*/
             }
         }
+         stage('Check User') {
+            steps {
+                sh 'whoami'
+            }
+        }
         stage('Deploy') {
             agent any
             environment {
@@ -26,7 +32,7 @@ pipeline {
             steps {                             
                     sh """ 
                     #!/bin/bash
-                    sudo cd /jenkins/workspace/AWS.Deploy.FargateService/ECS-Service-Deploy                
+                    sudo cd /jenkins/workspace/AWS.Deploy.FargateService/ECS-Service-Deploy/                
                     """ 
                     sh 'pwd'
                     sh 'ls'
