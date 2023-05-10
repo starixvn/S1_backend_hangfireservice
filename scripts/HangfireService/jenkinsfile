@@ -23,7 +23,7 @@ pipeline {
         stage('Deploy') {
             agent { node { label 'master' } }          
             steps {                 
-                    sh 'cd /jenkins/workspace/AWS.Deploy.FargateService/ECS-Service-Deploy/'
+                  dir('/jenkins/workspace/AWS.Deploy.FargateService/ECS-Service-Deploy/') {
                     sh 'pwd'
                     sh 'ls'
                     sh 'aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}'
@@ -31,7 +31,8 @@ pipeline {
                     sh 'aws configure set region ap-southeast-1'
                     sh 'aws configure set output json'
 
-                    sh 'dotnet run -- ${pulumi_env} ${pulumi_project} ${version} false'                           
+                    sh 'dotnet run ${pulumi_env} ${pulumi_project} ${version}'  
+                }                 
             }
         }
     }
