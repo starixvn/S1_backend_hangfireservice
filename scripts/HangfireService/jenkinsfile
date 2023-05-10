@@ -15,8 +15,7 @@ pipeline {
                 sh 'sudo docker rmi ${registry}:${version}'*/
             }
         }
-        stage('Deploy') {
-            agent { node { label 'Build2' } }
+        stage('Deploy') {        
             environment {
                 pulumi_env = 'DEV'
                 pulumi_project = 'Hangfire'    
