@@ -10,9 +10,9 @@ pipeline {
                 script {
                     env.version = sh (script: 'git rev-parse --short=7 HEAD', returnStdout: true).trim()
                 }
-                sh 'sudo docker build -f ./HangfireService/Dockerfile -t ${registry}:${version} .'
+                /*sh 'sudo docker build -f ./HangfireService/Dockerfile -t ${registry}:${version} .'
                 sh 'sudo docker push ${registry}:${version}'
-                sh 'sudo docker rmi ${registry}:${version}'
+                sh 'sudo docker rmi ${registry}:${version}'*/
             }
         }
         stage('Deploy') {
@@ -32,7 +32,7 @@ pipeline {
                     sh 'aws configure set region ap-southeast-1'
                     sh 'aws configure set output json'
 
-                    sh 'dotnet run -- ${pulumi_env} ${pulumi_project} ad32097 false'  
+                    sh 'dotnet run -- ${pulumi_env} ${pulumi_project} 78164ba false'  
                 }          
             }
         }
