@@ -26,7 +26,7 @@ pipeline {
             steps {                             
                     sh """ 
                     #!/bin/bash
-                    cd /jenkins/workspace/AWS.Deploy.FargateService/ECS-Service-Deploy                
+                    sudo cd /jenkins/workspace/AWS.Deploy.FargateService/ECS-Service-Deploy                
                     """ 
                     sh 'pwd'
                     sh 'ls'
