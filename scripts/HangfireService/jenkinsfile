@@ -23,8 +23,11 @@ pipeline {
                 AWS_ACCESS_KEY_ID     = 'AKIA3CXJE5UPUBU2H3XE'
                 AWS_SECRET_ACCESS_KEY = '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'
             }
-            steps {                      
-                    sh 'cd /jenkins/workspace/AWS.Deploy.FargateService/ECS-Service-Deploy'                
+            steps {                             
+                    sh """ 
+                    #!/bin/bash
+                    cd /jenkins/workspace/AWS.Deploy.FargateService/ECS-Service-Deploy                
+                    """ 
                     sh 'pwd'
                     sh 'ls'
                     sh 'aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}'
