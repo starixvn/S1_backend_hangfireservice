@@ -19,7 +19,9 @@ pipeline {
                 sh 'sudo docker rmi ${registry}:${version}'*/
 
                 dir('/jenkins/workspace/AWS.Deploy.FargateService/ECS-Service-Deploy/'){
-                  sh 'pwd'
+                 
+                }
+                 sh 'pwd'
                   sh 'ls'
                   sh 'aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}'
                   sh 'aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY}'
@@ -27,7 +29,6 @@ pipeline {
                   sh 'aws configure set output json'
 
                   sh 'dotnet run -- DEV Hangfire 5290df1 false'        
-                }
             }
         }
     }
