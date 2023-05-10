@@ -1,6 +1,5 @@
 pipeline {
     agent none
-    
     stages {
         stage('Build') {
             agent { node { label 'Build' } }
@@ -11,15 +10,9 @@ pipeline {
                 script {
                     env.version = sh (script: 'git rev-parse --short=7 HEAD', returnStdout: true).trim()
                 }
-                /*sh 'sudo docker build -f ./HangfireService/Dockerfile -t ${registry}:${version} .'
+                sh 'sudo docker build -f ./HangfireService/Dockerfile -t ${registry}:${version} .'
                 sh 'sudo docker push ${registry}:${version}'
-                sh 'sudo docker rmi ${registry}:${version}'*/
-            }
-        }
-        stage('Check User') {
-            agent any
-            steps {
-                sh 'whoami'
+                sh 'sudo docker rmi ${registry}:${version}'
             }
         }
         stage('Deploy') {
@@ -29,9 +22,9 @@ pipeline {
                 pulumi_project = 'Hangfire'    
                 AWS_ACCESS_KEY_ID     = 'AKIA3CXJE5UPUBU2H3XE'
                 AWS_SECRET_ACCESS_KEY = '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'
-            }      
-            steps {                             
-                    dir("/jenkins/workspace/AWS.Deploy.FargateService/ECS-Service-Deploy/"){
+            }
+            steps {
+                dir('/jenkins/workspace/AWS.Deploy.FargateService/ECS-Service-Deploy/') {
                     sh 'pwd'
                     sh 'ls'
                     sh 'aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}'
@@ -39,9 +32,8 @@ pipeline {
                     sh 'aws configure set region ap-southeast-1'
                     sh 'aws configure set output json'
 
-                    sh 'dotnet run -- ${pulumi_env} ${pulumi_project} ${version} false'   
-                }
-                sh 'pwd'                      
+                    sh 'dotnet run -- ${pulumi_env} ${pulumi_project} ${version} false'  
+                }          
             }
         }
     }
