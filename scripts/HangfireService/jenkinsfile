@@ -16,7 +16,7 @@ pipeline {
             }
         }
         stage('Deploy') {
-            agent any
+            agent { node { label 'Build' } }
             environment {
                 pulumi_env = 'DEV'
                 pulumi_project = 'Hangfire'    
@@ -32,7 +32,7 @@ pipeline {
                     sh 'aws configure set region ap-southeast-1'
                     sh 'aws configure set output json'
 
-                    sh 'dotnet run -- ${pulumi_env} ${pulumi_project} ${version} false'  
+                    sh 'dotnet run -- ${pulumi_env} ${pulumi_project} ad32097 false'  
                 }          
             }
         }
