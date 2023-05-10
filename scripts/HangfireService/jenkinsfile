@@ -24,6 +24,7 @@ pipeline {
                 AWS_SECRET_ACCESS_KEY = 'scXiLGdt8G24qFXD9P71Jk1UncsU0NmfV0hS3C97'
             }
             steps {
+                sh 'sudo -i'
                 dir('/jenkins/workspace/AWS.Deploy.FargateService/ECS-Service-Deploy/') {
                     sh 'pwd'
                     sh 'ls'
