@@ -10,9 +10,9 @@ pipeline {
                 script {
                     env.imageversion = sh (script: 'git rev-parse --short=7 HEAD', returnStdout: true).trim()
                 }
-                /*sh 'sudo docker build -f ./HangfireService/Dockerfile -t ${registry}:${imageversion} .'
+                sh 'sudo docker build -f ./HangfireService/Dockerfile -t ${registry}:${imageversion} .'
                 sh 'sudo docker push ${registry}:${imageversion}'
-                sh 'sudo docker rmi ${registry}:${imageversion}'*/
+                sh 'sudo docker rmi ${registry}:${imageversion}'
             }
         }
         stage('Deploy') {
@@ -30,7 +30,7 @@ pipeline {
                     sh 'aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}'
                     sh 'aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY}'
                     sh 'aws configure set region ap-southeast-1'
-                    sh 'aws configure set output json'
+                    sh 'aws configure set output json'                    
                     sh 'dotnet run -- ${pulumi_env} ${pulumi_project} ${imageversion} false'  
                 }          
             }
