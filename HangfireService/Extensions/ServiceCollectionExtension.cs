@@ -14,6 +14,7 @@ using HangfireService.Core.ThirdParty;
 using HangfireService.Core.ThirdParty.Interfaces;
 using System.Net;
 using HangfireService.Core.Promotion;
+using StackExchange.Redis;
 
 namespace HangfireService.Extensions
 {
@@ -28,6 +29,12 @@ namespace HangfireService.Extensions
             .AddSingleton(param => new MySqlClient(configuration.GetConnectionString($"{serviceType}_MainDB"), logger, DataBase.Main))
             .AddSingleton(param => new MySqlClient(configuration.GetConnectionString($"{serviceType}_ReportDB"), logger, DataBase.Report))
             .AddSingleton(param => new MySqlClient(configuration.GetConnectionString($"{serviceType}_WagerDB"), logger, DataBase.Wager));
+        }
+
+        public static IServiceCollection AddRedisConnection(this IServiceCollection services, IConfiguration configuration)
+        {
+            return  services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(configuration.GetValue<string>("RedisConnection")))
+                            .AddSingleton<ICacheHelper, RedisCacheHelper>();
         }
 
         public static IServiceCollection AddHangfireService(this IServiceCollection services, IConfiguration configuration)

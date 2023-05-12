@@ -60,5 +60,15 @@ namespace HangfireService.Core.Extensions
         {
             return DateTimeOffset.Parse(time.ToString() + timeZone);
         }
+
+        /// <summary>
+        /// 取得月底時間
+        /// </summary>
+        /// <param name="datetime"></param>
+        /// <returns></returns>
+        public static DateTime GetMonthEnd(this DateTime datetime)
+        {
+            return datetime.AddMonths(1).AddSeconds(-1);
+        }
     }
 }
