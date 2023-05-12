@@ -149,5 +149,20 @@ namespace HangfireService.Core.DataLayers
 
         #endregion
 
+
+        public IEnumerable<Leaderboard> GetLeaderboardList(int lBCategoryId, string eventCode, int siteId, int currencyId, int topNum, DateTime startTime, DateTime endTime)
+        {
+            var p = new DynamicParameters();
+            p.Add("LBCategoryId", lBCategoryId);
+            p.Add("EventCode", eventCode);
+            p.Add("SiteId", siteId);
+            p.Add("CurrencyId", currencyId);
+            p.Add("StartTime", startTime);
+            p.Add("EndTime", endTime);
+            p.Add("TopNum", topNum);
+            var result = _dbClient.Query<Leaderboard>("Member_Leaderboard_Get", p);
+            return result;
+        }
+
     }
 }
