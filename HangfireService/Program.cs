@@ -27,6 +27,7 @@ builder.Host.UseSerilog((context, Configuration) =>
 
 builder.Services
     .AddDatabaseConnection(builder.Configuration)
+    .AddRedisConnection(builder.Configuration)
     .RegisterServices(builder.Configuration) 
     .RegisterPromotion()
     .RegisterScheduledJobs(builder.Configuration)
