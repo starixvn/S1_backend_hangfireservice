@@ -9,7 +9,7 @@ namespace HangfireService.Core.Models.Options
         public int SiteId { get; set; }
         public int TopNum { get; set; }
         public int TimeoutSeconds { get; set; } = 300;
-        public IEnumerable<int> CurrencyList { get; set; } = new List<int>() { 2, 4, 15 };
+        public IEnumerable<int> CurrencyList { get; set; }
 
         public DateTime StartTime
         {
