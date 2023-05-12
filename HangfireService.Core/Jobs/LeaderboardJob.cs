@@ -41,18 +41,21 @@ namespace HangfireService.Core.Jobs
                 var categoryId = option.CategoryId;
                 var eventCode = option.EventCode;
                 var siteId = option.SiteId;
-                var currencyId = option.CurrencyId;
+                var result = new Dictionary<int,int>();
+                foreach (var currencyId in option.CurrencyList)
+                {       
+                    //Get Data
+                    var leaderboardList = _reportDBDataLayer.GetLeaderboardList(categoryId, eventCode, siteId, currencyId, option.TopNum, option.StartTime, option.EndTime);
 
-                //Get Data
-                var leaderboardList = _reportDBDataLayer.GetLeaderboardList(categoryId, eventCode, siteId, currencyId, option.TopNum, option.StartTime, option.EndTime);
+                    //insert redis
+                    var key = $"LeaderboardListMonth:{categoryId}:{eventCode}:{siteId}:{currencyId}:{option.StartTime:yyyyMM}";
+                    _redisHelper.StringSet(key, JsonConvert.SerializeObject(leaderboardList), null);
 
-                //insert redis
-                var key = $"LeaderboardListMonth:{categoryId}:{eventCode}:{siteId}:{currencyId}:{option.StartTime:yyyyMM}";
-                _redisHelper.StringSet(key, JsonConvert.SerializeObject(leaderboardList), null);
-
+                    result.Add(currencyId, leaderboardList.Count());
+                }
                 return JsonConvert.SerializeObject(new
                 {
-                    Success = leaderboardList.Count(),
+                    Success = result,
                 });
             }
             catch (Exception ex)
@@ -91,7 +94,7 @@ namespace HangfireService.Core.Jobs
         {
             public Dictionary<string, string> GetData()
             {
-                return _jobList?.Where(i => i.JobName.Contains("LeaderBoard.Nova88.Month.")).ToDictionary(f => f.JobName, f => f.JobName);
+                return _jobList?.Where(i => i.JobName.Contains("LeaderBoard.Nova88.Month")).ToDictionary(f => f.JobName, f => f.JobName);
             }
             public string GetDefaultValue()
             {
