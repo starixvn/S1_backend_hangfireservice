@@ -13,7 +13,7 @@ namespace HangfireService.Core.ThirdParty
     internal class One789TpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => true;
-
+        public bool BindCommonCurrency => true;
         public TimeOption TimeOptionId => TimeOption.TransTime;
 
         public int TpId => 23;
@@ -54,7 +54,9 @@ namespace HangfireService.Core.ThirdParty
             var CheckData = new List<BettransCheckData>();
             foreach (var item in tasks)
             {
-                CheckData.AddRange(item.Result);
+                var data = item.Result;
+                data = ProcessBettransSubCurrencyToMainCurrency(data);
+                CheckData.AddRange(data);
             }
 
             //使用CurrencyId組合資料
@@ -96,6 +98,7 @@ namespace HangfireService.Core.ThirdParty
         {
             //  改用TpBetRecord.TransTime檢查
             tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckDataByTpId(TpId, checkOption.BeginTime, checkOption.EndTime, TicketStatusExcludeOption.CancelAndUnsettle, TimeOption.TransTime).ToList();
+            tpBetRecord = ProcessTpBetRecordSubCurrencyToMainCurrency(tpBetRecord);
 
             // 交易資料 ValidBet 設為 結算資料 ValidBet，因交易資料無法計算出ValidBet
             foreach (var tpBettransData in bettransList)

@@ -62,7 +62,8 @@ namespace HangfireService.Core.Jobs
 
                     var bettransList = await tpHelper.GetBettransCheckData(checkOption);
                     var tpDailyList = await tpHelper.GetTpDailySummaryCheckData(checkOption);
-                    var checkResult = tpHelper.CheckData(checkOption,tpBetRecord.Value,  bettransList.ToList(), tpDailyList.ToList());
+                    var tpBetRecordData = (tpHelper.BindCommonCurrency) ? tpHelper.ProcessTpBetRecordSubCurrencyToMainCurrency(tpBetRecord.Value) : tpBetRecord.Value;
+                    var checkResult = tpHelper.CheckData(checkOption, tpBetRecordData, bettransList.ToList(), tpDailyList.ToList());
                     if (checkResult.Any())
                     {
                         var msg = GetMessage(tpBetRecord.Key, checkOption, checkResult);
@@ -71,7 +72,7 @@ namespace HangfireService.Core.Jobs
                         result.AppendLine(msg);
                     }
                 }
-                
+
                 return result.ToString();
             }
             catch (Exception ex)
@@ -111,7 +112,8 @@ namespace HangfireService.Core.Jobs
             if (TpId == 30)
             {
                 specialMsg = "(GameType: 50)";
-            }else if (TpId == 6)
+            }
+            else if (TpId == 6)
             {
                 specialMsg = "(GameType: 88~91)";
             }
@@ -122,12 +124,12 @@ namespace HangfireService.Core.Jobs
                 return result.ToString();
             }
 
-           
+
             result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} 帳務檢查異常  {specialMsg}");
             var group = checkFilter.GroupBy(i => i.CurrencyId);
             foreach (var check in group)
             {
-                result.AppendLine($"\u3000CurrencyId:{check.Key}"); 
+                result.AppendLine($"\u3000CurrencyId:{check.Key}");
                 foreach (var item in check.OrderBy(i => i.FinanceCheckType))
                 {
                     result.AppendLine($"\u3000\u3000{item.FinanceCheckType}");

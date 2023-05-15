@@ -14,7 +14,7 @@ namespace HangfireService.Core.ThirdParty
     internal class N2LiveTpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => false;
-
+        public bool BindCommonCurrency => false;
         public TimeOption TimeOptionId => TimeOption.SettledTime;
 
         public int TpId => 28;
@@ -54,7 +54,8 @@ namespace HangfireService.Core.ThirdParty
             var CheckData = new List<BettransCheckData>();
             foreach (var item in tasks)
             {
-                CheckData.AddRange(item.Result);
+                var data = item.Result;
+                CheckData.AddRange(data);
             }
 
             //使用CurrencyId組合資料

@@ -12,7 +12,7 @@ namespace HangfireService.Core.ThirdParty
     internal class YLTpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => false;
-
+        public bool BindCommonCurrency => true;
         public TimeOption TimeOptionId => TimeOption.TransTime;
 
         public int TpId => 7;
@@ -77,6 +77,8 @@ namespace HangfireService.Core.ThirdParty
         {
             // Bettrans時間欄位為transTime 改用TpBetRecord.TransTime檢查
             tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckDataByTpId(TpId, checkOption.BeginTime.AddHours(utcTime), checkOption.EndTime.AddHours(utcTime), TicketStatusExcludeOption.Cancel, TimeOption.TransTime).ToList();
+            tpBetRecord = ProcessTpBetRecordSubCurrencyToMainCurrency(tpBetRecord);
+
             var checkResult = new List<FinanceCheckResult>();
             if (bettransList.Any())
             {

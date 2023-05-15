@@ -13,7 +13,7 @@ namespace HangfireService.Core.ThirdParty
     internal class PTTpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => false;
-
+        public bool BindCommonCurrency => true;
         public TimeOption TimeOptionId => TimeOption.SettledTime;
 
         public int TpId => 27;
@@ -50,7 +50,7 @@ namespace HangfireService.Core.ThirdParty
 
             foreach (var item in _tpCurrency)
             {
-                if (!_currencyTimeZoneList.ContainsKey(item.CurrencyId))
+                if (!_currencyTimeZoneList.ContainsKey(item.CurrencyId) || item.CurrencyId == 72)
                 {
                     continue;
                 }
@@ -118,6 +118,7 @@ namespace HangfireService.Core.ThirdParty
                 tpBetRecord.RemoveAll(s => s.CurrencyId == currencyId);
                 tpBetRecord.AddRange(_reportDbDataLayer.GetTpBetRecordCheckCurrencyIdByTpId(TpId, currencyId, Begin, End).ToList());
             }
+            tpBetRecord = ProcessTpBetRecordSubCurrencyToMainCurrency(tpBetRecord);
 
             // 調整為tpbetrecord計算公式
             foreach (var tpDaily in tpDailyList)

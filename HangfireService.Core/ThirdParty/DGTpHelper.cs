@@ -13,6 +13,7 @@ namespace HangfireService.Core.ThirdParty
     internal class DGTpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => false;
+        public bool BindCommonCurrency => false;
 
         public TimeOption TimeOptionId => TimeOption.TransTime;
 
@@ -40,6 +41,7 @@ namespace HangfireService.Core.ThirdParty
             var BeginTime = checkOption.BeginTime.GetUnixTimeByDay();
             var EndTime = checkOption.EndTime.GetUnixTimeByDay() - 1;
             var bettrans = await _wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerDG_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
+
             foreach (var item in bettrans)
             {
                 var rate = _tpCurrency.First(c => c.CurrencyId == item.CurrencyId).ExchangeRate;
@@ -54,7 +56,7 @@ namespace HangfireService.Core.ThirdParty
 
         public async Task<IEnumerable<TpDailySummaryCheckData>> GetTpDailySummaryCheckData(FinanceCheckOption checkOption)
         {
-            // DG無報表API 資料為Wager總計
+            // DG無報表API 資料為Wager總計(可區分成3,72)
             var tpDailyList = await _fincanceService.GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
             foreach (var tpDaily in tpDailyList)
             {

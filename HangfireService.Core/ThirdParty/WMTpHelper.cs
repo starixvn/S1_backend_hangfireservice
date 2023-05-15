@@ -13,6 +13,7 @@ namespace HangfireService.Core.ThirdParty
     internal class WMTpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => true;
+        public bool BindCommonCurrency => true;
 
         public TimeOption TimeOptionId => TimeOption.SettledTime;
 
@@ -46,6 +47,7 @@ namespace HangfireService.Core.ThirdParty
             // 因使用transtime檢查會使tpbetrecord 下注跨天計算有問題，暫時調整為settletime比對確保tpbetrecord與wager金額相符，但會造成bettrans跨天計算有問題，後續如有bettrans & 第三方不符，請先手動檢查bettrans & wager (bettime)下注時間撈取總計檢查
             var bettransData = await _dbClient.QueryAsync<BettransCheckData>("Finance_BettransLC_WM_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
             var bettrans = bettransData.Where(x => x.Stake != 0 && x.WinlostAmount != 0);
+            bettrans = ProcessBettransSubCurrencyToMainCurrency(bettrans);
             foreach (var item in bettrans)
             {
                 item.ValidBet = item.Stake;
@@ -73,6 +75,7 @@ namespace HangfireService.Core.ThirdParty
         {
             // 改用TpBetRecord.TransTime檢查
             tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckDataByTpId(TpId, checkOption.BeginTime, checkOption.EndTime, TicketStatusExcludeOption.Cancel, TimeOption.TransTime).ToList();
+            tpBetRecord = ProcessTpBetRecordSubCurrencyToMainCurrency(tpBetRecord);
 
             // 交易資料 ValidBet 設為 結算資料 ValidBet，因交易資料無法計算出ValidBet
             foreach (var tpBettransData in bettransList)
