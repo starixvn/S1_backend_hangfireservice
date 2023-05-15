@@ -1,5 +1,4 @@
 ﻿using HangfireService.Core.DataLayers;
-using HangfireService.Core.Extensions;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
@@ -13,6 +12,7 @@ namespace HangfireService.Core.ThirdParty
     internal class AllBetTpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => false;
+        public bool BindCommonCurrency => true;
 
         public TimeOption TimeOptionId => TimeOption.TransTime;
 
@@ -72,6 +72,7 @@ namespace HangfireService.Core.ThirdParty
         {
             // 對方報表API為下注時間 需改用TpBetRecord.TransTime檢查
             tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckDataByTpId(TpId, checkOption.BeginTime.AddHours(utcTime), checkOption.EndTime.AddHours(utcTime), TicketStatusExcludeOption.Cancel, TimeOption.TransTime).ToList();
+            tpBetRecord = ProcessTpBetRecordSubCurrencyToMainCurrency(tpBetRecord);
 
             // 第三方資料 ValidBet 設為 結算資料 ValidBet，因第三方資料無法計算出ValidBet
             foreach (var tpDailyData in tpDailyList)
@@ -114,6 +115,5 @@ namespace HangfireService.Core.ThirdParty
             }
             return checkResult;
         }
-
     }
 }

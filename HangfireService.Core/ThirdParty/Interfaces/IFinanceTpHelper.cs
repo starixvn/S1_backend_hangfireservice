@@ -3,8 +3,6 @@ using HangfireService.Core.Models.Finance;
 using HangfireService.Core.Models.Options;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System.Text;
-using System.Linq;
 
 namespace HangfireService.Core.ThirdParty.Interfaces
 {
@@ -14,6 +12,13 @@ namespace HangfireService.Core.ThirdParty.Interfaces
         /// 是否詳細檢查TransId
         /// </summary>
         bool CheckTransId { get; }
+
+        /// <summary>
+        /// 綁定共用幣別
+        /// 如主幣別3 子幣別72為共用幣別
+        /// 主要依對方的帳(TpDailySummary)是否為公用幣別的主幣別
+        /// </summary>
+        bool BindCommonCurrency { get; }
 
         /// <summary>
         /// TpBetRecord使用時間欄位
@@ -69,6 +74,45 @@ namespace HangfireService.Core.ThirdParty.Interfaces
             }
 
             return checkResult;
+        }
+
+        public List<TpBetRecordCheck> ProcessTpBetRecordSubCurrencyToMainCurrency(List<TpBetRecordCheck> tpBetRecordData)
+        {
+            var mainCurrencyId = 3;
+            var subCurrencyId = 72;
+            bool hasMainCurrency = tpBetRecordData.Any(c => c.CurrencyId == mainCurrencyId);
+            bool hasSubCurrency = tpBetRecordData.Any(c => c.CurrencyId == subCurrencyId);
+
+            if (!hasMainCurrency && hasSubCurrency)
+            {
+                // 無主幣別資料將子幣別取代為主幣別
+                ReplaceSubCurrencyWithMainCurrency(tpBetRecordData, mainCurrencyId, subCurrencyId);
+            }
+            else if (hasMainCurrency && hasSubCurrency)
+            {
+                // 加總
+                AggregateCurrencyData(tpBetRecordData, mainCurrencyId, subCurrencyId);
+            }
+            return tpBetRecordData;
+        }
+
+        private void ReplaceSubCurrencyWithMainCurrency(List<TpBetRecordCheck> tpBetRecordData, int mainCurrencyId, int subCurrencyId)
+        {
+            TpBetRecordCheck subCurrencyRecord = tpBetRecordData.FirstOrDefault(i => i.CurrencyId == subCurrencyId);
+            subCurrencyRecord.CurrencyId = mainCurrencyId;
+        }
+
+        private void AggregateCurrencyData(List<TpBetRecordCheck> tpBetRecordData, int mainCurrencyId, int subCurrencyId)
+        {
+            TpBetRecordCheck mainCurrencyRecord = tpBetRecordData.FirstOrDefault(i => i.CurrencyId == mainCurrencyId);
+            TpBetRecordCheck subCurrencyRecord = tpBetRecordData.FirstOrDefault(i => i.CurrencyId == subCurrencyId);
+
+            mainCurrencyRecord.Stake += subCurrencyRecord.Stake;
+            mainCurrencyRecord.ValidBet += subCurrencyRecord.ValidBet;
+            mainCurrencyRecord.WinlostAmount += subCurrencyRecord.WinlostAmount;
+            mainCurrencyRecord.Revenue += subCurrencyRecord.Revenue;
+            mainCurrencyRecord.ProgressiveBet += subCurrencyRecord.ProgressiveBet;
+            mainCurrencyRecord.ProgressiveWin += subCurrencyRecord.ProgressiveWin;
         }
 
         public Task<IEnumerable<BettransCheckTransIdData>> GetBettransCheckTransIdData(FinanceCheckTransIdOption checkOption)

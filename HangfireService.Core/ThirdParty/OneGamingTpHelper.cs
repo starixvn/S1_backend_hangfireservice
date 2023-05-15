@@ -12,7 +12,7 @@ namespace HangfireService.Core.ThirdParty
     internal class OneGamingTpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => false;
-
+        public bool BindCommonCurrency => false;
         public TimeOption TimeOptionId => TimeOption.SettledTime;
         
         public int TpId => 13;
@@ -39,6 +39,7 @@ namespace HangfireService.Core.ThirdParty
             var BeginTime = checkOption.BeginTime.GetUnixTimeByDay();
             var EndTime = checkOption.EndTime.GetUnixTimeByDay() - 1;
             var bettrans = await _wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerPK_OneGaming_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
+            bettrans = ProcessBettransSubCurrencyToMainCurrency(bettrans);
             foreach (var item in bettrans)
             {
                 var rate = _tpCurrency.First(c => c.CurrencyId == item.CurrencyId).ExchangeRate;

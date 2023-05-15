@@ -12,7 +12,7 @@ namespace HangfireService.Core.ThirdParty;
 internal class YeebetTpHelper : BaseTpHelper, IFinanceTpHelper
 {
     public bool CheckTransId => false;
-
+    public bool BindCommonCurrency => false;
     public TimeOption TimeOptionId => TimeOption.SettledTime;
 
     public int TpId => 46;
@@ -52,7 +52,7 @@ internal class YeebetTpHelper : BaseTpHelper, IFinanceTpHelper
 
     public async Task<IEnumerable<TpDailySummaryCheckData>> GetTpDailySummaryCheckData(FinanceCheckOption checkOption)
     {
-        // Yeebet統計API需by username取得，會造成打過多次API取資料，故改用Wager總計
+        // Yeebet統計API需by username取得，會造成打過多次API取資料，故改用Wager總計(可區分成3,72)
         var tpDailyList = await _fincanceService.GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
         foreach (var tpDaily in tpDailyList)
         {
