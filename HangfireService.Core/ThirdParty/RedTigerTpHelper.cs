@@ -13,7 +13,7 @@ namespace HangfireService.Core.ThirdParty
     internal class RedTigerTpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => false;
-
+        public bool BindCommonCurrency => true;
         public TimeOption TimeOptionId => TimeOption.SettledTime;
 
         public int TpId => 38;
@@ -40,6 +40,7 @@ namespace HangfireService.Core.ThirdParty
             var BeginTime = checkOption.BeginTime.GetUnixTimeByDay();
             var EndTime = checkOption.EndTime.GetUnixTimeByDay() - 1;
             var bettrans = await _dbClient.QueryAsync<BettransCheckData>("Finance_BettransRng_RedTiger_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120);
+            bettrans = ProcessBettransSubCurrencyToMainCurrency(bettrans);
             foreach (var item in bettrans)
             {
                 item.TpId = TpId;
@@ -65,6 +66,7 @@ namespace HangfireService.Core.ThirdParty
         {
             // 排除promo
             tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckDataByTpId(TpId, checkOption.BeginTime, checkOption.EndTime, TicketStatusExcludeOption.Promo, TimeOption.SettledTime).ToList();
+            tpBetRecord = ProcessTpBetRecordSubCurrencyToMainCurrency(tpBetRecord);
 
             var checkResult = new List<FinanceCheckResult>();
             if (bettransList.Any())

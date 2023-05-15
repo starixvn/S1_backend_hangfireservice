@@ -14,6 +14,7 @@ namespace HangfireService.Core.ThirdParty;
 internal class BGTpHelper : BaseTpHelper, IFinanceTpHelper
 {
     public bool CheckTransId => false;
+    public bool BindCommonCurrency => true;
 
     public TimeOption TimeOptionId => TimeOption.SettledTime;
 
@@ -37,7 +38,7 @@ internal class BGTpHelper : BaseTpHelper, IFinanceTpHelper
         var BeginTime = (long)(checkOption.BeginTime.AddHours(utcTime).Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
         var EndTime = (long)(checkOption.EndTime.AddHours(utcTime).Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
         var bettrans = await _dbClient.QueryAsync<BettransCheckData>("Finance_TpWagerLC_BG_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
-
+        bettrans = ProcessBettransSubCurrencyToMainCurrency(bettrans);
         foreach (var item in bettrans)
         {
             var rate = _tpCurrency.First(c => c.CurrencyId == item.CurrencyId).ExchangeRate;

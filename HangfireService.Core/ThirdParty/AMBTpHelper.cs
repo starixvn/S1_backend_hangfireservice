@@ -12,6 +12,7 @@ namespace HangfireService.Core.ThirdParty
     internal class AMBTpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => false;
+        public bool BindCommonCurrency => true;
 
         public TimeOption TimeOptionId => TimeOption.SettledTime;
 
@@ -53,7 +54,9 @@ namespace HangfireService.Core.ThirdParty
             var CheckData = new List<BettransCheckData>();
             foreach (var item in tasks)
             {
-                CheckData.AddRange(item.Result);
+                var data = item.Result;
+                data = ProcessBettransSubCurrencyToMainCurrency(data);
+                CheckData.AddRange(data);
             }
 
             //使用TpCurrencyId組合Slot跟Poker資料
@@ -93,7 +96,8 @@ namespace HangfireService.Core.ThirdParty
         {
             // 暫時僅檢查Poker
             tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckByGameType(TpId, 50, checkOption.BeginTime.AddHours(utcTime), checkOption.EndTime.AddHours(utcTime)).ToList();
-            
+            tpBetRecord = ProcessTpBetRecordSubCurrencyToMainCurrency(tpBetRecord);
+
             // 第三方資料 Stake 設為 結算資料 Stake
             foreach (var tpDailyData in tpDailyList)
             {

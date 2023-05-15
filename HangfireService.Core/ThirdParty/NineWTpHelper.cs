@@ -12,7 +12,7 @@ namespace HangfireService.Core.ThirdParty
     public class NineWTpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => false;
-
+        public bool BindCommonCurrency => true;
         public TimeOption TimeOptionId => TimeOption.SettledTime;
 
         public int TpId { get; } = 31;
