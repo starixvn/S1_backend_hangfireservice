@@ -13,5 +13,8 @@ namespace HangfireService.Core.Models.Options
         public int TopNum { get; set; }
         public int TimeoutSeconds { get; set; } = 300;
         public IEnumerable<int> beforeDays { get; set; }
+
+        public DateTime? StartTime { get; set; }
+        public DateTime? EndTime { get; set; }
     }
 }

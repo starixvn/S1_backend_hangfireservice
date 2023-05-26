@@ -47,7 +47,7 @@ namespace HangfireService.Core.Jobs
                     {
                         foreach (var currencyId in option.CurrencyList)
                         {
-                            var(startTime, endTime) = GetTimeRange(option.ExecuteType, beforeDay);
+                            var(startTime, endTime) = GetTimeRange(option, beforeDay);
                             //Get Data
                             var leaderboardList = _reportDBDataLayer.GetLeaderboardList(categoryId, eventCode, siteId, currencyId, option.TopNum, startTime, endTime);
 
@@ -77,13 +77,13 @@ namespace HangfireService.Core.Jobs
 
         }
 
-        private (DateTime StartTime, DateTime EndTime) GetTimeRange(ExecuteType executeType, int beforeDay)
+        private (DateTime StartTime, DateTime EndTime) GetTimeRange(LeaderboardOption option, int beforeDay)
         {
             var now = DateTime.UtcNow;
-            var startTime = new DateTime(now.Year, now.Month, 1);
-            var endTime = startTime.GetMonthEnd();
+            var startTime = option.StartTime ?? new DateTime(now.Year, now.Month, 1);
+            var endTime = option.EndTime ?? startTime.GetMonthEnd();
             
-            if (executeType == ExecuteType.Days)
+            if (option.ExecuteType == ExecuteType.Days)
             {
                 startTime = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);  // 當月份1號開始
                 endTime = DateTime.UtcNow.Date.AddDays(beforeDay * -1).AddDays(1).AddSeconds(-1);
@@ -126,7 +126,7 @@ namespace HangfireService.Core.Jobs
         {
             public Dictionary<string, string> GetData()
             {
-                return _jobList?.Where(i => i.JobName.Contains("LeaderBoard")).ToDictionary(f => f.JobName, f => f.JobName);
+                return _jobList?.Where(i => i.JobName.Contains("LeaderBoard.Nova88.Months")).ToDictionary(f => f.JobName, f => f.JobName);
             }
             public string GetDefaultValue()
             {
