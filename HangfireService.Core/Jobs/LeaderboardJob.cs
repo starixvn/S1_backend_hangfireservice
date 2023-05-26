@@ -38,7 +38,7 @@ namespace HangfireService.Core.Jobs
             {
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
                 var option = JsonConvert.DeserializeObject<LeaderboardOption>(jobOption.Parameters);
-                var result = new Dictionary<int, int>();
+                var result = new Dictionary<string, int>();
                 var eventCode = option.EventCode;
                 var siteId = option.SiteId;
                 foreach (var beforeDay in option.beforeDays)
@@ -59,7 +59,7 @@ namespace HangfireService.Core.Jobs
                                 _ => throw new NotImplementedException()
                             };
                             _redisHelper.StringSet(key, JsonConvert.SerializeObject(leaderboardList), null);
-                            result.Add(currencyId, leaderboardList.Count());
+                            result.Add($"beforeDay:{beforeDay}_categoryId:{categoryId}_currencyId:{currencyId}", leaderboardList.Count());
                         }
                     }
                 }
