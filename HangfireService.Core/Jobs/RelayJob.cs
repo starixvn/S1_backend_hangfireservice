@@ -13,6 +13,7 @@ using Hangfire.Dashboard.Management.Support;
 using HangfireService.Core.Extensions;
 using HangfireService.Core.Helpers;
 using MySql.Data.MySqlClient;
+using HangfireService.Core.Models.Enums;
 
 namespace HangfireService.Core.Jobs
 {

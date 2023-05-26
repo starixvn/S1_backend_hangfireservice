@@ -1,11 +1,13 @@
-﻿namespace HangfireService.Core.Models.Options
+﻿using HangfireService.Core.Models.Enums;
+
+namespace HangfireService.Core.Models.Options
 {
     public class RelayOption
     {
         public string GetSP { get; set; }
         public string InsertSP { get; set; }
         public string DeleteSP { get; set; }
-        public ExecuteType ExecuteType { get; set; }
+        public ExecuteType ExecuteType { get; set; } = ExecuteType.Days;
         public int Subtract { get; set; } = 0;
         public int TimeoutSeconds { get; set; } = 300;
         public string SummaryType { get; set; } = "";
@@ -49,11 +51,5 @@
             var nextHour = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0).AddHours(1);
             return (nextHour.AddHours(Subtract), nextHour);
         }
-    }
-
-    public enum ExecuteType
-    {
-        Days,
-        Hours
     }
 }

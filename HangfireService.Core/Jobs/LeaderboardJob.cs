@@ -12,6 +12,7 @@ using HangfireService.Core.Models.Options;
 using Hangfire.Dashboard.Management.Support;
 using HangfireService.Core.Extensions;
 using HangfireService.Core.Helpers;
+using HangfireService.Core.Models.Enums;
 
 namespace HangfireService.Core.Jobs
 {
@@ -37,22 +38,32 @@ namespace HangfireService.Core.Jobs
             {
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
                 var option = JsonConvert.DeserializeObject<LeaderboardOption>(jobOption.Parameters);
-
-                var categoryId = option.CategoryId;
+                var result = new Dictionary<int, int>();
                 var eventCode = option.EventCode;
                 var siteId = option.SiteId;
-                var result = new Dictionary<int,int>();
-                foreach (var currencyId in option.CurrencyList)
-                {       
-                    //Get Data
-                    var leaderboardList = _reportDBDataLayer.GetLeaderboardList(categoryId, eventCode, siteId, currencyId, option.TopNum, option.StartTime, option.EndTime);
+                foreach (var beforeDay in option.beforeDays)
+                {               
+                    foreach (var categoryId in option.CategoryList)
+                    {
+                        foreach (var currencyId in option.CurrencyList)
+                        {
+                            var(startTime, endTime) = GetTimeRange(option, beforeDay);
+                            //Get Data
+                            var leaderboardList = _reportDBDataLayer.GetLeaderboardList(categoryId, eventCode, siteId, currencyId, option.TopNum, startTime, endTime);
 
-                    //insert redis
-                    var key = $"LeaderboardListMonth:{categoryId}:{eventCode}:{siteId}:{currencyId}:{option.StartTime:yyyyMM}";
-                    _redisHelper.StringSet(key, JsonConvert.SerializeObject(leaderboardList), null);
-
-                    result.Add(currencyId, leaderboardList.Count());
+                            //根據ExecuteType設定Redis Key
+                            var key = option.ExecuteType switch
+                            {
+                                ExecuteType.Months => $"LeaderboardListMonth:{categoryId}:{eventCode}:{siteId}:{currencyId}:{startTime:yyyyMM}",
+                                ExecuteType.Days => $"LeaderboardListDays:{categoryId}:{eventCode}:{siteId}:{currencyId}:{beforeDay}",
+                                _ => throw new NotImplementedException()
+                            };
+                            _redisHelper.StringSet(key, JsonConvert.SerializeObject(leaderboardList), null);
+                            result.Add(currencyId, leaderboardList.Count());
+                        }
+                    }
                 }
+
                 return JsonConvert.SerializeObject(new
                 {
                     Success = result,
@@ -64,6 +75,27 @@ namespace HangfireService.Core.Jobs
                 return JsonConvert.SerializeObject(ex);
             }
 
+        }
+
+        private (DateTime StartTime, DateTime EndTime) GetTimeRange(LeaderboardOption option, int beforeDay)
+        {
+            var now = DateTime.UtcNow;
+            var startTime = option.StartTime ?? new DateTime(now.Year, now.Month, 1);
+            var endTime = option.EndTime ?? startTime.GetMonthEnd();
+            
+            if (option.ExecuteType == ExecuteType.Days)
+            {
+                startTime = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);  // 當月份1號開始
+                endTime = DateTime.UtcNow.Date.AddDays(beforeDay * -1).AddDays(1).AddSeconds(-1);
+
+                if (startTime > endTime)
+                {
+                    (startTime, endTime) = (endTime, startTime);
+                    startTime = startTime.Date;
+                }
+            }
+
+            return (startTime, endTime);
         }
 
         [Job]
@@ -94,7 +126,7 @@ namespace HangfireService.Core.Jobs
         {
             public Dictionary<string, string> GetData()
             {
-                return _jobList?.Where(i => i.JobName.Contains("LeaderBoard.Nova88.Month")).ToDictionary(f => f.JobName, f => f.JobName);
+                return _jobList?.Where(i => i.JobName.Contains("LeaderBoard.Nova88.Months")).ToDictionary(f => f.JobName, f => f.JobName);
             }
             public string GetDefaultValue()
             {
