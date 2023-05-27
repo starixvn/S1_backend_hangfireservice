@@ -60,8 +60,11 @@ namespace HangfireService.Core.Jobs
                             };
                             _redisHelper.StringSet(key, JsonConvert.SerializeObject(leaderboardList), null);
                             result.Add($"beforeDay:{beforeDay}_categoryId:{categoryId}_currencyId:{currencyId}", leaderboardList.Count());
+                            Thread.Sleep(5000);
                         }
+                        Thread.Sleep(5000);
                     }
+                    Thread.Sleep(5000);
                 }
 
                 return JsonConvert.SerializeObject(new
