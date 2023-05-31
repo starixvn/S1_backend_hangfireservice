@@ -16,12 +16,16 @@ namespace HangfireService.Core.ThirdParty
         public TimeOption TimeOptionId => TimeOption.SettledTime;
 
         public int TpId { get; } = 31;
+
+        private readonly ReportDBDataLayer _reportDbDataLayer;
         private readonly IEnumerable<TpCurrency> _tpCurrency;
         private readonly MySqlClient _wagerDbClient;
         private readonly FincanceService _fincanceService;
 
         public NineWTpHelper(IServiceProvider provider) : base(provider)
         {
+            _reportDbDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
+
             _tpCurrency = provider.GetRequiredService<ReportDBDataLayer>().GetTpCurrency(TpId);
 
             _wagerDbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Wager);
@@ -61,6 +65,8 @@ namespace HangfireService.Core.ThirdParty
 
         public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, List<TpBetRecordCheck> tpBetRecord, List<BettransCheckData> bettransList, List<TpDailySummaryCheckData> tpDailyList)
         {
+            tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckDataByTpId(TpId, checkOption.BeginTime, checkOption.EndTime, TicketStatusExcludeOption.CancelAndUnsettle, TimeOption.SettledTime).ToList();
+
             //排除9W Revenue金額
             foreach (var tpDaily in tpDailyList)
             {
