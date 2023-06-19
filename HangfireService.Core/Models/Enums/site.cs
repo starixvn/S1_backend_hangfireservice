@@ -6,4 +6,11 @@ namespace HangfireService.Core.Models.Enums
         Goal123 = 2,
         Bwing = 3
     }
+
+    public enum SiteShortName
+    {
+        N88 = 1,
+        N8G = 2,
+        N8B = 3
+    }
 }
