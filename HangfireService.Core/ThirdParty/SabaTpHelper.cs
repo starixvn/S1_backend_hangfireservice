@@ -87,8 +87,6 @@ namespace HangfireService.Core.ThirdParty
                     { "trans_id", todo.TransId }
                 };
 
-                _logger.LogInformation($"MickeyDebug：Url：{url} vendor_id：{tpSetting["VendorId"]}, trans_id:{todo.TransId}");
-
                 var result = await HttpPostAsync(url, parameters);
                 using Stream s = await result.Content.ReadAsStreamAsync();
                 using StreamReader sr = new StreamReader(s);
