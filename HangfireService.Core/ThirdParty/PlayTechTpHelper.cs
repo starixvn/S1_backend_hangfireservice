@@ -53,7 +53,7 @@ namespace HangfireService.Core.ThirdParty
                 item.ProgressiveBet *= rate;
                 item.ProgressiveWin *= rate;
             }
-            return bettrans;
+            return bettrans.Where(x => x.Stake != 0 && x.WinlostAmount != 0);
         }
 
         public async Task<IEnumerable<TpDailySummaryCheckData>> GetTpDailySummaryCheckData(FinanceCheckOption checkOption)
