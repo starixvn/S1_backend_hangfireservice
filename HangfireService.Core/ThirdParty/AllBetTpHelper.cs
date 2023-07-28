@@ -41,8 +41,13 @@ namespace HangfireService.Core.ThirdParty
             var BeginTime = (long)(checkOption.BeginTime.AddHours(utcTime).Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
             var EndTime = (long)(checkOption.EndTime.AddHours(utcTime).AddSeconds(-1).Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
             var bettrans = await _wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerAllBet_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
+            var aTpCurrency = _tpCurrency.Select(i => i.TpCurrencyId).ToList();
             foreach (var item in bettrans)
             {
+                if (!aTpCurrency.Contains(item.TpCurrencyId))
+                {
+                    continue;
+                }
                 var rate = _tpCurrency.First(c => c.TpCurrencyId == item.TpCurrencyId).ExchangeRate;
                 item.CurrencyId = _tpCurrency.First(c => c.TpCurrencyId == item.TpCurrencyId).CurrencyId;
                 item.TpId = TpId;
