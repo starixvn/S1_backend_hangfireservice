@@ -48,7 +48,7 @@ namespace HangfireService.Core.ThirdParty
                 item.Stake *= tpCurrency.ExchangeRate;
                 item.ValidBet *= tpCurrency.ExchangeRate;
                 item.WinlostAmount *= tpCurrency.ExchangeRate;
-                item.Payout = (item.ValidBet + item.WinlostAmount) * tpCurrency.ExchangeRate;
+                item.Payout = (item.Stake + item.WinlostAmount);
             }
             return bettrans;
         }
