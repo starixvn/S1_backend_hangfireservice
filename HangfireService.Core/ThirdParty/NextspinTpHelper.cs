@@ -42,12 +42,13 @@ namespace HangfireService.Core.ThirdParty
             var bettrans = await _wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerRng_Nextspin_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
             foreach (var item in bettrans)
             {
-                var rate = _tpCurrency.First(c => c.TpCurrencyId == item.TpCurrencyId).ExchangeRate;
+                var tpCurrency = _tpCurrency.First(c => c.TpCurrencyId == item.TpCurrencyId);                
                 item.TpId = TpId;
-                item.Stake *= rate;
-                item.ValidBet *= rate;
-                item.WinlostAmount *= rate;
-                item.CurrencyId = _tpCurrency.First(c => c.TpCurrencyId == item.TpCurrencyId).CurrencyId;
+                item.CurrencyId = tpCurrency.CurrencyId;
+                item.Stake *= tpCurrency.ExchangeRate;
+                item.ValidBet *= tpCurrency.ExchangeRate;
+                item.WinlostAmount *= tpCurrency.ExchangeRate;
+                item.Payout = (item.Stake + item.WinlostAmount);
             }
             return bettrans;
         }
@@ -62,6 +63,7 @@ namespace HangfireService.Core.ThirdParty
                 tpDaily.Stake *= rate;
                 tpDaily.ValidBet *= rate;
                 tpDaily.WinlostAmount *= rate;
+                tpDaily.Payout *= rate;
             }
             return tpDailyList;
         }
