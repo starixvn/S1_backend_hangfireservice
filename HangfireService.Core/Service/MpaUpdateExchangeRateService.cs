@@ -132,6 +132,10 @@ namespace HangfireService.Core.Service
                             if (x.CurrencyId is 15 or 51)
                             {
                                 x.TargetCurrencyRate /= 1000;
+                                if (x.CurrencyId == x.TargetCurrencyId)
+                                {
+                                    x.TargetCurrencyRate /= 1000;
+                                }
                             }
 
                             x.RateDate = DateTime.Parse(date);
