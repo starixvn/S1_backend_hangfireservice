@@ -6,9 +6,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Net;
-using System.Security.Policy;
-using System.Text;
-using Ubiety.Dns.Core;
 
 namespace HangfireService.Core.Service
 {
