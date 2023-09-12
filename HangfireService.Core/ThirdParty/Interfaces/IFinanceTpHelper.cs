@@ -166,22 +166,30 @@ namespace HangfireService.Core.ThirdParty.Interfaces
             var checkTpBetTransId = tpBetRecordOfTransIds.Except(bettransOfTransIds).ToList();
             if (checkBetTransId.Any())
             {
-                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.交易與結算單號檢查, TpId, checkBetTransId.Count, checkBetTransId));
+                err.Clear();
+                err.Add("transid bettrans not in tpbetrecord.");
+                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.交易與結算單號檢查, TpId, checkBetTransId.Count, checkBetTransId, JsonConvert.SerializeObject(err)));
             }
 
             if (checkTpBetTransId.Any())
             {
-                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.結算與交易單號檢查, TpId, checkTpBetTransId.Count, checkTpBetTransId));
+                err.Clear();
+                err.Add("transid tpbetrecord not in bettrans.");
+                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.結算與交易單號檢查, TpId, checkTpBetTransId.Count, checkTpBetTransId, JsonConvert.SerializeObject(err)));
             }
 
             // 金額檢查
             var tpResult = bettransList.Select(bettrans
                 => bettrans.CheckTransIdData(FinanceCheckTransIdType.結算與交易金額檢查, tpBetRecord.FirstOrDefault(tpBetRecord => tpBetRecord.TransId == bettrans.TransId)));
-            var tpData = tpResult.Where(item => item != null).Select(item => item.ErrorList).ToList();
+            var tpData = tpResult.Where(item => item != null).ToList();
 
             if (tpData.Any())
             {
-                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.結算與交易金額檢查, TpId, tpData.Count, null, JsonConvert.SerializeObject(tpData)));
+                var errList = new List<string>
+                {
+                    JsonConvert.SerializeObject(tpData)
+                };
+                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.結算與交易金額檢查, TpId, tpData.Count, errList, JsonConvert.SerializeObject(tpData)));
             }
 
             // 原資料

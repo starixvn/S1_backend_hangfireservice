@@ -147,11 +147,18 @@ namespace HangfireService.Core.ThirdParty
         {
             var BeginTime = checkOption.BeginTime.GetUnixTime();
             var EndTime = checkOption.EndTime.GetUnixTime() - 1;
+            int Mode = (int)checkOption.Mode;
+            var TransId = checkOption.TransIds;
+            if (Mode == (int)ConditionOption.TransId && TransId == "[]")
+            {
+                return Enumerable.Empty<BettransCheckTransIdData>();
+            }
 
+            var Parameter = new { _Mode = Mode, _BeginTime = BeginTime, _EndTime = EndTime, _TransIds = TransId };
             var tasks = new List<Task<IEnumerable<BettransCheckTransIdData>>>
             {
-                _wagerClient.QueryAsync<BettransCheckTransIdData>("Finance_TpWagerRng_SG_Check_TransId_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }),
-                _wagerClient.QueryAsync<BettransCheckTransIdData>("Finance_TpWagerFish_SG_Check_TransId_Get", new { _BeginTime = BeginTime, _EndTime = EndTime })
+                _wagerClient.QueryAsync<BettransCheckTransIdData>("Finance_TpWagerRng_SG_Check_TransId_Get", Parameter),
+                _wagerClient.QueryAsync<BettransCheckTransIdData>("Finance_TpWagerFish_SG_Check_TransId_Get", Parameter)
             };
 
             await Task.WhenAll(tasks);

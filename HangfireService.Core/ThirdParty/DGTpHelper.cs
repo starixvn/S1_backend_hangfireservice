@@ -109,6 +109,5 @@ namespace HangfireService.Core.ThirdParty
             }
             return checkResult;
         }
-
     }
 }
