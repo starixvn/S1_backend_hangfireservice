@@ -4,7 +4,6 @@ using Hangfire.Dashboard.Management.Support;
 using Hangfire.Server;
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Extensions;
-using HangfireService.Core.Helpers;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
@@ -23,12 +22,11 @@ namespace HangfireService.Core.Jobs
     internal class FinanceCheckTransIdJob : BaseJob, IScheduledJob
     {
         private readonly ReportDBDataLayer _reportDBDataLayer;
+        private readonly MainDBDataLayer _mainDBDataLayer;
 
         private readonly Dictionary<int, IFinanceTpHelper> _tpHandler = new();
 
         private static List<JobOption> _jobList;
-
-        private readonly TelegramBotHelper _telegramBotHelper;
 
         public FinanceCheckTransIdJob(IServiceProvider provider) : base(provider)
         {
@@ -36,7 +34,7 @@ namespace HangfireService.Core.Jobs
             MyJobManager.GetJobGroups()?.TryGetValue("Check", out _jobList);
 
             _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
-            _telegramBotHelper = provider.GetRequiredService<TelegramBotHelper>();
+            _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
             foreach (var tp in provider.GetServices<IFinanceTpHelper>())
             {
                 // 詳細檢查TransId
@@ -62,22 +60,27 @@ namespace HangfireService.Core.Jobs
                     var tpId = item.Key;
                     var tpHelper = item.Value;
                     var timeOptionId = tpHelper.TimeOptionId;
-
                     var tpBetRecordList = _reportDBDataLayer.GetTpBetRecordCheckTransIdData(checkOption.BeginTime, checkOption.EndTime, tpId, timeOptionId);
-                    if(tpId == 36 || tpId == 37 || tpId == 38)
+                    if (tpId == 36 || tpId == 37 || tpId == 38)
                     {
                         tpBetRecordList = tpBetRecordList.Where(x => x.TicketStatus != 6);
                     }
-                    else if(tpId == 6){
+                    else if (tpId == 6)
+                    {
                         tpBetRecordList = tpBetRecordList.Where(x => x.SettlementType != 0);
+                    }
+                    else if (tpId == 42)
+                    {
+                        tpBetRecordList = tpBetRecordList.Where(x => x.TicketStatus != 3);
                     }
                     var bettransList = await tpHelper.GetBettransCheckTransIdData(checkOption);
                     var checkResult = tpHelper.CheckTransIdData(checkOption, tpBetRecordList.ToList(), bettransList.ToList());
                     if (checkResult.Any())
                     {
+                        // 寫入需重新確認的資料
+                        InsertFinanceCheckTransId(tpId, checkOption, checkResult);
                         var msg = GetMessage(tpId, checkOption, checkResult);
-                        _logger.LogError(msg);
-                        _telegramBotHelper.SendMessage(msg);
+                        //_logger.LogError(msg);
                         result.AppendLine(msg);
                     }
                 }
@@ -97,7 +100,8 @@ namespace HangfireService.Core.Jobs
             PerformContext context = null,
             IJobCancellationToken cancellationToken = null,
             [DisplayData("JobName", ConvertType = typeof(JobList))] string jobName = null,
-            [DisplayData("CheckTime", placeholderText: "yyyy-MM-dd HH:00:00")] string CheckTime = null)
+            [DisplayData("CheckTime", placeholderText: "yyyy-MM-dd HH:00:00")] string CheckTime = null
+        )
         {
             if (!_jobList.Any())
             {
@@ -121,6 +125,7 @@ namespace HangfireService.Core.Jobs
             if (!checkFilter.Any())
             {
                 result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd HH:00:00}] TpId:{TpId} 帳務單號檢查正常");
+                _logger.LogInformation(result.ToString());
                 return result.ToString();
             }
 
@@ -134,21 +139,82 @@ namespace HangfireService.Core.Jobs
                     foreach (var error in check.ErrorList)
                     {
                         result.AppendLine($"\u3000\u3000\u3000 - {error}");
+                        _logger.LogError($"\r\n\u3000\u3000\u3000 - {error}");
                     }
                 }
                 else if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.結算與交易金額檢查)
                 {
-                    _logger.LogError($"{check.FinanceCheckTransIdType}-異常資料\r\n{check.ErrorData}");
-                    result.AppendLine($"\u3000\u3000\u3000 異常筆數 - {check.Count}");
+                    _logger.LogError($"{check.FinanceCheckTransIdType}-異常資料 TpId:{TpId},異常筆數: {check.Count}\r\n{check.ErrorData}");
                 }
                 else
                 {
-                    _logger.LogError($"{check.FinanceCheckTransIdType}-異常資料\r\n{JsonConvert.SerializeObject(check.ErrorList)}");
-                    result.AppendLine($"\u3000\u3000\u3000 異常筆數 - {check.Count}");
+                    _logger.LogError($"{check.FinanceCheckTransIdType}-異常資料 TpId:{TpId},異常筆數: {check.Count}\r\n{JsonConvert.SerializeObject(check.ErrorList)}");
                 }
             }
             return result.ToString();
         }
+
+        private bool InsertFinanceCheckTransId(int TpId, FinanceCheckTransIdOption checkOption, IEnumerable<FinanceCheckTransIdResult> checkResults)
+        {
+            var result = new StringBuilder();
+            var checkFilter = checkResults.Where(i => i.ErrorList.Any());
+
+            if (!checkFilter.Any())
+            {
+                return false;
+            }
+
+            foreach (var check in checkResults)
+            {
+                var financeCheckTransIdData = new FinanceCheckTransIdData
+                {
+                    TpId = TpId,
+                    TransId = "",
+                    FinanceCheckTransIdType = (int)check.FinanceCheckTransIdType,
+                    CheckTime = checkOption.BeginTime,
+                    ErrorData = "[]"
+                };
+
+                if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.結算與交易資料檢查)
+                {
+                    foreach (var error in check.ErrorList)
+                    {
+                        financeCheckTransIdData.ErrorData = error;
+                        _mainDBDataLayer.InsertFinanceCheckTransId(financeCheckTransIdData);
+                    }
+                }
+                else if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.結算與交易金額檢查)
+                {
+                    foreach (var error in check.ErrorList)
+                    {
+                        var errorDetail = JsonConvert.DeserializeObject<List<ErrorDetail>>(error);
+                        foreach (var detail in errorDetail)
+                        {
+                            financeCheckTransIdData.TransId = detail.TransId;
+                            financeCheckTransIdData.ErrorData = JsonConvert.SerializeObject(detail);
+                            _mainDBDataLayer.InsertFinanceCheckTransId(financeCheckTransIdData);
+                        }
+                    }
+                }
+                else if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.結算與交易單號檢查 || check.FinanceCheckTransIdType == FinanceCheckTransIdType.交易與結算單號檢查)
+                {
+                    foreach (var error in check.ErrorList)
+                    {
+                        financeCheckTransIdData.TransId = error;
+                        financeCheckTransIdData.ErrorData = check.ErrorData;
+                        _mainDBDataLayer.InsertFinanceCheckTransId(financeCheckTransIdData);
+                    }
+                }
+                else
+                {
+                    financeCheckTransIdData.ErrorData = JsonConvert.SerializeObject(check.ErrorList);
+                    _mainDBDataLayer.InsertFinanceCheckTransId(financeCheckTransIdData);
+                }
+            }
+
+            return true;
+        }
+
         private class JobList : IInputDataList
         {
             public Dictionary<string, string> GetData()

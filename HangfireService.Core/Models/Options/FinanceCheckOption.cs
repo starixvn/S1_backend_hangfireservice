@@ -1,4 +1,6 @@
-﻿namespace HangfireService.Core.Models.Options
+﻿using HangfireService.Core.Models.Enums;
+
+namespace HangfireService.Core.Models.Options
 {
     public class FinanceCheckOption
     {
@@ -35,7 +37,11 @@
 
     public class FinanceCheckTransIdOption
     {
+        public ConditionOption Mode { get; set; } = ConditionOption.Time;
+
         public int SubtractHour { get; set; }
+
+        public string TransIds { get; set; } = "[]";
 
         public DateTime BeginTime
         {
