@@ -42,7 +42,7 @@ namespace HangfireService.Core.ThirdParty
             var bettrans = await _wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerRng_Nextspin_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
             foreach (var item in bettrans)
             {
-                var tpCurrency = _tpCurrency.First(c => c.TpCurrencyId == item.TpCurrencyId);                
+                var tpCurrency = _tpCurrency.First(c => c.TpCurrencyId == item.TpCurrencyId);
                 item.TpId = TpId;
                 item.CurrencyId = tpCurrency.CurrencyId;
                 item.Stake *= tpCurrency.ExchangeRate;
@@ -114,7 +114,15 @@ namespace HangfireService.Core.ThirdParty
         {
             var BeginTime = checkOption.BeginTime.GetUnixTime();
             var EndTime = checkOption.EndTime.GetUnixTime() - 1;
-            var bettrans = await _wagerClient.QueryAsync<BettransCheckTransIdData>("Finance_TpWagerRng_Nextspin_Check_TransId_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
+            int Mode = (int)checkOption.Mode;
+            var TransId = checkOption.TransIds;
+            if (Mode == (int)ConditionOption.TransId && TransId == "[]")
+            {
+                return Enumerable.Empty<BettransCheckTransIdData>();
+            }
+
+            var Parameter = new { _Mode = Mode, _BeginTime = BeginTime, _EndTime = EndTime, _TransIds = TransId };
+            var bettrans = await _wagerClient.QueryAsync<BettransCheckTransIdData>("Finance_TpWagerRng_Nextspin_Check_TransId_Get", Parameter);
 
             return (from item in bettrans
                     let exchangeRate = _tpCurrency.First(c => c.CurrencyId == item.CurrencyId).ExchangeRate

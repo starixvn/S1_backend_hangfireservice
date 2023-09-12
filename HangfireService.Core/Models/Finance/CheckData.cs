@@ -135,9 +135,8 @@ namespace HangfireService.Core.Models.Finance
 
         public int TicketStatus { get; set; }
 
-        public FinanceCheckTransIdResult CheckTransIdData(FinanceCheckTransIdType checkType, TpBetRecordCheckTransId check)
+        public ErrorDetail CheckTransIdData(FinanceCheckTransIdType checkType, TpBetRecordCheckTransId check)
         {
-            var result = new List<string>();
             decimal checkStake = 0;
             decimal checkValidBet = 0;
             decimal checkRevenue = 0;
@@ -163,39 +162,52 @@ namespace HangfireService.Core.Models.Finance
             var progressiveBetDiff = ProgressiveBet - checkProgressiveBet;
             var progressiveWinDiff = ProgressiveWin - checkProgressiveWin;
 
-            if (stakeDiff != 0)
+            var match = true;
+
+            if (stakeDiff != 0 && Math.Abs(stakeDiff) > 0.01m)
             {
-                result.Add($"Stake 差額:{stakeDiff:f4}");
+                match = false;
             }
-            if (validBetDiff != 0)
+            if (validBetDiff != 0 && Math.Abs(validBetDiff) > 0.01m)
             {
-                result.Add($"ValidBet 差額:{validBetDiff:f4}");
+                match = false;
             }
-            if (winlostAmountDiff != 0)
+            if (winlostAmountDiff != 0 && Math.Abs(winlostAmountDiff) > 0.01m)
             {
-                result.Add($"WinlostAmount 差額:{winlostAmountDiff:f4}");
+                match = false;
             }
-            if (revenueDiff != 0)
+            if (revenueDiff != 0 && Math.Abs(revenueDiff) > 0.01m)
             {
-                result.Add($"Revenue 差額:{revenueDiff:f4}");
+                match = false;
             }
-            if (progressiveBetDiff != 0)
+            if (progressiveBetDiff != 0 && Math.Abs(progressiveBetDiff) > 0.01m)
             {
-                result.Add($"ProgressiveBet 差額:{progressiveBetDiff:f4}");
+                match = false;
             }
-            if (progressiveWinDiff != 0)
+            if (progressiveWinDiff != 0 && Math.Abs(progressiveWinDiff) > 0.01m)
             {
-                result.Add($"ProgressiveWin 差額:{progressiveWinDiff:f4}");
+                match = false;
             }
-            if (result.Count() > 0)
+
+            if (!match)
             {
-                result.Add($"TransId :{checkTransId}");
+                var errorDetail = new ErrorDetail
+                {
+                    TransId = checkTransId,
+                    Stake = $"差額:{stakeDiff:f4}",
+                    ValidBet = $"差額:{validBetDiff:f4}",
+                    WinlostAmount = $"差額:{winlostAmountDiff:f4}",
+                    Revenue = $"差額:{revenueDiff:f4}",
+                    ProgressiveBet = $"差額:{progressiveBetDiff:f4}",
+                    ProgressiveWin = $"差額:{progressiveWinDiff:f4}",
+                };
+
+                return errorDetail;
             }
             else
             {
                 return null;
             }
-            return new FinanceCheckTransIdResult(checkType, TpId, result.Count(), result);
         }
     }
 

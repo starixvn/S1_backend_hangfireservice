@@ -26,5 +26,12 @@
     {
         SettledTime = 0,
         TransTime = 1,
+        TransId = 2,
+    }
+
+    public enum ConditionOption
+    {
+        Time = 0,
+        TransId = 1,
     }
 }

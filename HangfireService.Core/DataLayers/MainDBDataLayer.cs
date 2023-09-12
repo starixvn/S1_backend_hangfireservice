@@ -9,7 +9,7 @@ using System.Data;
 using HangfireService.Core.Service;
 using System.Security.Policy;
 using HangfireService.Core.Service;
-
+using HangfireService.Core.Models.Finance;
 
 namespace HangfireService.Core.DataLayers
 {
@@ -381,6 +381,25 @@ namespace HangfireService.Core.DataLayers
             });
         }
 
+        public int InsertFinanceCheckTransId(FinanceCheckTransIdData financeCheckTransIdData)
+        {
+            return _dbClient.Execute("Service_FinanceCheckTransId_Ins", new
+            {
+                _TpId = financeCheckTransIdData.TpId,
+                _TransId = financeCheckTransIdData.TransId,
+                _FinanceCheckTransIdType = financeCheckTransIdData.FinanceCheckTransIdType,
+                _CheckTime = financeCheckTransIdData.CheckTime,
+                _ErrorData = financeCheckTransIdData.ErrorData
+            });
+        }
+
+        public int DeleteFinanceCheckTransId(long SQ)
+        {
+            return _dbClient.Execute("Service_FinanceCheckTransId_Del", new
+            {
+                _SQ = SQ
+            });
+        }
     }
 }
 

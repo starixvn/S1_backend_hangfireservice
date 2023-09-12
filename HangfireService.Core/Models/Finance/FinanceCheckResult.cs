@@ -1,5 +1,4 @@
-﻿using HangfireService.Core.Models.DBs;
-using HangfireService.Core.Models.Enums;
+﻿using HangfireService.Core.Models.Enums;
 
 namespace HangfireService.Core.Models.Finance
 {
@@ -38,5 +37,39 @@ namespace HangfireService.Core.Models.Finance
             ErrorList = errorList;
             ErrorData = errorData;
         }
+    }
+
+    public class FinanceCheckTransIdData
+    {
+        public long SQ { get; set; }
+
+        public int TpId { get; set; }
+
+        public string TransId { get; set; }
+
+        public int FinanceCheckTransIdType { get; set; }
+
+        public DateTime CheckTime { get; set; }
+
+        public string ErrorData { get; set; }
+
+        public DateTime CreateTime { get; set; }
+    }
+
+    public class ErrorDetail
+    {
+        public string TransId { get; set; }
+
+        public string Stake { get; set; }
+
+        public string ValidBet { get; set; }
+
+        public string WinlostAmount { get; set; }
+
+        public string Revenue { get; set; }
+
+        public string ProgressiveBet { get; set; }
+
+        public string ProgressiveWin { get; set; }
     }
 }
