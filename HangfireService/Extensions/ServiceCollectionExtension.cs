@@ -13,6 +13,7 @@ using HangfireService.Core.Service;
 using HangfireService.Core.ThirdParty;
 using HangfireService.Core.ThirdParty.Interfaces;
 using System.Net;
+using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Promotion;
 using StackExchange.Redis;
 
@@ -108,7 +109,6 @@ namespace HangfireService.Extensions
                 .AddSingleton<PartitionService>()
                 .AddSingleton<FincanceService>()
                 .AddSingleton<CustomerService>()
-                .AddSingleton<PtMerchantBalanceCheckService>()
                 .AddSingleton<WorldCupDepositDailySummaryService>()
                 .AddSingleton<MpaUpdateExchangeRateService>()
                 .AddSingleton<OnlineCountService>()
@@ -187,7 +187,7 @@ namespace HangfireService.Extensions
             return services;
         }
 
-        public static IServiceCollection AddOptionListByDB<T>(this IServiceCollection services, string sql, object parameters = null)
+        private static IServiceCollection AddOptionListByDB<T>(this IServiceCollection services, string sql, object parameters = null)
         {
             var provider = services.BuildServiceProvider();
             var configService = provider.GetRequiredService<ConfigService>();
@@ -199,6 +199,11 @@ namespace HangfireService.Extensions
         public static IServiceCollection AddOption(this IServiceCollection services)
         {
             return services.AddOptionListByDB<CurrencyOption>("Common_Currency_Get");
+        }
+
+        public static IServiceCollection AddServerInfo(this IServiceCollection services)
+        {
+            return services.AddOptionListByDB<ServerInfo>("Admin_ServerInfoList_Get");
         }
     }
 }

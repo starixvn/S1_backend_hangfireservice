@@ -4,7 +4,9 @@ namespace HangfireService.Core.Models.Enums
     {
         Nova88 = 1,
         Goal123 = 2,
-        Bwing = 3
+        Bwing = 3,
+        Ivorysport = 5,
+        Leobet = 6
     }
 
     public enum SiteShortName
