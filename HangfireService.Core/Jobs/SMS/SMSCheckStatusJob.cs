@@ -193,7 +193,11 @@ namespace HangfireService.Core.Jobs.SMS
                 {
                     return oTPCheck.GetResult(OTPStatus.SendToProvider);
                 }
-                
+
+                if (result.code == "3")
+                {
+                    return oTPCheck.GetResult(OTPStatus.Fail);
+                }
 
                 var status = result.row.dr switch
                 {
