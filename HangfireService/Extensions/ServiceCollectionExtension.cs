@@ -16,6 +16,7 @@ using System.Net;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Promotion;
 using StackExchange.Redis;
+using HangfireService.Core.Models.SiteConfig;
 
 namespace HangfireService.Extensions
 {
@@ -34,7 +35,7 @@ namespace HangfireService.Extensions
 
         public static IServiceCollection AddRedisConnection(this IServiceCollection services, IConfiguration configuration)
         {
-            return  services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(configuration.GetValue<string>("RedisConnection")))
+            return services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(configuration.GetValue<string>("RedisConnection")))
                             .AddSingleton<ICacheHelper, RedisCacheHelper>();
         }
 
@@ -64,9 +65,9 @@ namespace HangfireService.Extensions
                 })
             .AddHangfireConsoleExtensions()
             .AddHangfireServer(config =>
-            {               
+            {
                 config.SchedulePollingInterval = TimeSpan.FromSeconds(15);
-                var queues= jobGroups.Select(item => item.Key.ToLower()).ToList();
+                var queues = jobGroups.Select(item => item.Key.ToLower()).ToList();
                 if (!queues.Contains("default"))
                 {
                     queues.Add("default");
@@ -116,7 +117,8 @@ namespace HangfireService.Extensions
                 .AddSingleton<MpaUpdateExchangeRateService>()
                 .AddSingleton<AffiliateApi>()
                 .AddSingleton<UpdateAffiliateInfoService>()
-                .AddSingleton<ConfigService>();
+                .AddSingleton<ConfigService>()
+                .AddSingleton<ConfigBLL>();
         }
 
         public static IServiceCollection RegisterPromotion(this IServiceCollection services)
@@ -124,7 +126,7 @@ namespace HangfireService.Extensions
             services
                 .AddSingleton<IBonusSummaryTimerService, BonusSummaryTimerService>()
                 .AddSingleton<IPromotionService, PromotionService>();
-            
+
             var provider = services.BuildServiceProvider();
             var timerService = provider.GetRequiredService<IBonusSummaryTimerService>();
             var promotionService = provider.GetRequiredService<IPromotionService>();
@@ -151,7 +153,7 @@ namespace HangfireService.Extensions
             var configService = provider.GetRequiredService<ConfigService>();
             var jobGroups = configService.Query<JobOption>("Service_ScheduledJob_Get", new { Project = "Hangfire" })
                .GroupBy(i => i.Group)
-               .ToDictionary(i=>i.Key, i => i.ToList());
+               .ToDictionary(i => i.Key, i => i.ToList());
             services.AddSingleton(provider => jobGroups);
             MyJobManager.SettingJob(jobGroups);
 
@@ -200,9 +202,37 @@ namespace HangfireService.Extensions
             return services.AddOptionListByDB<CurrencyOption>("Common_Currency_Get");
         }
 
+        public static IServiceCollection AddConfig(this IServiceCollection services, string configGroup)
+        {
+            return services.AddOptionListByDB<HangfireService.Core.Models.SiteConfig.Config>("SiteConfig_Get", new { ConfigGroup = configGroup });
+        }
+
         public static IServiceCollection AddServerInfo(this IServiceCollection services)
         {
             return services.AddOptionListByDB<ServerInfo>("Admin_ServerInfoList_Get");
         }
+
+        public static IServiceCollection AddSiteConfig(this IServiceCollection services)
+        {
+            var provider = services.BuildServiceProvider();
+            // 準備ServerInfo
+            var serverInfoList = new List<ServerInfo>() { new ServerInfo() { SiteId = 0, SiteName = "default" } };
+            serverInfoList.AddRange(provider.GetRequiredService<IEnumerable<ServerInfo>>());
+
+            // 準備Config
+            var siteConfigGroup = provider.GetRequiredService<IEnumerable<HangfireService.Core.Models.SiteConfig.Config>>().GroupBy(i => i.SiteId);
+
+            foreach (var serverInfo in serverInfoList)
+            {
+                //設定SiteConfig
+                var siteConfig = siteConfigGroup.FirstOrDefault(i => i.Key == serverInfo.SiteId) ?? siteConfigGroup.First(i => i.Key == 0);
+                var config = siteConfig.ToDictionary(i => i.ConfigKey, i => i.ConfigValue);
+                services.AddSingleton(new SiteConfig(serverInfo, config));
+            }
+            return services;
+        }
     }
 }
+
+
+

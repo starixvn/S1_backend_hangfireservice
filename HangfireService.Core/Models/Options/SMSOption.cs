@@ -1,16 +1,24 @@
-﻿namespace HangfireService.Core.Models.Options
+﻿namespace HangfireService.Core.Models
 {
-    public class SMSOption
+    public class SmsWithOtpBaseConfig
     {
-        public string SMSTPName { get; set; }
-        public string Accountname { get; set; }
-        public string URL { get; set; }
-        public string KEY1 { get; set; }
-        public string KEY2 { get; set; }
-        public string KEY3 { get; set; }
-        public int Minimumlimit { get; set; }
-        public string CheckURL { get; set; }
+        public string SmsTpName { get; set; }
+        public string AccountName { get; set; }
+        public string GetBalanceUrl { get; set; }
+        public string Key1 { get; set; }
+        public string Key2 { get; set; }
+        public int MiniMumLimit { get; set; }
+        public string CheckUrl { get; set; }
     }
+
+    public class NxCloudSmsConfig : SmsWithOtpBaseConfig { }
+
+    public class SkyLineSmsConfig : SmsWithOtpBaseConfig { }
+
+    public class SkyLineOtpConfig : SmsWithOtpBaseConfig { }
+
+    public class AwsSmsConfig : SmsWithOtpBaseConfig { }
+
 
     public class SKYLineSMSResult
     {
