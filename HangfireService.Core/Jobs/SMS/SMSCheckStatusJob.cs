@@ -189,11 +189,16 @@ namespace HangfireService.Core.Jobs.SMS
                 var content = await httpResponse.Content.ReadAsStringAsync();
                 _logger.LogWarning($"httpResponse Result URL : {url} content : {content} StatusCode: {httpResponse.StatusCode}");
                 var result = JsonConvert.DeserializeObject<NxCloudCheckResult>(content);
+
+                if (result.code == "3")
+                {
+                    return oTPCheck.GetResult(OTPStatus.Fail);
+                }
+
                 if (result.code != "0")
                 {
                     return oTPCheck.GetResult(OTPStatus.SendToProvider);
                 }
-                
 
                 var status = result.row.dr switch
                 {
