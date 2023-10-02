@@ -1,36 +1,16 @@
-﻿namespace HangfireService.Core.Models
+﻿namespace HangfireService.Core.Models.Options
 {
-    public class SmsWithOtpBaseConfig
+    public class SMSOption
     {
-        public string SmsTpName { get; set; }
-        public string AccountName { get; set; }
-        public string GetBalanceUrl { get; set; }
-        public string Key1 { get; set; }
-        public string Key2 { get; set; }
-        public int MiniMumLimit { get; set; }
-        public string CheckUrl { get; set; }
+        public string SMSTPName { get; set; }
+        public string Accountname { get; set; }
+        public string URL { get; set; }
+        public string KEY1 { get; set; }
+        public string KEY2 { get; set; }
+        public string KEY3 { get; set; }
+        public int Minimumlimit { get; set; }
+        public string CheckURL { get; set; }
     }
-
-    public class NxCloudSmsConfig : SmsWithOtpBaseConfig { }
-
-    public class SkyLineSmsConfig : SmsWithOtpBaseConfig { }
-
-    public class SkyLineOtpConfig : SmsWithOtpBaseConfig { }
-
-    public class AwsSmsConfig : SmsWithOtpBaseConfig { }
-
-
-    public class LetsTalkConfig
-    {
-        public string SignInUrl { get; set; }
-        public int SignInId { get; set; }
-        public string SignInToken { get; set; }
-        public string SandMessageUrl { get; set; }
-        public string SandMessageRoomId { get; set; }
-        public string SnsGroupName { get; set; }
-        public string MonitoringGroupName { get; set; }
-    }
-
 
     public class SKYLineSMSResult
     {

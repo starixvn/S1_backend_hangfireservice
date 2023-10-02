@@ -1,6 +1,6 @@
 ﻿namespace HangfireService.Core.Models.Options
 {
-    public class MpaExchangeRateConfig
+    public class MpaExchangeRateOption
     {
         public string Username { get; set; }
 

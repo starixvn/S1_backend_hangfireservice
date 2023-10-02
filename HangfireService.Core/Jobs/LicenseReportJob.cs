@@ -1,8 +1,6 @@
 using System.ComponentModel;
-using System.Dynamic;
 using System.Net;
 using Amazon;
-using Amazon.Runtime.Internal;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Hangfire;
@@ -21,7 +19,6 @@ using HangfireService.Core.ThirdParty;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Serilog.Context;
 
 
@@ -34,12 +31,12 @@ namespace HangfireService.Core.Jobs
         private readonly ExcelHelper _excelHelper;
         private readonly string _proxyHost;
         private readonly int _proxyPort;
-        private readonly string _awsAccessKey;
+        private readonly string _awsKey;
         private readonly string _awsSecretKey;
 
         private readonly BaseTpHelper _baseTpHelper;
         private static List<JobOption> _reportJobList;
-        private readonly Dictionary<string, LicenseReportConfig> _licenseReportConfig;
+        private readonly Dictionary<string, LicenseReportOptions> _config;
 
         public LicenseReportJob(IServiceProvider provider) : base(provider)
         {
@@ -48,21 +45,13 @@ namespace HangfireService.Core.Jobs
             _baseTpHelper = provider.GetRequiredService<BaseTpHelper>();
             MyJobManager.GetJobGroups()?.TryGetValue("Report", out _reportJobList);
             _excelHelper = provider.GetRequiredService<ExcelHelper>();
-            
-            var configBll = provider.GetRequiredService<ConfigBLL>();
-            var proxyConfig = configBll.GetConfigValuesBySiteId<ProxyConfig>("ProxySetting").First().Value;
-            _proxyHost = proxyConfig.ProxyHost;
-            _proxyPort = proxyConfig.ProxyPort;
-
-            var awsConfig = configBll.GetConfigValuesBySiteId<AwsConfig>("HangfireAwsKey").First().Value;
-            _awsAccessKey = awsConfig.AccessKey;
-            _awsSecretKey = awsConfig.SecretKey;
-
-            // ±_ª¬ Json object ³B²z
-            var configValue = configBll.GetConfigValuesBySiteId<dynamic>("LicenseReport").First().Value;
-            string jsonString = JsonConvert.SerializeObject(configValue);
-            var configResult = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, LicenseReportConfig>>>(jsonString);
-            _licenseReportConfig = configResult["LicenseReportConfig"];
+            var configuration = provider.GetRequiredService<IConfiguration>();
+            _proxyHost = configuration.GetValue<string>("ProxyHost");
+            _proxyPort = configuration.GetValue<int>("ProxyPort");
+            _awsKey = configuration.GetValue<string>("ProxyHost");
+            _awsKey = configuration.GetValue<string>("AWSKey");
+            _awsSecretKey = configuration.GetValue<string>("AwsSecretKey");
+            _config = configuration.GetSection("LicenseReportConfig").Get<Dictionary<string, LicenseReportOptions>>();
         }
 
         [DisplayName("{0}")]
@@ -74,7 +63,7 @@ namespace HangfireService.Core.Jobs
 
                 var date = GetLastDayOfMonth(DateTime.UtcNow.AddHours(8).AddMonths(-1));
                 var jobResult = new JobResult();
-                foreach (var config in _licenseReportConfig)
+                foreach (var config in _config)
                 {
                     var data = _reportDbDataLayer.GetBalanceForLicense((int)SiteId.Nova88, date,
                         JsonConvert.SerializeObject(config.Value.CurrencyId));
@@ -145,7 +134,7 @@ namespace HangfireService.Core.Jobs
                     config.ProxyPort = _proxyPort;
                 }
 
-                IAmazonS3 client = new AmazonS3Client(_awsAccessKey, _awsSecretKey, config);
+                IAmazonS3 client = new AmazonS3Client(_awsKey, _awsSecretKey, config);
                 var putRequest = new PutObjectRequest
                 {
                     BucketName = "ailab-license",

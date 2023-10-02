@@ -1,4 +1,4 @@
-﻿using HangfireService.Core.Models.Options;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Text;
@@ -7,21 +7,26 @@ namespace HangfireService.Core.Helpers
 {
     public class TelegramBotHelper
     {
+
         protected readonly ILogger<TelegramBotHelper> _logger;
+
         protected readonly HttpHelper _httpHelper;
-        private readonly TelegramConfig _telegramConfig;
-        
-        public TelegramBotHelper(IServiceProvider provider)
+
+        private static IReadOnlyDictionary<string, dynamic>? _telegram;
+        private readonly int _telegramNotify;
+
+
+        public TelegramBotHelper(IServiceProvider provider, IConfiguration configuration)
         {
             _logger = provider.GetRequiredService<ILogger<TelegramBotHelper>>();
             _httpHelper = provider.GetRequiredService<HttpHelper>();
-            var configBll = provider.GetRequiredService<ConfigBLL>();
-            _telegramConfig = configBll.GetConfigValuesBySiteId<TelegramConfig>("HangfireTelegram").First().Value;
+            _telegramNotify = configuration.GetValue<int>("TelegramNotify");
+            _telegram = configuration.GetSection("Telegram").Get<Dictionary<string, dynamic>>();
         }
 
         public void SendMessage(string message)
         {
-            if (!_telegramConfig.Enable)
+            if (_telegramNotify != 1)
             {
                 return;
             }
@@ -29,10 +34,10 @@ namespace HangfireService.Core.Helpers
             // telegrm not allow more than 30 messages per second, not be able to send more than 20 messages per minute to the same group
             Thread.Sleep(6000);
 
-            var url = $"{_telegramConfig.Url}/bot{_telegramConfig.Token}/sendMessage";
+            var url = $"{_telegram["Url"]}/bot{_telegram["Token"]}/sendMessage";
             var param = new
             {
-                chat_id = _telegramConfig.ChatId,
+                chat_id = _telegram["ChatId"],
                 text = message
             };
 
@@ -41,7 +46,7 @@ namespace HangfireService.Core.Helpers
 
         public void GetUpdates()
         {
-            var url = $"{_telegramConfig.Url}/bot{_telegramConfig.Token}/getUpdates";
+            var url = $"{_telegram["Url"]}/bot{_telegram["Token"]}/getUpdates";
 
             _ = HttpPostAsync(url, "");
         }

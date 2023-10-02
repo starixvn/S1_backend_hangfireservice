@@ -7,14 +7,15 @@ using Newtonsoft.Json;
 using System.ComponentModel;
 using Hangfire.Server;
 using Hangfire;
+using HangfireService.Core.Models.Options;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using HangfireService.Core.Helpers;
+using Microsoft.Extensions.Configuration;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using System.Net;
 using Amazon.CloudWatchLogs.Model;
-using HangfireService.Core.Models;
 
 namespace HangfireService.Core.Jobs.SMS
 {
@@ -24,18 +25,12 @@ namespace HangfireService.Core.Jobs.SMS
         protected readonly HttpHelper _httpHelper;
         private readonly SecureHelper _secureHelper;
         private readonly AWSCloudWatchLogsHelper _awsSnsHelper;
-
-        private readonly ReportDBDataLayer _reportDbDataLayer;
-        private readonly MainDBDataLayer _mainDbDataLayer;
+        private readonly Dictionary<string, SMSOption> _smsConfig;
+        private static List<JobOption> _jobList;
+        private readonly ReportDBDataLayer _reportDBDataLayer;
+        private readonly MainDBDataLayer _mainDBDataLayer;
         private readonly Dictionary<string, Func<OTPCheck, Task<OTPCheckResult>>> _providerHandler;
         private readonly Func<OTPCheck, Task<OTPCheckResult>> _defaultCheck;
-
-        private readonly Dictionary<int, NxCloudSmsConfig> _nxCloudSmsConfig;
-        private readonly Dictionary<int, SkyLineSmsConfig> _skyLineSmsConfig;
-        private readonly Dictionary<int, SkyLineOtpConfig> _skyLineOtpConfig;
-        private readonly Dictionary<int, AwsSmsConfig> _awsSmsConfig;
-
-        private static List<JobOption> _jobList;
 
         public SMSCheckStatusJob(IServiceProvider provider) : base(provider)
         {
@@ -43,17 +38,11 @@ namespace HangfireService.Core.Jobs.SMS
             _httpHelper = provider.GetRequiredService<HttpHelper>();
             _secureHelper = provider.GetRequiredService<SecureHelper>();
             _awsSnsHelper = provider.GetRequiredService<AWSCloudWatchLogsHelper>();
-
-            var configBll = provider.GetRequiredService<ConfigBLL>();
-            _nxCloudSmsConfig = configBll.GetConfigValuesBySiteId<NxCloudSmsConfig>("HangfireNxCloud");
-            _skyLineSmsConfig = configBll.GetConfigValuesBySiteId<SkyLineSmsConfig>("HangfireSkyLineSMS");
-            _skyLineOtpConfig = configBll.GetConfigValuesBySiteId<SkyLineOtpConfig>("HangfireSkyLineOTP");
-            _awsSmsConfig = configBll.GetConfigValuesBySiteId<AwsSmsConfig>("HangfireAwsSms");
-
+            var iConfiguration = provider.GetRequiredService<IConfiguration>();
+            _smsConfig = iConfiguration.GetSection("SMSConfig").Get<Dictionary<string, SMSOption>>();
             MyJobManager.GetJobGroups()?.TryGetValue("Check", out _jobList);
-
-            _reportDbDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
-            _mainDbDataLayer = provider.GetRequiredService<MainDBDataLayer>();
+            _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
+            _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
             _providerHandler = new Dictionary<string, Func<OTPCheck, Task<OTPCheckResult>>>()
             {
                 { "SkyLine", SkyLineCheckStatus},
@@ -68,17 +57,17 @@ namespace HangfireService.Core.Jobs.SMS
         {
             try
             {
-                var checkList = _reportDbDataLayer.GetOTPCheckList();
+                var checkList = _reportDBDataLayer.GetOTPCheckList();
                 foreach (var otp in checkList)
                 {
 
                     var result = _providerHandler.TryGetValue(otp.OTPProvider, out var func)
                         ? await func.Invoke(otp)
                         : await _defaultCheck.Invoke(otp);
-
+                    
                     if (result.OTPStatus is (int)OTPStatus.SendToCustomer or (int)OTPStatus.Fail)
                     {
-                        _mainDbDataLayer.SetOTPStatus(result);
+                        _mainDBDataLayer.SetOTPStatus(result);
                     }
                 }
                 return $"Success check count : {checkList.Count()}";
@@ -89,156 +78,6 @@ namespace HangfireService.Core.Jobs.SMS
                 return JsonConvert.SerializeObject(ex);
             }
         }
-
-        private async Task<OTPCheckResult> SkyLineCheckStatus(OTPCheck otpCheck)
-        {
-            try
-            {
-                var smsOption = GetSkyLineOption(otpCheck);
-                var account = smsOption.Key1;
-                var passWord = smsOption.Key2;
-                var dateTime = DateTime.UtcNow.AddHours(8).ToString("yyyyMMddHHmmss");
-                var sign = _secureHelper.ToMD5($"{account}{passWord}{dateTime}");
-                var url = $"{smsOption.CheckUrl}?account={account}&sign={sign}&datetime={dateTime}&ids={otpCheck.Request_id}";
-
-                using var result = await _httpHelper.GetClient().GetAsync(url);
-                if (result.StatusCode != HttpStatusCode.OK)
-                {
-                    _logger.LogError($"SkyLine httpResponse error URL : {url}  StatusCode: {result.StatusCode}");
-                    return otpCheck.GetResult(OTPStatus.SendToProvider);
-                }
-
-                var contentResult = await result.Content.ReadAsStringAsync();
-                var resultResp = JsonConvert.DeserializeObject<SKYLineSMSResult>(contentResult);
-
-                if (resultResp.status != 0)
-                {
-                    _logger.LogError($"SkyLine status error URL : {url}  resultResp: {contentResult}");
-                    return otpCheck.GetResult(OTPStatus.SendToProvider);
-                }
-
-                var smsResult = resultResp.array?.FirstOrDefault();
-                if (smsResult == null || smsResult[0] != otpCheck.Request_id) //回傳的array找不到同一個Request_id
-                {
-                    return otpCheck.GetResult(OTPStatus.Fail, $" || SkyLine no found Request_id:{otpCheck.Request_id}.");
-                }
-
-                var status = smsResult[3] switch
-                {
-                    "0" => OTPStatus.CustomerVerified, //发送成功              
-                    "1" => OTPStatus.SendToProvider, //未发送
-                    "2" => OTPStatus.SendToProvider, //正在发送
-                    _ => OTPStatus.Fail,
-                };
-
-                return otpCheck.GetResult(status, $"check status is {smsResult[3]}");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-                return otpCheck.GetResult(OTPStatus.SendToProvider);
-            }
-        }
-
-        private async Task<OTPCheckResult> NxCloudCheckStatus(OTPCheck otpCheck)
-        {
-            try
-            {
-                LogContext.PushProperty("TP", "NxCloud");
-                LogContext.PushProperty("RequestId", Guid.NewGuid().ToString());
-
-                var nxCloudConfig = GetNxCloudOption(otpCheck);
-                var url = nxCloudConfig.CheckUrl;
-                var data = new Dictionary<string, string>()
-                {
-                    { "appkey", nxCloudConfig.Key1},
-                    { "secretkey", nxCloudConfig.Key2},
-                    { "date", otpCheck.CreateTime.AddHours(8).ToString("yyyyMMdd")},
-                    { "messageid", otpCheck.Request_id}
-                };
-
-                LogContext.PushProperty("TpInfo", JsonConvert.SerializeObject(data));
-
-                using var httpResponse = await _httpHelper.HttpFromPostAsync(url, null, data, "application/x-www-form-urlencoded");
-                if (httpResponse.StatusCode != HttpStatusCode.OK)
-                {
-                    _logger.LogWarning($"httpResponse error URL : {url} data:{data} StatusCode: {httpResponse.StatusCode}");
-                    return otpCheck.GetResult(OTPStatus.SendToProvider);
-                }
-
-                var content = await httpResponse.Content.ReadAsStringAsync();
-                _logger.LogWarning($"httpResponse Result URL : {url} content : {content} StatusCode: {httpResponse.StatusCode}");
-                var result = JsonConvert.DeserializeObject<NxCloudCheckResult>(content);
-
-                if (result.code == "3")
-                {
-                    return otpCheck.GetResult(OTPStatus.Fail);
-                }
-
-                if (result.code != "0")
-                {
-                    return otpCheck.GetResult(OTPStatus.SendToProvider);
-                }
-
-                var status = result.row.dr switch
-                {
-                    "DELIVRD" => OTPStatus.SendToCustomer, // 成功
-                    "UNDELIV" => OTPStatus.Fail, // 失败
-                    "REJECTD" => OTPStatus.Fail, // 拒绝
-                    "EXPIRED" => OTPStatus.Fail, // 过期
-                    "DELETED" => OTPStatus.Fail, // 删除
-                    "DND" => OTPStatus.Fail, // 免打扰
-                    "ESME_RINVDSTADR" => OTPStatus.Fail, // 错误号码
-                    "ESME_RINVSRCADR" => OTPStatus.Fail, // 错误发件人
-                    "UNKNOWN" => OTPStatus.SendToProvider, // 未知
-                    _ => OTPStatus.SendToProvider
-                };
-
-                return otpCheck.GetResult(status, $"check status is {result.row.dr}");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-                return otpCheck.GetResult(OTPStatus.SendToProvider);
-            }
-        }
-
-        private Task<OTPCheckResult> AwsCheckStatus(OTPCheck otpCheck)
-        {
-            try
-            {
-                var customer = _reportDbDataLayer.GetCustInfo(otpCheck.CustId);
-                var awsSmsConfig = _awsSmsConfig[customer.SiteId];
-                var startQueryRequest = new StartQueryRequest
-                {
-                    LogGroupNames = new List<string>
-                    {
-                        awsSmsConfig.Key1,
-                        awsSmsConfig.Key2
-                    },
-                    StartTime = otpCheck.CreateTimeToUnix - 120,
-                    EndTime = ((DateTimeOffset)DateTime.UtcNow.AddSeconds(-1)).ToUnixTimeSeconds(),
-                    QueryString = "fields @timestamp, @message" +
-                                  $" | filter @message like /{otpCheck.Request_id}/" +
-                                  " | sort @timestamp",
-                    Limit = 100
-                };
-                var queryId = _awsSnsHelper.GetCloudWatchLogsQueryId(startQueryRequest);
-
-                BackgroundJob.Schedule(
-                    () => AwsOtpResult(otpCheck, queryId, true, JsonConvert.SerializeObject(startQueryRequest)),
-                    TimeSpan.FromMinutes(1));
-
-                return Task.FromResult(otpCheck.GetResult(OTPStatus.SendToProvider));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-                return Task.FromResult(otpCheck.GetResult(OTPStatus.SendToProvider));
-            }
-        }
-
-
 
         [Job]
         [DisplayName("Run {2} by ManagementPage")]
@@ -270,12 +109,160 @@ namespace HangfireService.Core.Jobs.SMS
             }
         }
 
-        private Task<OTPCheckResult> CheckStatusByPass(OTPCheck otpCheck)
+        private async Task<OTPCheckResult> SkyLineCheckStatus(OTPCheck oTPCheck)
         {
-            return Task.FromResult(otpCheck.GetResult(OTPStatus.SendToCustomer));
+            try
+            {
+                var smsOption = GetSkyLineOption(oTPCheck);
+                var account = smsOption.KEY1;
+                var passWord = smsOption.KEY2;
+                var dateTime = DateTime.UtcNow.AddHours(8).ToString("yyyyMMddHHmmss");
+                var sign = _secureHelper.ToMD5($"{account}{passWord}{dateTime}");
+                var url = $"{smsOption.CheckURL}?account={account}&sign={sign}&datetime={dateTime}&ids={oTPCheck.Request_id}";
+
+                using var result = await _httpHelper.GetClient().GetAsync(url);
+                if (result.StatusCode != HttpStatusCode.OK)
+                {
+                    _logger.LogError($"SkyLine httpResponse error URL : {url}  StatusCode: {result.StatusCode}");
+                    return oTPCheck.GetResult(OTPStatus.SendToProvider);
+                }
+
+                var contentResult = await result.Content.ReadAsStringAsync();
+                var resultResp = JsonConvert.DeserializeObject<SKYLineSMSResult>(contentResult);
+
+                if (resultResp.status != 0)
+                {
+                    _logger.LogError($"SkyLine status error URL : {url}  resultResp: {contentResult}");
+                    return oTPCheck.GetResult(OTPStatus.SendToProvider);
+                }
+
+                var smsResult = resultResp.array?.FirstOrDefault();
+                if (smsResult == null || smsResult[0] != oTPCheck.Request_id) //回傳的array找不到同一個Request_id
+                {
+                    return oTPCheck.GetResult(OTPStatus.Fail,$" || SkyLine no found Request_id:{oTPCheck.Request_id}.");
+                }
+
+                var status = smsResult[3] switch
+                {
+                    "0" => OTPStatus.CustomerVerified, //发送成功              
+                    "1" => OTPStatus.SendToProvider, //未发送
+                    "2" => OTPStatus.SendToProvider, //正在发送
+                    _ => OTPStatus.Fail,
+                };
+
+                return oTPCheck.GetResult(status, $"check status is {smsResult[3]}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return oTPCheck.GetResult(OTPStatus.SendToProvider);
+            }
         }
 
-        public Task<OTPCheckResult> AwsOtpResult(OTPCheck otpCheck, string queryId, bool retry,
+        private async Task<OTPCheckResult> NxCloudCheckStatus(OTPCheck oTPCheck)
+        {
+
+            try
+            {
+                LogContext.PushProperty("TP", "NxCloud");
+                LogContext.PushProperty("RequestId", Guid.NewGuid().ToString());
+                
+                var smsOption = GetNxCloudOption(oTPCheck);
+                var url = smsOption.CheckURL;
+                var data = new Dictionary<string, string>()
+                {
+                    { "appkey", smsOption.KEY1},
+                    { "secretkey", smsOption.KEY2},
+                    { "date", oTPCheck.CreateTime.AddHours(8).ToString("yyyyMMdd")},
+                    { "messageid", oTPCheck.Request_id}
+                };
+
+                LogContext.PushProperty("TpInfo", JsonConvert.SerializeObject(data));
+
+                using var httpResponse = await _httpHelper.HttpFromPostAsync(url, null, data, "application/x-www-form-urlencoded");
+                if (httpResponse.StatusCode != HttpStatusCode.OK)
+                {
+                    _logger.LogWarning($"httpResponse error URL : {url} data:{data} StatusCode: {httpResponse.StatusCode}");
+                    return oTPCheck.GetResult(OTPStatus.SendToProvider);
+                }
+
+                var content = await httpResponse.Content.ReadAsStringAsync();
+                _logger.LogWarning($"httpResponse Result URL : {url} content : {content} StatusCode: {httpResponse.StatusCode}");
+                var result = JsonConvert.DeserializeObject<NxCloudCheckResult>(content);
+
+                if (result.code == "3")
+                {
+                    return oTPCheck.GetResult(OTPStatus.Fail);
+                }
+
+                if (result.code != "0")
+                {
+                    return oTPCheck.GetResult(OTPStatus.SendToProvider);
+                }
+
+                var status = result.row.dr switch
+                {
+                    "DELIVRD" => OTPStatus.SendToCustomer, // 成功
+                    "UNDELIV" => OTPStatus.Fail, // 失败
+                    "REJECTD" => OTPStatus.Fail, // 拒绝
+                    "EXPIRED" => OTPStatus.Fail, // 过期
+                    "DELETED" => OTPStatus.Fail, // 删除
+                    "DND" => OTPStatus.Fail, // 免打扰
+                    "ESME_RINVDSTADR" => OTPStatus.Fail, // 错误号码
+                    "ESME_RINVSRCADR" => OTPStatus.Fail, // 错误发件人
+                    "UNKNOWN" => OTPStatus.SendToProvider, // 未知
+                    _ => OTPStatus.SendToProvider
+                };
+
+                return oTPCheck.GetResult(status, $"check status is {result.row.dr}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return oTPCheck.GetResult(OTPStatus.SendToProvider);
+            }
+        }
+
+        private async Task<OTPCheckResult> CheckStatusByPass(OTPCheck oTPCheck)
+        {
+            return oTPCheck.GetResult(OTPStatus.SendToCustomer);
+        }
+        
+        private async Task<OTPCheckResult> AwsCheckStatus(OTPCheck oTPCheck)
+        {
+            try
+            {
+                var smsOption = _smsConfig["AwsSMS"];
+                var startQueryRequest = new StartQueryRequest
+                {
+                    LogGroupNames = new List<string>
+                    {
+                        smsOption.KEY1,
+                        smsOption.KEY2
+                    },
+                    StartTime = oTPCheck.CreateTimeToUnix - 120,
+                    EndTime = ((DateTimeOffset)DateTime.UtcNow.AddSeconds(-1)).ToUnixTimeSeconds(),
+                    QueryString = "fields @timestamp, @message" +
+                                  $" | filter @message like /{oTPCheck.Request_id}/" +
+                                  " | sort @timestamp",
+                    Limit = 100
+                };
+                var queryId = _awsSnsHelper.GetCloudWatchLogsQueryId(startQueryRequest);
+
+                BackgroundJob.Schedule(
+                    () => AwsOtpResult(oTPCheck, queryId, true, JsonConvert.SerializeObject(startQueryRequest)),
+                    TimeSpan.FromMinutes(1));
+                
+                return oTPCheck.GetResult(OTPStatus.SendToProvider);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return oTPCheck.GetResult(OTPStatus.SendToProvider);
+            }
+        }
+
+        public async Task<OTPCheckResult> AwsOtpResult(OTPCheck oTPCheck, string queryId, bool retry,
             string queryString)
         {
             LogContext.PushProperty("TP", "AWSCloudWatchLogs");
@@ -290,7 +277,7 @@ namespace HangfireService.Core.Jobs.SMS
                 var message = "";
                 if (results.Any())
                 {
-                    var awsResult = results.FirstOrDefault(i => i.notification.messageId == otpCheck.Request_id);
+                    var awsResult = results.FirstOrDefault(i => i.notification.messageId == oTPCheck.Request_id);
                     status = awsResult?.status switch
                     {
                         "SUCCESS" => OTPStatus.SendToCustomer, // 成功
@@ -300,48 +287,49 @@ namespace HangfireService.Core.Jobs.SMS
                     message = awsResult?.delivery.providerResponse;
                 }
 
-                var result = otpCheck.GetResult(status, message);
+                var result = oTPCheck.GetResult(status, message);
                 if (result.OTPStatus is (int)OTPStatus.SendToCustomer or (int)OTPStatus.Fail)
                 {
-                    _mainDbDataLayer.SetOTPStatus(result);
-                    return Task.FromResult(result);
+                    _mainDBDataLayer.SetOTPStatus(result);
+                    return result;
                 }
 
                 if (retry)
                 {
                     //再次嘗試跟 AWS 要 OTP 發送狀態，確保 AWS 已處理完請求
                     BackgroundJob.Schedule(
-                        () => AwsOtpResult(otpCheck, queryId, false, queryString),
+                        () => AwsOtpResult(oTPCheck, queryId, false, queryString),
                         TimeSpan.FromMinutes(3));
                 }
                 else
                 {
                     //嘗試一次後拿不到資料直接更新資料，避免無窮迴圈
-                    _mainDbDataLayer.SetOTPStatus(otpCheck.GetResult(OTPStatus.SendToCustomer, "系統檢查2次自動Pass"));
+                    _mainDBDataLayer.SetOTPStatus(oTPCheck.GetResult(OTPStatus.SendToCustomer, "系統檢查2次自動Pass"));
                 }
 
-                return Task.FromResult(result);
+                return result;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
-                return Task.FromResult(otpCheck.GetResult(OTPStatus.SendToProvider));
+                return oTPCheck.GetResult(OTPStatus.SendToProvider);
             }
         }
 
-        private SmsWithOtpBaseConfig GetSkyLineOption(OTPCheck otpCheck)
+        private SMSOption GetSkyLineOption(OTPCheck oTPCheck)
         {
-            var customer = _reportDbDataLayer.GetCustInfo(otpCheck.CustId);
-
-            return string.IsNullOrWhiteSpace(otpCheck.OTPNum)
-                ? _skyLineSmsConfig[customer.SiteId]
-                : _skyLineOtpConfig[customer.SiteId];
+            return string.IsNullOrWhiteSpace(oTPCheck.OTPNum) ? _smsConfig["SkyLineSMSNova88"] : _smsConfig["SkyLineOTPNova88"];
         }
 
-        private SmsWithOtpBaseConfig GetNxCloudOption(OTPCheck otpCheck)
+        private SMSOption GetNxCloudOption(OTPCheck oTPCheck)
         {
-            var customer = _reportDbDataLayer.GetCustInfo(otpCheck.CustId);
-            return _nxCloudSmsConfig[customer.SiteId];
+            var customer = _reportDBDataLayer.GetCustInfo(oTPCheck.CustId);
+            return customer.SiteId switch
+            {
+                1 => _smsConfig["NXCloudSMSNova88"],
+                2 => _smsConfig["NxCloudSMSGoal123"],
+                3 => _smsConfig["NxCloudSMSBwing"],
+            };
         }
     }
 }
