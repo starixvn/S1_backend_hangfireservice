@@ -42,7 +42,7 @@ namespace HangfireService.Core.Jobs.SMS
             _skyLineOtpConfig = configBll.GetConfigValuesBySiteId<SkyLineOtpConfig>("HangfireSkyLineOTP");
 
             // 共用同一組設定
-            var letsTalkConfig = configBll.GetConfigValuesBySiteId<LetsTalkConfig>("HangfireLetsTalkConfig");
+            var letsTalkConfig = configBll.GetConfigValuesBySiteId<LetsTalkConfig>("HangfireLetsTalk");
             _letsTalkGroupName = letsTalkConfig.First().Value.SnsGroupName;
 
             var iConfiguration = provider.GetRequiredService<IConfiguration>();

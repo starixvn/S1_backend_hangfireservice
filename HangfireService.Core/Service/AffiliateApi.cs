@@ -18,7 +18,7 @@ namespace HangfireService.Core.Service
         public AffiliateApi(HttpHelper httpHelper, ILogger<AffiliateApi> logger, ConfigBLL configBll)
         {
             _httpHelper = httpHelper;
-            _mpaExchangeRateConfig = configBll.GetConfigValuesBySiteId<MpaExchangeRateConfig>("MpaExchangeRateConfig")
+            _mpaExchangeRateConfig = configBll.GetConfigValuesBySiteId<MpaExchangeRateConfig>("MpaExchangeRate")
                 .First().Value;
 
             _logger = logger;
