@@ -6,22 +6,21 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Net;
-using System.Security.Policy;
-using System.Text;
-using Ubiety.Dns.Core;
 
 namespace HangfireService.Core.Service
 {
     public class AffiliateApi
     {
         private readonly HttpHelper _httpHelper;
-        private readonly MpaExchangeRateOption _config;
+        private readonly MpaExchangeRateConfig _mpaExchangeRateConfig;
         private readonly ILogger<AffiliateApi> _logger;
 
-        public AffiliateApi(HttpHelper httpHelper, IConfiguration configuration, ILogger<AffiliateApi> logger)
+        public AffiliateApi(HttpHelper httpHelper, ILogger<AffiliateApi> logger, ConfigBLL configBll)
         {
             _httpHelper = httpHelper;
-            _config = configuration.GetSection("MpaExchangeRateConfig").Get<MpaExchangeRateOption>();
+            _mpaExchangeRateConfig = configBll.GetConfigValuesBySiteId<MpaExchangeRateConfig>("MpaExchangeRate")
+                .First().Value;
+
             _logger = logger;
         }
 
@@ -35,12 +34,12 @@ namespace HangfireService.Core.Service
             {
                 var postData = new
                 {
-                    Username = _config.Username,
-                    Password = _config.Password,
+                    Username = _mpaExchangeRateConfig.Username,
+                    Password = _mpaExchangeRateConfig.Password,
                 };
 
                 var parameters = JsonConvert.SerializeObject(postData);
-                var httpResponse = await _httpHelper.HttpPost1Async($"{_config.ApiUrl}/Auth", null, parameters, "application/json");
+                var httpResponse = await _httpHelper.HttpPost1Async($"{_mpaExchangeRateConfig.ApiUrl}/Auth", null, parameters, "application/json");
 
                 if (httpResponse.StatusCode == HttpStatusCode.OK)
                 {
@@ -50,7 +49,7 @@ namespace HangfireService.Core.Service
                 }
 
                 var failResponseBody = await httpResponse.Content.ReadAsStringAsync();
-                _logger.LogError($"{_config}/Auth api fail statusCode:{httpResponse.StatusCode} responseBody :{failResponseBody}");
+                _logger.LogError($"{_mpaExchangeRateConfig}/Auth api fail statusCode:{httpResponse.StatusCode} responseBody :{failResponseBody}");
                 return string.Empty;
             }
             catch (Exception ex)
@@ -73,7 +72,7 @@ namespace HangfireService.Core.Service
                 LicenseeCode = site.ToString()
             };
             var parameters = JsonConvert.SerializeObject(postData);
-            var httpResponse = await _httpHelper.HttpPost1Async($"{_config.ApiUrl}/AffDetailInfoList?access_token={accessToken}", null, parameters, "application/json");
+            var httpResponse = await _httpHelper.HttpPost1Async($"{_mpaExchangeRateConfig.ApiUrl}/AffDetailInfoList?access_token={accessToken}", null, parameters, "application/json");
             var content = await httpResponse.Content.ReadAsStringAsync();
             var affiliates = JsonConvert.DeserializeObject<List<Affiliate>>(content);
             return affiliates;

@@ -8,10 +8,12 @@ using Hangfire.Server;
 using Hangfire;
 using System.Net;
 using HangfireService.Core.Helpers;
-using HangfireService.Core.Models.Options;
 using Microsoft.Extensions.Configuration;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
+using HangfireService.Core.Models;
+using System;
+using HangfireService.Core.Models.Options;
 
 namespace HangfireService.Core.Jobs.SMS
 {
@@ -20,32 +22,115 @@ namespace HangfireService.Core.Jobs.SMS
     {
         protected readonly HttpHelper _httpHelper;
         private readonly SecureHelper _secureHelper;
-        private readonly Dictionary<string, SMSOption> _smsConfig;
+        
         private readonly string _letsTalkGroupName;
         private readonly string _commonServiceHost;
         private static List<JobOption> _jobList;
 
+        private readonly Dictionary<int, NxCloudSmsConfig> _nxCloudSmsConfig;
+        private readonly Dictionary<int, SkyLineSmsConfig> _skyLineSmsConfig;
+        private readonly Dictionary<int, SkyLineOtpConfig> _skyLineOtpConfig;
+        
         public SMSCheckBalanceJob(IServiceProvider provider) : base(provider)
         {
             LogContext.PushProperty("ClassName", GetType().Name);
             _httpHelper = provider.GetRequiredService<HttpHelper>();
             _secureHelper = provider.GetRequiredService<SecureHelper>();
-            var iConfiguration = provider.GetRequiredService<IConfiguration>();
-            _smsConfig = iConfiguration.GetSection("SMSConfig").Get<Dictionary<string, SMSOption>>();
-            _letsTalkGroupName = iConfiguration.GetValue<string>("LetsTalkConfig:SNS:LetsTalkGroupName");
-            _commonServiceHost = iConfiguration.GetValue<string>("AiLabServiceHost:CommonServiceHost");
+
+            var configBll = provider.GetRequiredService<ConfigBLL>();
+            _nxCloudSmsConfig = configBll.GetConfigValuesBySiteId<NxCloudSmsConfig>("HangfireNxCloud");
+            _skyLineSmsConfig = configBll.GetConfigValuesBySiteId<SkyLineSmsConfig>("HangfireSkyLineSMS");
+            _skyLineOtpConfig = configBll.GetConfigValuesBySiteId<SkyLineOtpConfig>("HangfireSkyLineOTP");
+
+            // 共用同一組設定
+            var letsTalkConfig = configBll.GetConfigValuesBySiteId<LetsTalkConfig>("HangfireLetsTalk");
+            _letsTalkGroupName = letsTalkConfig.First().Value.SnsGroupName;
+
+            var serviceHostConfig = configBll.GetConfigValuesBySiteId<ServiceHostConfig>("ServiceHost").First().Value;
+            _commonServiceHost = serviceHostConfig.CommonService;
+
             MyJobManager.GetJobGroups()?.TryGetValue("Check", out _jobList);
         }
 
-        private async Task<bool> NxCloudGetBalance(SMSOption smsOption)
+        [DisplayName("{0}")]
+        public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
+        {
+            _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
+
+            var skyLineSmsCheckBalanceTask = SkyLineSmsCheckBalance();
+            var skyLineOtpCheckBalanceTask = SkyLineOtpCheckBalance();
+            var nxCloudCheckBalanceTask = NxCloudCheckBalance();
+
+            await Task.WhenAll(skyLineSmsCheckBalanceTask,
+                skyLineOtpCheckBalanceTask,
+                nxCloudCheckBalanceTask);
+
+            _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} End......");
+
+            return "true";
+        }
+
+        #region CheckBalance
+
+        private async Task NxCloudCheckBalance()
         {
             try
             {
-                var resourceUrl = smsOption.URL;
+                foreach (var nxCloudConfigItem in _nxCloudSmsConfig)
+                {
+                    await NxCloudGetBalance(nxCloudConfigItem.Value);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    $"{DateTime.Now:HH:mm:ss} || nxCloud SMS CheckBalance Job Error Exception:{JsonConvert.SerializeObject(ex)}");
+            }
+        }
+
+        private async Task SkyLineOtpCheckBalance()
+        {
+            try
+            {
+                foreach (var skyLineOtpConfigItem in _skyLineOtpConfig)
+                {
+                    await SkyLineGetBalance(skyLineOtpConfigItem.Value);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    $"{DateTime.Now:HH:mm:ss} || skyLine OTP CheckBalance Job Error Exception:{JsonConvert.SerializeObject(ex)}");
+            }
+        }
+
+        private async Task SkyLineSmsCheckBalance()
+        {
+            try
+            {
+                foreach (var skyLineSmsConfigItem in _skyLineSmsConfig)
+                {
+                    await SkyLineGetBalance(skyLineSmsConfigItem.Value);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    $"{DateTime.Now:HH:mm:ss} || skyLine Sms CheckBalance Job Error Exception:{JsonConvert.SerializeObject(ex)}");
+            }
+        }
+
+        #endregion
+
+        private async Task<bool> NxCloudGetBalance(SmsWithOtpBaseConfig nxCloudSmsConfig)
+        {
+            try
+            {
+                var resourceUrl = nxCloudSmsConfig.GetBalanceUrl;
                 var data = new Dictionary<string, string>()
                 {
-                    {"appkey", smsOption.KEY1},
-                    {"secretkey", smsOption.KEY2},
+                    {"appkey", nxCloudSmsConfig.Key1},
+                    {"secretkey", nxCloudSmsConfig.Key2},
                 };
 
                 using var httpResponse = await _httpHelper.HttpFromPostAsync(resourceUrl, null, data, "application/x-www-form-urlencoded");
@@ -70,10 +155,14 @@ namespace HangfireService.Core.Jobs.SMS
                     return false;
                 }
 
-                _logger.LogError($"TPName : {smsOption.SMSTPName} AccountName : {smsOption.Accountname} balance : {balance} MinimumLimit : {smsOption.Minimumlimit}");
+                _logger.LogError($"TPName : {nxCloudSmsConfig.SmsTpName} AccountName : {nxCloudSmsConfig.AccountName} balance : {balance} MinimumLimit : {nxCloudSmsConfig.MiniMumLimit}");
 
-                if ((int)Convert.ToDecimal(balance) < smsOption.Minimumlimit) await SandLesTalkMessage(smsOption, balance);
-                return true;
+                if ((int)Convert.ToDecimal(balance) < nxCloudSmsConfig.MiniMumLimit)
+                {
+                    await SandLesTalkMessage(nxCloudSmsConfig, balance);
+                    return true;
+                }
+
             }
             catch (Exception ex)
             {
@@ -83,13 +172,13 @@ namespace HangfireService.Core.Jobs.SMS
 
         }
 
-        private async Task<bool> SkyLineGetBalance(SMSOption smsOption)
+        private async Task<bool> SkyLineGetBalance(SmsWithOtpBaseConfig smsConfig)
         {
-            var account = smsOption.KEY1;
-            var passWord = smsOption.KEY2;
-            var urlGetBalance = smsOption.URL;
+            var account = smsConfig.Key1;
+            var passWord = smsConfig.Key2;
+            var urlGetBalance = smsConfig.GetBalanceUrl;
             var dateTime = DateTime.UtcNow.AddHours(8).ToString("yyyyMMddHHmmss");
-            var sign = MakeSignString(account, passWord, dateTime);
+            var sign = _secureHelper.ToMD5($"{account}{passWord}{dateTime}");
             var url = $"{urlGetBalance}?account={account}&sign={sign}&datetime={dateTime}";
 
             try
@@ -109,8 +198,8 @@ namespace HangfireService.Core.Jobs.SMS
                     return false;
                 }
 
-                _logger.LogError($"TPName : {smsOption.SMSTPName} AccountName : {smsOption.Accountname} balance : {resultResp.balance} MinimumLimit : {smsOption.Minimumlimit}");
-                if ((int)Convert.ToDecimal(resultResp.balance) < smsOption.Minimumlimit) await SandLesTalkMessage(smsOption, resultResp.balance);
+                _logger.LogError($"TPName : {smsConfig.SmsTpName} AccountName : {smsConfig.AccountName} balance : {resultResp.balance} MinimumLimit : {smsConfig.MiniMumLimit}");
+                if ((int)Convert.ToDecimal(resultResp.balance) < smsConfig.MiniMumLimit) await SandLesTalkMessage(smsConfig, resultResp.balance);
                 return true;
             }
             catch (Exception ex)
@@ -120,7 +209,9 @@ namespace HangfireService.Core.Jobs.SMS
             return false;
         }
 
-        private async Task<bool> SandLesTalkMessage(SMSOption smsOption, object balance)
+        #region Send Notfication To LestTask
+
+        private async Task<bool> SandLesTalkMessage(SmsWithOtpBaseConfig smsOption, object balance)
         {
             try
             {
@@ -143,52 +234,23 @@ namespace HangfireService.Core.Jobs.SMS
             return true;
         }
 
-        private static string MakeAlertMessage(SMSOption smsOption, string balance)
+        private static string MakeAlertMessage(SmsWithOtpBaseConfig smsOption, string balance)
         {
             var message =
                     $"* SMS Balance Alert * \r\n" +
                     $"* Time : {DateTime.UtcNow.AddHours(8):yyyy-MM-dd HH:mm:ss} * \r\n" +
                     $"=======================\r\n" +
-                    $"The balance of SMS is less than {smsOption.Minimumlimit}.\r\n" +
+                    $"The balance of SMS is less than {smsOption.MiniMumLimit}.\r\n" +
                     $"Please add value.\r\n" +
                     $"=======================\r\n" +
-                    $"TPName : {smsOption.SMSTPName}\r\n" +
-                    $"AccountName : {smsOption.Accountname}\r\n" +
+                    $"TPName : {smsOption.SmsTpName}\r\n" +
+                    $"AccountName : {smsOption.AccountName}\r\n" +
                     $"Now Balance : {balance}\r\n"
                 ;
             return message;
         }
 
-        private string MakeSignString(string account, string pwd, string datetime)
-        {
-            var tmpStr = $"{account}{pwd}{datetime}";
-            return _secureHelper.ToMD5(tmpStr);
-
-        }
-
-        [DisplayName("{0}")]
-        public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
-        {
-            _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
-
-            foreach (var item in _smsConfig)
-            {
-                if (item.Value.SMSTPName.Equals("SkyLine"))
-                {
-                    await SkyLineGetBalance(item.Value);
-                }
-                else
-                {
-                    await NxCloudGetBalance(item.Value);
-                }
-            }
-
-            _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} End......");
-
-            return "true";
-
-        }
-
+        #endregion
 
         [Job]
         [DisplayName("Run {2} by ManagementPage")]
