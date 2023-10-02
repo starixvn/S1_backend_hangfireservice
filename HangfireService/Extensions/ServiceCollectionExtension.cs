@@ -97,7 +97,6 @@ namespace HangfireService.Extensions
             }
 
             return services
-                .Configure<AWSKeyConfigOption>(configuration.GetSection("ailab-cloudwatchlogs"))
                 .AddSingleton<HttpHelper>()
                 .AddSingleton<SecureHelper>()
                 .AddSingleton<ExcelHelper>()
