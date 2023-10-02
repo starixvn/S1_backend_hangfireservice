@@ -13,6 +13,7 @@ using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using HangfireService.Core.Models;
 using System;
+using HangfireService.Core.Models.Options;
 
 namespace HangfireService.Core.Jobs.SMS
 {
@@ -29,7 +30,7 @@ namespace HangfireService.Core.Jobs.SMS
         private readonly Dictionary<int, NxCloudSmsConfig> _nxCloudSmsConfig;
         private readonly Dictionary<int, SkyLineSmsConfig> _skyLineSmsConfig;
         private readonly Dictionary<int, SkyLineOtpConfig> _skyLineOtpConfig;
-
+        
         public SMSCheckBalanceJob(IServiceProvider provider) : base(provider)
         {
             LogContext.PushProperty("ClassName", GetType().Name);
@@ -45,8 +46,9 @@ namespace HangfireService.Core.Jobs.SMS
             var letsTalkConfig = configBll.GetConfigValuesBySiteId<LetsTalkConfig>("HangfireLetsTalk");
             _letsTalkGroupName = letsTalkConfig.First().Value.SnsGroupName;
 
-            var iConfiguration = provider.GetRequiredService<IConfiguration>();
-            _commonServiceHost = iConfiguration.GetValue<string>("AiLabServiceHost:CommonServiceHost");
+            var serviceHostConfig = configBll.GetConfigValuesBySiteId<ServiceHostConfig>("ServiceHost").First().Value;
+            _commonServiceHost = serviceHostConfig.CommonService;
+
             MyJobManager.GetJobGroups()?.TryGetValue("Check", out _jobList);
         }
 
