@@ -1,33 +1,33 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Serilog.Context;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
+using HangfireService.Core.Models.Options;
 
 namespace HangfireService.Core.Helpers
 {
     public class HttpHelper
     {
         private readonly HttpClient client;
-        public static string proxyHost;
-        public static int proxyPort;
         private readonly ILogger<HttpHelper> _logger;
+        public readonly string _proxyHost;
+        public readonly int _proxyPort;
 
         public HttpHelper(IServiceProvider provider)
         {
-            var configuration = provider.GetRequiredService<IConfiguration>(); 
             var clientFactory = provider.GetRequiredService<IHttpClientFactory>();
             _logger = provider.GetRequiredService<ILogger<HttpHelper>>();
 
-            if (configuration.GetValue<string>("ProxyHost") != null)
-            {
-                client = clientFactory.CreateClient("with_proxy");
-            }
-            else
-            {
-                client = clientFactory.CreateClient();
-            }
+            var configBll = provider.GetRequiredService<ConfigBLL>();
+            var proxyConfig = configBll.GetConfigValuesBySiteId<ProxyConfig>("ProxySetting").First().Value;
+
+            _proxyHost = proxyConfig.ProxyHost;
+            _proxyPort = proxyConfig.ProxyPort;
+
+            client = _proxyHost != null
+                ? clientFactory.CreateClient("with_proxy") 
+                : clientFactory.CreateClient();
         }
 
         public HttpClient GetClient() => client;
@@ -39,11 +39,11 @@ namespace HangfireService.Core.Helpers
             LogContext.PushProperty("RequestId", Guid.NewGuid().ToString());
             LogContext.PushProperty("HttpHelper.Request.URL", url);
             HttpClientHandler handler = null;
-            if (!string.IsNullOrEmpty(proxyHost))
+            if (!string.IsNullOrEmpty(_proxyHost))
             {
                 handler = new HttpClientHandler()
                 {
-                    Proxy = new WebProxy(proxyHost, proxyPort),
+                    Proxy = new WebProxy(_proxyHost, _proxyPort),
                     UseProxy = true,
                 };
             }
@@ -74,11 +74,11 @@ namespace HangfireService.Core.Helpers
             LogContext.PushProperty("RequestId", Guid.NewGuid().ToString());
             LogContext.PushProperty("HttpHelper.Request.URL", url);
             HttpClientHandler handler = null;
-            if (!string.IsNullOrEmpty(proxyHost))
+            if (!string.IsNullOrEmpty(_proxyHost))
             {
                 handler = new HttpClientHandler()
                 {
-                    Proxy = new WebProxy(proxyHost, proxyPort),
+                    Proxy = new WebProxy(_proxyHost, _proxyPort),
                     UseProxy = true,
                 };
             }
@@ -112,11 +112,11 @@ namespace HangfireService.Core.Helpers
             LogContext.PushProperty("RequestId", Guid.NewGuid().ToString());
             LogContext.PushProperty("HttpHelper.Request.URL", url);
             HttpClientHandler handler = null;
-            if (!string.IsNullOrEmpty(proxyHost))
+            if (!string.IsNullOrEmpty(_proxyHost))
             {
                 handler = new HttpClientHandler()
                 {
-                    Proxy = new WebProxy(proxyHost, proxyPort),
+                    Proxy = new WebProxy(_proxyHost, _proxyPort),
                     UseProxy = true,
                 };
             }

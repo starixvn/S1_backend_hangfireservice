@@ -80,23 +80,6 @@ namespace HangfireService.Extensions
 
         public static IServiceCollection RegisterServices(this IServiceCollection services, IConfiguration configuration)
         {
-            var proxyHost = configuration.GetValue<string?>("ProxyHost");
-            if (!string.IsNullOrEmpty(proxyHost))
-            {
-                var proxy = new HttpClientHandler
-                {
-                    Proxy = new WebProxy(configuration.GetValue<string>("ProxyHost"), configuration.GetValue<int>("ProxyPort")),
-                    UseProxy = true
-                };
-
-                services.AddHttpClient("with_proxy")
-                .ConfigurePrimaryHttpMessageHandler(() => proxy);
-            }
-            else
-            {
-                services.AddHttpClient();
-            }
-
             return services
                 .AddSingleton<HttpHelper>()
                 .AddSingleton<SecureHelper>()
@@ -120,6 +103,35 @@ namespace HangfireService.Extensions
                 .AddSingleton<ConfigService>()
                 .AddSingleton<ConfigBLL>();
         }
+
+        public static IServiceCollection RegisterHttpClient(this IServiceCollection services)
+        {
+            var provider = services.BuildServiceProvider();
+            var configBll = provider.GetRequiredService<ConfigBLL>();
+            var proxyConfig = configBll.GetConfigValuesBySiteId<ProxyConfig>("ProxySetting").First().Value;
+
+            var proxyHost = proxyConfig.ProxyHost;
+            var proxyPort = proxyConfig.ProxyPort;
+
+            if (!string.IsNullOrEmpty(proxyHost))
+            {
+                var proxy = new HttpClientHandler
+                {
+                    Proxy = new WebProxy(proxyHost, proxyPort),
+                    UseProxy = true
+                };
+
+                services.AddHttpClient("with_proxy")
+                    .ConfigurePrimaryHttpMessageHandler(() => proxy);
+            }
+            else
+            {
+                services.AddHttpClient();
+            }
+
+            return services;
+        }
+
 
         public static IServiceCollection RegisterPromotion(this IServiceCollection services)
         {

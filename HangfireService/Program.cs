@@ -34,7 +34,8 @@ builder.Services
     .AddOption()
     .AddConfig()
     .AddServerInfo()
-    .AddSiteConfig();
+    .AddSiteConfig()
+    .RegisterHttpClient();
 
 var app = builder.Build();
 

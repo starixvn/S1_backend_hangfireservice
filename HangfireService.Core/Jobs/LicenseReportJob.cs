@@ -46,8 +46,11 @@ namespace HangfireService.Core.Jobs
             MyJobManager.GetJobGroups()?.TryGetValue("Report", out _reportJobList);
             _excelHelper = provider.GetRequiredService<ExcelHelper>();
             var configuration = provider.GetRequiredService<IConfiguration>();
-            _proxyHost = configuration.GetValue<string>("ProxyHost");
-            _proxyPort = configuration.GetValue<int>("ProxyPort");
+
+            var configBll = provider.GetRequiredService<ConfigBLL>();
+            var proxyConfig = configBll.GetConfigValuesBySiteId<ProxyConfig>("ProxySetting").First().Value;
+            _proxyHost = proxyConfig.ProxyHost;
+            _proxyPort = proxyConfig.ProxyPort;
             _awsKey = configuration.GetValue<string>("ProxyHost");
             _awsKey = configuration.GetValue<string>("AWSKey");
             _awsSecretKey = configuration.GetValue<string>("AwsSecretKey");
