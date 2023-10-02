@@ -17,6 +17,7 @@ using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Promotion;
 using StackExchange.Redis;
 using HangfireService.Core.Models.SiteConfig;
+using Google.Protobuf.WellKnownTypes;
 
 namespace HangfireService.Extensions
 {
@@ -201,9 +202,20 @@ namespace HangfireService.Extensions
             return services.AddOptionListByDB<CurrencyOption>("Common_Currency_Get");
         }
 
-        public static IServiceCollection AddConfig(this IServiceCollection services, string configGroup)
+        public static IServiceCollection AddConfig(this IServiceCollection services)
         {
-            return services.AddOptionListByDB<HangfireService.Core.Models.SiteConfig.Config>("SiteConfig_Get", new { ConfigGroup = configGroup });
+            var configList = new List<Config>();
+
+            var provider = services.BuildServiceProvider();
+            var configService = provider.GetRequiredService<ConfigService>();
+            var hangFireConfig = configService.Query<Config>("SiteConfig_Get", new { ConfigGroup = "HangfireService" });
+            configList.AddRange(hangFireConfig);
+
+            var allConfig = configService.Query<Config>("SiteConfig_Get", new { ConfigGroup = "All" });
+            configList.AddRange(allConfig);
+
+            services.AddSingleton(typeof(IEnumerable<Config>), p => configList);
+            return services;
         }
 
         public static IServiceCollection AddServerInfo(this IServiceCollection services)

@@ -32,7 +32,7 @@ builder.Services
     .AddHangfireService(builder.Configuration)
     .RegisterTpHelper()
     .AddOption()
-    .AddConfig("HangfireService")
+    .AddConfig()
     .AddServerInfo()
     .AddSiteConfig();
 

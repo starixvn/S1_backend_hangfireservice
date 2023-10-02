@@ -1,10 +1,8 @@
 ﻿using Amazon;
 using Amazon.CloudWatchLogs;
 using Amazon.CloudWatchLogs.Model;
-using HangfireService.Core.Models;
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.Models.ThirdParty.Saba;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -16,24 +14,20 @@ public class AWSCloudWatchLogsHelper
     private readonly ILogger<AWSCloudWatchLogsHelper> _logger;
     public AWSCloudWatchLogsHelper(IServiceProvider provider)
     {
-        var configBll = provider.GetRequiredService<ConfigBLL>();
-        
-
-        var configuration = provider.GetRequiredService<IConfiguration>();
-        var proxyHost = configuration.GetValue<string>("ProxyHost");
-        var proxyPort = configuration.GetValue<int>("ProxyPort");
-
         _logger = provider.GetRequiredService<ILogger<AWSCloudWatchLogsHelper>>();
+
+        var configBll = provider.GetRequiredService<ConfigBLL>();
+        var proxyConfig = configBll.GetConfigValuesBySiteId<ProxyConfig>("ProxySetting").First().Value;
 
         var config = new AmazonCloudWatchLogsConfig
         {
             RegionEndpoint = RegionEndpoint.APSoutheast1
         };
 
-        if (!string.IsNullOrEmpty(proxyHost))
+        if (!string.IsNullOrEmpty(proxyConfig.ProxyHost))
         {
-            config.ProxyHost = proxyHost;
-            config.ProxyPort = proxyPort;
+            config.ProxyHost = proxyConfig.ProxyHost;
+            config.ProxyPort = proxyConfig.ProxyPort;
         }
 
         var awsKeyConfig = configBll.GetConfigValuesBySiteId<AwsCloudWatchConfig>("AwsCloudWatchConfig").First().Value;
