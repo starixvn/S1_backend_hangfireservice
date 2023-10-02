@@ -46,7 +46,6 @@ namespace HangfireService.Core.Jobs.SMS
 
             var configBll = provider.GetRequiredService<ConfigBLL>();
             _nxCloudSmsConfig = configBll.GetConfigValuesBySiteId<NxCloudSmsConfig>("HangfireNxCloud");
-
             _skyLineSmsConfig = configBll.GetConfigValuesBySiteId<SkyLineSmsConfig>("HangfireSkyLineSMS");
             _skyLineOtpConfig = configBll.GetConfigValuesBySiteId<SkyLineOtpConfig>("HangfireSkyLineOTP");
             _awsSmsConfig = configBll.GetConfigValuesBySiteId<AwsSmsConfig>("HangfireAwsSms");

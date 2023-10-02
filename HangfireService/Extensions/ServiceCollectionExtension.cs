@@ -216,18 +216,7 @@ namespace HangfireService.Extensions
 
         public static IServiceCollection AddConfig(this IServiceCollection services)
         {
-            var configList = new List<Config>();
-
-            var provider = services.BuildServiceProvider();
-            var configService = provider.GetRequiredService<ConfigService>();
-            var hangFireConfig = configService.Query<Config>("SiteConfig_Get", new { ConfigGroup = "HangfireService" });
-            configList.AddRange(hangFireConfig);
-
-            var allConfig = configService.Query<Config>("SiteConfig_Get", new { ConfigGroup = "All" });
-            configList.AddRange(allConfig);
-
-            services.AddSingleton(typeof(IEnumerable<Config>), p => configList);
-            return services;
+            return services.AddOptionListByDB<Config>("SiteConfig_Get", new { ConfigGroup = "HangfireService" });
         }
 
         public static IServiceCollection AddServerInfo(this IServiceCollection services)
