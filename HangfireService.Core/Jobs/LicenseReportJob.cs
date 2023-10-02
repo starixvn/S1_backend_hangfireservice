@@ -1,6 +1,8 @@
 using System.ComponentModel;
+using System.Dynamic;
 using System.Net;
 using Amazon;
+using Amazon.Runtime.Internal;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Hangfire;
@@ -19,6 +21,7 @@ using HangfireService.Core.ThirdParty;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Serilog.Context;
 
 
@@ -36,7 +39,7 @@ namespace HangfireService.Core.Jobs
 
         private readonly BaseTpHelper _baseTpHelper;
         private static List<JobOption> _reportJobList;
-        private readonly Dictionary<string, LicenseReportOptions> _config;
+        private readonly Dictionary<string, LicenseReportConfig> _licenseReportConfig;
 
         public LicenseReportJob(IServiceProvider provider) : base(provider)
         {
@@ -45,8 +48,7 @@ namespace HangfireService.Core.Jobs
             _baseTpHelper = provider.GetRequiredService<BaseTpHelper>();
             MyJobManager.GetJobGroups()?.TryGetValue("Report", out _reportJobList);
             _excelHelper = provider.GetRequiredService<ExcelHelper>();
-            var configuration = provider.GetRequiredService<IConfiguration>();
-
+            
             var configBll = provider.GetRequiredService<ConfigBLL>();
             var proxyConfig = configBll.GetConfigValuesBySiteId<ProxyConfig>("ProxySetting").First().Value;
             _proxyHost = proxyConfig.ProxyHost;
@@ -56,7 +58,11 @@ namespace HangfireService.Core.Jobs
             _awsAccessKey = awsConfig.AccessKey;
             _awsSecretKey = awsConfig.SecretKey;
 
-            _config = configuration.GetSection("LicenseReportConfig").Get<Dictionary<string, LicenseReportOptions>>();
+            // ±_ª¬ Json object ³B²z
+            var configValue = configBll.GetConfigValuesBySiteId<dynamic>("LicenseReport").First().Value;
+            string jsonString = JsonConvert.SerializeObject(configValue);
+            var configResult = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, LicenseReportConfig>>>(jsonString);
+            _licenseReportConfig = configResult["LicenseReportConfig"];
         }
 
         [DisplayName("{0}")]
@@ -68,7 +74,7 @@ namespace HangfireService.Core.Jobs
 
                 var date = GetLastDayOfMonth(DateTime.UtcNow.AddHours(8).AddMonths(-1));
                 var jobResult = new JobResult();
-                foreach (var config in _config)
+                foreach (var config in _licenseReportConfig)
                 {
                     var data = _reportDbDataLayer.GetBalanceForLicense((int)SiteId.Nova88, date,
                         JsonConvert.SerializeObject(config.Value.CurrencyId));
