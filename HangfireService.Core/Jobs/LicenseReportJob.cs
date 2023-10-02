@@ -31,7 +31,7 @@ namespace HangfireService.Core.Jobs
         private readonly ExcelHelper _excelHelper;
         private readonly string _proxyHost;
         private readonly int _proxyPort;
-        private readonly string _awsKey;
+        private readonly string _awsAccessKey;
         private readonly string _awsSecretKey;
 
         private readonly BaseTpHelper _baseTpHelper;
@@ -51,9 +51,11 @@ namespace HangfireService.Core.Jobs
             var proxyConfig = configBll.GetConfigValuesBySiteId<ProxyConfig>("ProxySetting").First().Value;
             _proxyHost = proxyConfig.ProxyHost;
             _proxyPort = proxyConfig.ProxyPort;
-            _awsKey = configuration.GetValue<string>("ProxyHost");
-            _awsKey = configuration.GetValue<string>("AWSKey");
-            _awsSecretKey = configuration.GetValue<string>("AwsSecretKey");
+
+            var awsConfig = configBll.GetConfigValuesBySiteId<AwsConfig>("HangfireAwsKey").First().Value;
+            _awsAccessKey = awsConfig.AccessKey;
+            _awsSecretKey = awsConfig.SecretKey;
+
             _config = configuration.GetSection("LicenseReportConfig").Get<Dictionary<string, LicenseReportOptions>>();
         }
 
@@ -137,7 +139,7 @@ namespace HangfireService.Core.Jobs
                     config.ProxyPort = _proxyPort;
                 }
 
-                IAmazonS3 client = new AmazonS3Client(_awsKey, _awsSecretKey, config);
+                IAmazonS3 client = new AmazonS3Client(_awsAccessKey, _awsSecretKey, config);
                 var putRequest = new PutObjectRequest
                 {
                     BucketName = "ailab-license",

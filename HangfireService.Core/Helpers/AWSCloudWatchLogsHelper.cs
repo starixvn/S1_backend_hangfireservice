@@ -30,8 +30,8 @@ public class AWSCloudWatchLogsHelper
             config.ProxyPort = proxyConfig.ProxyPort;
         }
 
-        var awsKeyConfig = configBll.GetConfigValuesBySiteId<AwsCloudWatchConfig>("AwsCloudWatchConfig").First().Value;
-        _client = new AmazonCloudWatchLogsClient(awsKeyConfig.AccessKey, awsKeyConfig.SecretKey, config);
+        var awsCloudWatchConfig = configBll.GetConfigValuesBySiteId<AwsCloudWatchConfig>("AwsCloudWatchConfig").First().Value;
+        _client = new AmazonCloudWatchLogsClient(awsCloudWatchConfig.AccessKey, awsCloudWatchConfig.SecretKey, config);
     }
 
     public string GetCloudWatchLogsQueryId(StartQueryRequest request)
