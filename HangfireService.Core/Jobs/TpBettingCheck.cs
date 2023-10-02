@@ -11,6 +11,8 @@ using Hangfire;
 using HangfireService.Core.Helpers;
 using HangfireService.Core.Models.DBs;
 using Microsoft.Extensions.Configuration;
+using HangfireService.Core.Models;
+using HangfireService.Core.Models.Options;
 
 namespace HangfireService.Core.Jobs
 {
@@ -28,9 +30,15 @@ namespace HangfireService.Core.Jobs
             _mainDbDataLayer = provider.GetRequiredService<MainDBDataLayer>();
             _reportDbDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
             _httpHelper = provider.GetRequiredService<HttpHelper>();
-            var iConfiguration = provider.GetRequiredService<IConfiguration>();
-            _letsTalkGroupName = iConfiguration.GetValue<string>("LetsTalkConfig:Monitoring:LetsTalkGroupName");
-            _commonServiceHost = iConfiguration.GetValue<string>("AiLabServiceHost:CommonServiceHost");
+            
+            var configBll = provider.GetRequiredService<ConfigBLL>();
+
+            // 共用同一組設定
+            var letsTalkConfig = configBll.GetConfigValuesBySiteId<LetsTalkConfig>("HangfireLetsTalk");
+            _letsTalkGroupName = letsTalkConfig.First().Value.MonitoringGroupName;
+
+            var serviceHostConfig = configBll.GetConfigValuesBySiteId<ServiceHostConfig>("ServiceHost").First().Value;
+            _commonServiceHost = serviceHostConfig.CommonService;
         }
 
         [DisplayName("{0}")]
