@@ -41,8 +41,11 @@ namespace HangfireService.Core.Jobs.SMS
             _skyLineSmsConfig = configBll.GetConfigValuesBySiteId<SkyLineSmsConfig>("HangfireSkyLineSMS");
             _skyLineOtpConfig = configBll.GetConfigValuesBySiteId<SkyLineOtpConfig>("HangfireSkyLineOTP");
 
+            // 共用同一組設定
+            var letsTalkConfig = configBll.GetConfigValuesBySiteId<LetsTalkConfig>("HangfireLetsTalkConfig");
+            _letsTalkGroupName = letsTalkConfig.First().Value.SnsGroupName;
+
             var iConfiguration = provider.GetRequiredService<IConfiguration>();
-            _letsTalkGroupName = iConfiguration.GetValue<string>("LetsTalkConfig:SNS:LetsTalkGroupName");
             _commonServiceHost = iConfiguration.GetValue<string>("AiLabServiceHost:CommonServiceHost");
             MyJobManager.GetJobGroups()?.TryGetValue("Check", out _jobList);
         }

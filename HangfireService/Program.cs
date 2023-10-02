@@ -1,6 +1,5 @@
 using Hangfire;
 using HangfireService.Core.Jobs;
-using HangfireService.Core.Models.Options;
 using HangfireService.Extensions;
 using HangfireService.Extensions.ActionFilters;
 using Serilog;

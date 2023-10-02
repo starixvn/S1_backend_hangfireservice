@@ -20,6 +20,18 @@
     public class AwsSmsConfig : SmsWithOtpBaseConfig { }
 
 
+    public class LetsTalkConfig
+    {
+        public string SignInUrl { get; set; }
+        public int SignInId { get; set; }
+        public string SignInToken { get; set; }
+        public string SandMessageUrl { get; set; }
+        public string SandMessageRoomId { get; set; }
+        public string SnsGroupName { get; set; }
+        public string MonitoringGroupName { get; set; }
+    }
+
+
     public class SKYLineSMSResult
     {
         public int status { get; set; }
