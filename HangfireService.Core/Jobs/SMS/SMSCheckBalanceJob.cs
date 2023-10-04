@@ -8,11 +8,9 @@ using Hangfire.Server;
 using Hangfire;
 using System.Net;
 using HangfireService.Core.Helpers;
-using Microsoft.Extensions.Configuration;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using HangfireService.Core.Models;
-using System;
 using HangfireService.Core.Models.Options;
 
 namespace HangfireService.Core.Jobs.SMS
@@ -220,7 +218,7 @@ namespace HangfireService.Core.Jobs.SMS
 
                 var parameters = JsonConvert.SerializeObject(postData);
 
-                var httpResponse = await _httpHelper.HttpPost1Async($"{_commonServiceHost}/Common/LetsTalk/SendMessage",
+                var httpResponse = await _httpHelper.HttpPost1Async($"{_commonServiceHost}LetsTalk/SendMessage",
                     null, parameters, "application/json");
             }
             catch (Exception ex)

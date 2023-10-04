@@ -97,7 +97,7 @@ namespace HangfireService.Core.Jobs
                 };
 
                 var parameters = JsonConvert.SerializeObject(postData);
-                var httpResponse = await _httpHelper.HttpPost1Async($"{_commonServiceHost}/Common/LetsTalk/SendMessage",
+                var httpResponse = await _httpHelper.HttpPost1Async($"{_commonServiceHost}LetsTalk/SendMessage",
                     null, parameters, "application/json");
                 if (httpResponse.StatusCode == HttpStatusCode.OK)
                 {
