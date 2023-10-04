@@ -8,11 +8,9 @@ using Hangfire.Server;
 using Hangfire;
 using System.Net;
 using HangfireService.Core.Helpers;
-using Microsoft.Extensions.Configuration;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using HangfireService.Core.Models;
-using System;
 using HangfireService.Core.Models.Options;
 
 namespace HangfireService.Core.Jobs.SMS
@@ -27,9 +25,9 @@ namespace HangfireService.Core.Jobs.SMS
         private readonly string _commonServiceHost;
         private static List<JobOption> _jobList;
 
-        private readonly Dictionary<int, NxCloudSmsConfig> _nxCloudSmsConfig;
-        private readonly Dictionary<int, SkyLineSmsConfig> _skyLineSmsConfig;
-        private readonly Dictionary<int, SkyLineOtpConfig> _skyLineOtpConfig;
+        private readonly IEnumerable<NxCloudSmsConfig> _nxCloudSmsConfig;
+        private readonly IEnumerable<SkyLineSmsConfig> _skyLineSmsConfig;
+        private readonly IEnumerable<SkyLineOtpConfig> _skyLineOtpConfig;
         
         public SMSCheckBalanceJob(IServiceProvider provider) : base(provider)
         {
@@ -38,16 +36,13 @@ namespace HangfireService.Core.Jobs.SMS
             _secureHelper = provider.GetRequiredService<SecureHelper>();
 
             var configBll = provider.GetRequiredService<ConfigBLL>();
-            _nxCloudSmsConfig = configBll.GetConfigValuesBySiteId<NxCloudSmsConfig>("HangfireNxCloud");
-            _skyLineSmsConfig = configBll.GetConfigValuesBySiteId<SkyLineSmsConfig>("HangfireSkyLineSMS");
-            _skyLineOtpConfig = configBll.GetConfigValuesBySiteId<SkyLineOtpConfig>("HangfireSkyLineOTP");
+            _nxCloudSmsConfig = configBll.GetRawConfigValues<NxCloudSmsConfig>("HangfireNxCloud");
+            _skyLineSmsConfig = configBll.GetRawConfigValues<SkyLineSmsConfig>("HangfireSkyLineSMS");
+            _skyLineOtpConfig = configBll.GetRawConfigValues<SkyLineOtpConfig>("HangfireSkyLineOTP");
 
             // 共用同一組設定
-            var letsTalkConfig = configBll.GetConfigValuesBySiteId<LetsTalkConfig>("HangfireLetsTalk");
-            _letsTalkGroupName = letsTalkConfig.First().Value.SnsGroupName;
-
-            var serviceHostConfig = configBll.GetConfigValuesBySiteId<ServiceHostConfig>("ServiceHost").First().Value;
-            _commonServiceHost = serviceHostConfig.CommonService;
+            _letsTalkGroupName = configBll.GetConfigValue<LetsTalkConfig>("HangfireLetsTalk").SnsGroupName;
+            _commonServiceHost = configBll.GetConfigValue<ServiceHostConfig>("ServiceHost").CommonService;
 
             MyJobManager.GetJobGroups()?.TryGetValue("Check", out _jobList);
         }
@@ -78,7 +73,7 @@ namespace HangfireService.Core.Jobs.SMS
             {
                 foreach (var nxCloudConfigItem in _nxCloudSmsConfig)
                 {
-                    await NxCloudGetBalance(nxCloudConfigItem.Value);
+                    await NxCloudGetBalance(nxCloudConfigItem);
                 }
             }
             catch (Exception ex)
@@ -94,7 +89,7 @@ namespace HangfireService.Core.Jobs.SMS
             {
                 foreach (var skyLineOtpConfigItem in _skyLineOtpConfig)
                 {
-                    await SkyLineGetBalance(skyLineOtpConfigItem.Value);
+                    await SkyLineGetBalance(skyLineOtpConfigItem);
                 }
             }
             catch (Exception ex)
@@ -110,7 +105,7 @@ namespace HangfireService.Core.Jobs.SMS
             {
                 foreach (var skyLineSmsConfigItem in _skyLineSmsConfig)
                 {
-                    await SkyLineGetBalance(skyLineSmsConfigItem.Value);
+                    await SkyLineGetBalance(skyLineSmsConfigItem);
                 }
             }
             catch (Exception ex)
@@ -223,7 +218,7 @@ namespace HangfireService.Core.Jobs.SMS
 
                 var parameters = JsonConvert.SerializeObject(postData);
 
-                var httpResponse = await _httpHelper.HttpPost1Async($"{_commonServiceHost}/Common/LetsTalk/SendMessage",
+                var httpResponse = await _httpHelper.HttpPost1Async($"{_commonServiceHost}LetsTalk/SendMessage",
                     null, parameters, "application/json");
             }
             catch (Exception ex)

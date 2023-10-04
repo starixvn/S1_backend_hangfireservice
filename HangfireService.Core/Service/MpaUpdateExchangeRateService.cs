@@ -25,10 +25,7 @@ namespace HangfireService.Core.Service
 
         public MpaUpdateExchangeRateService(IServiceProvider provider)
         {
-            var configBll = provider.GetRequiredService<ConfigBLL>();
-            _mpaExchangeRateConfig = configBll.GetConfigValuesBySiteId<MpaExchangeRateConfig>("MpaExchangeRate")
-                .First().Value;
-
+            _mpaExchangeRateConfig = provider.GetRequiredService<ConfigBLL>().GetConfigValue<MpaExchangeRateConfig>("MpaExchangeRate");
             _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
             _httpHelper = provider.GetRequiredService<HttpHelper>();
             _logger = provider.GetRequiredService<ILogger<BaseJob>>();

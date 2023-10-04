@@ -18,9 +18,7 @@ namespace HangfireService.Core.Helpers
         {
             var clientFactory = provider.GetRequiredService<IHttpClientFactory>();
             _logger = provider.GetRequiredService<ILogger<HttpHelper>>();
-
-            var configBll = provider.GetRequiredService<ConfigBLL>();
-            var proxyConfig = configBll.GetConfigValuesBySiteId<ProxyConfig>("ProxySetting").First().Value;
+            var proxyConfig = provider.GetRequiredService<ConfigBLL>().GetConfigValue<ProxyConfig>("ProxySetting");
 
             _proxyHost = proxyConfig.ProxyHost;
             _proxyPort = proxyConfig.ProxyPort;
