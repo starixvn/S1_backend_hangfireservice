@@ -34,11 +34,8 @@ namespace HangfireService.Core.Jobs
             var configBll = provider.GetRequiredService<ConfigBLL>();
 
             // 共用同一組設定
-            var letsTalkConfig = configBll.GetConfigValuesBySiteId<LetsTalkConfig>("HangfireLetsTalk");
-            _letsTalkGroupName = letsTalkConfig.First().Value.MonitoringGroupName;
-
-            var serviceHostConfig = configBll.GetConfigValuesBySiteId<ServiceHostConfig>("ServiceHost").First().Value;
-            _commonServiceHost = serviceHostConfig.CommonService;
+            _letsTalkGroupName = configBll.GetConfigValue<LetsTalkConfig>("HangfireLetsTalk").MonitoringGroupName;
+            _commonServiceHost = configBll.GetConfigValue<ServiceHostConfig>("ServiceHost").CommonService;
         }
 
         [DisplayName("{0}")]

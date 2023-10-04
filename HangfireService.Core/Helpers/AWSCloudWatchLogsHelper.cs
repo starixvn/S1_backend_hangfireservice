@@ -17,7 +17,7 @@ public class AWSCloudWatchLogsHelper
         _logger = provider.GetRequiredService<ILogger<AWSCloudWatchLogsHelper>>();
 
         var configBll = provider.GetRequiredService<ConfigBLL>();
-        var proxyConfig = configBll.GetConfigValuesBySiteId<ProxyConfig>("ProxySetting").First().Value;
+        var proxyConfig = configBll.GetConfigValue<ProxyConfig>("ProxySetting");
 
         var config = new AmazonCloudWatchLogsConfig
         {
@@ -30,7 +30,7 @@ public class AWSCloudWatchLogsHelper
             config.ProxyPort = proxyConfig.ProxyPort;
         }
 
-        var awsCloudWatchConfig = configBll.GetConfigValuesBySiteId<AwsCloudWatchConfig>("AwsCloudWatch").First().Value;
+        var awsCloudWatchConfig = configBll.GetConfigValue<AwsCloudWatchConfig>("AwsCloudWatch");
         _client = new AmazonCloudWatchLogsClient(awsCloudWatchConfig.AccessKey, awsCloudWatchConfig.SecretKey, config);
     }
 

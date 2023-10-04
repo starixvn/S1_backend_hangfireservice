@@ -18,13 +18,11 @@ namespace HangfireService.Core.Service
         private readonly MpaExchangeRateConfig _mpaExchangeRateConfig;
         private readonly ILogger<AffiliateApi> _logger;
 
-        public AffiliateApi(HttpHelper httpHelper, ILogger<AffiliateApi> logger, ConfigBLL configBll)
+        public AffiliateApi(IServiceProvider provider)
         {
-            _httpHelper = httpHelper;
-            _mpaExchangeRateConfig = configBll.GetConfigValuesBySiteId<MpaExchangeRateConfig>("MpaExchangeRate")
-                .First().Value;
-
-            _logger = logger;
+            _httpHelper = provider.GetRequiredService<HttpHelper>();
+            _mpaExchangeRateConfig = provider.GetRequiredService<ConfigBLL>().GetConfigValue<MpaExchangeRateConfig>("MpaExchangeRate");
+            _logger = provider.GetRequiredService<ILogger<AffiliateApi>>();
         }
 
         /// <summary>
@@ -37,8 +35,8 @@ namespace HangfireService.Core.Service
             {
                 var postData = new
                 {
-                    Username = _mpaExchangeRateConfig.Username,
-                    Password = _mpaExchangeRateConfig.Password,
+                    _mpaExchangeRateConfig.Username,
+                    _mpaExchangeRateConfig.Password,
                 };
 
                 var parameters = JsonConvert.SerializeObject(postData);

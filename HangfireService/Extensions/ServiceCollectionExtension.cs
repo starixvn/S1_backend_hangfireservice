@@ -107,9 +107,8 @@ namespace HangfireService.Extensions
         public static IServiceCollection RegisterHttpClient(this IServiceCollection services)
         {
             var provider = services.BuildServiceProvider();
-            var configBll = provider.GetRequiredService<ConfigBLL>();
-            var proxyConfig = configBll.GetConfigValuesBySiteId<ProxyConfig>("ProxySetting").First().Value;
-
+            
+            var proxyConfig = provider.GetRequiredService<ConfigBLL>().GetConfigValue<ProxyConfig>("ProxySetting");
             var proxyHost = proxyConfig.ProxyHost;
             var proxyPort = proxyConfig.ProxyPort;
 
@@ -232,7 +231,7 @@ namespace HangfireService.Extensions
             serverInfoList.AddRange(provider.GetRequiredService<IEnumerable<ServerInfo>>());
 
             // 準備Config
-            var siteConfigGroup = provider.GetRequiredService<IEnumerable<HangfireService.Core.Models.SiteConfig.Config>>().GroupBy(i => i.SiteId);
+            var siteConfigGroup = provider.GetRequiredService<IEnumerable<Config>>().GroupBy(i => i.SiteId);
 
             foreach (var serverInfo in serverInfoList)
             {

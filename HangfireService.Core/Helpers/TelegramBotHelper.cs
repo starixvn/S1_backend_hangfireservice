@@ -15,8 +15,7 @@ namespace HangfireService.Core.Helpers
         {
             _logger = provider.GetRequiredService<ILogger<TelegramBotHelper>>();
             _httpHelper = provider.GetRequiredService<HttpHelper>();
-            var configBll = provider.GetRequiredService<ConfigBLL>();
-            _telegramConfig = configBll.GetConfigValuesBySiteId<TelegramConfig>("HangfireTelegram").First().Value;
+            _telegramConfig = provider.GetRequiredService<ConfigBLL>().GetConfigValue<TelegramConfig>("HangfireTelegram");
         }
 
         public void SendMessage(string message)

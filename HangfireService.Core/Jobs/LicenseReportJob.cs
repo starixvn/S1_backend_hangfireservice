@@ -50,16 +50,16 @@ namespace HangfireService.Core.Jobs
             _excelHelper = provider.GetRequiredService<ExcelHelper>();
             
             var configBll = provider.GetRequiredService<ConfigBLL>();
-            var proxyConfig = configBll.GetConfigValuesBySiteId<ProxyConfig>("ProxySetting").First().Value;
+            var proxyConfig = configBll.GetConfigValue<ProxyConfig>("ProxySetting");
             _proxyHost = proxyConfig.ProxyHost;
             _proxyPort = proxyConfig.ProxyPort;
 
-            var awsConfig = configBll.GetConfigValuesBySiteId<AwsConfig>("HangfireAwsKey").First().Value;
+            var awsConfig = configBll.GetConfigValue<AwsConfig>("HangfireAwsKey");
             _awsAccessKey = awsConfig.AccessKey;
             _awsSecretKey = awsConfig.SecretKey;
 
             // ±_ª¬ Json object ³B²z
-            var configValue = configBll.GetConfigValuesBySiteId<dynamic>("LicenseReport").First().Value;
+            var configValue = configBll.GetConfigValue<dynamic>("LicenseReport");
             string jsonString = JsonConvert.SerializeObject(configValue);
             var configResult = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, LicenseReportConfig>>>(jsonString);
             _licenseReportConfig = configResult["LicenseReportConfig"];
