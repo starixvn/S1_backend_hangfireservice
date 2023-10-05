@@ -70,8 +70,8 @@ namespace HangfireService.Core.Jobs
                 }
 
                 //洗舊資料用
-                if (jobName.Contains("TpBetRecordSummary-Days") && option.StartTime == option.EndTime
-                    && option.StartTime >= new DateTime(2022, 01, 01))
+                if ((jobName.Contains("TpBetRecordSummary-Days") || jobName.Contains("TpBetRecordSummary-Days-BA"))
+                    && option.StartTime == option.EndTime && option.StartTime >= new DateTime(2022, 01, 01))
                 {
                     var lastDay = option.StartTime.ToString("yyyy-MM-dd");
                     var nextDay = option.StartTime.AddDays(-1).ToString("yyyy-MM-dd");
