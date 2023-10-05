@@ -17,7 +17,6 @@ using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Promotion;
 using StackExchange.Redis;
 using HangfireService.Core.Models.SiteConfig;
-using Google.Protobuf.WellKnownTypes;
 
 namespace HangfireService.Extensions
 {
@@ -163,25 +162,26 @@ namespace HangfireService.Extensions
             var provider = services.BuildServiceProvider();
             var configService = provider.GetRequiredService<ConfigService>();
 
-            var jobGroups = configService.Query<JobOption>("Service_ScheduledJob_Get", new { Project = "Hangfire" });
+            // 取得啟用的Job
+            var enableJobList = configService.Query<JobOption>("Service_ScheduledJob_Get", new { Project = "Hangfire" })
+                .Where(r => r.Enable).ToList();
 
-            // 啟用的 Job
-            var enableJobGroup = jobGroups
-                .Where(r => r.Enable)
-                .GroupBy(i => i.Group)
-                .ToDictionary(i => i.Key, i => i.ToList());
-            services.AddSingleton(serviceProvider => enableJobGroup);
-            MyJobManager.SettingJob(enableJobGroup);
+            // 依照Job的Group進行分類整理並設定到MyJobManager
+            var jobGroups = enableJobList.GroupBy(i => i.Group).ToDictionary(i => i.Key, i => i.ToList());
+            services.AddSingleton(serviceProvider => jobGroups);
+            MyJobManager.SettingJob(jobGroups);
 
-            // 停用的 Job
-            var disableJobGroup = jobGroups.Where(r => !r.Enable)
-                .Select(r => r.ClassName);
-
+            // 取得有實作IScheduledJob的Class列表
             var scheduledJobs = typeof(IScheduledJob).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IScheduledJob)));
-            foreach (var job in scheduledJobs)
+
+            // 依照啟用的Job建立Instance
+            foreach (var jobOption in enableJobList)
             {
-                if (disableJobGroup.Contains(job.Name)) continue;
-                services.AddSingleton(serviceProvider => (IScheduledJob)Activator.CreateInstance(job, new object[] { serviceProvider }));
+                var job = scheduledJobs.FirstOrDefault(i => i.Name == jobOption.ClassName);
+                if (job != null)
+                {
+                    services.AddSingleton(serviceProvider => (IScheduledJob)Activator.CreateInstance(job, new object[] { serviceProvider }));
+                }
             }
 
             return services;
