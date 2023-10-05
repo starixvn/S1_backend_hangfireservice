@@ -39,7 +39,7 @@ namespace HangfireService.Extensions
                             .AddSingleton<ICacheHelper, RedisCacheHelper>();
         }
 
-        public static IServiceCollection AddHangfireService(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddHangfireService(this IServiceCollection services)
         {
             var provider = services.BuildServiceProvider();
             var jobGroups = provider.GetRequiredService<Dictionary<string, List<JobOption>>>();
@@ -77,7 +77,7 @@ namespace HangfireService.Extensions
             });
         }
 
-        public static IServiceCollection RegisterServices(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection RegisterServices(this IServiceCollection services)
         {
             return services
                 .AddSingleton<HttpHelper>()
@@ -157,7 +157,7 @@ namespace HangfireService.Extensions
             return services;
         }
 
-        public static IServiceCollection RegisterScheduledJobs(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection RegisterScheduledJobs(this IServiceCollection services)
         {
             var provider = services.BuildServiceProvider();
             var configService = provider.GetRequiredService<ConfigService>();

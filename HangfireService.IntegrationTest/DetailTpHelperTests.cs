@@ -32,9 +32,9 @@ namespace HangfireService.IntegrationTest
             builder.Services.AddTransient(p => logger);
             builder.Services
                 .AddDatabaseConnection(builder.Configuration)
-                .RegisterServices(builder.Configuration)
-                .AddHangfireService(builder.Configuration)
-                .RegisterScheduledJobs(builder.Configuration)
+                .RegisterServices()
+                .AddHangfireService()
+                .RegisterScheduledJobs()
                 .RegisterTpHelper();
 
             var app = builder.Build();
