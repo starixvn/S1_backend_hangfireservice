@@ -70,8 +70,13 @@ namespace HangfireService.Core.Jobs
                 }
 
                 //洗舊資料用
-                if ((jobName.Contains("TpBetRecordSummary-Days") || jobName.Contains("TpBetRecordSummary-Days-BA"))
+                //TpBetRecordSummary-Days：StartTime=EndTime，會從StartTime By Days 往前洗，洗到2022/01/01以前的資料
+                //TpBetRecordSummary-DaysBA：StartTime=EndTime，會從StartTime By Days 往前洗，洗到2023/04/01以前的資料
+                if ((jobName.Contains("TpBetRecordSummary-Days")
                     && option.StartTime == option.EndTime && option.StartTime >= new DateTime(2022, 01, 01))
+                    ||
+                    (jobName.Contains("TpBetRecordSummary-Days-BA")
+                    && option.StartTime == option.EndTime && option.StartTime >= new DateTime(2023, 04, 01)))
                 {
                     var lastDay = option.StartTime.ToString("yyyy-MM-dd");
                     var nextDay = option.StartTime.AddDays(-1).ToString("yyyy-MM-dd");
