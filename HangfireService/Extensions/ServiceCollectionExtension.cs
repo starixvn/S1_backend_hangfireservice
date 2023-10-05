@@ -164,7 +164,7 @@ namespace HangfireService.Extensions
 
             // 取得啟用的Job
             var enableJobList = configService.Query<JobOption>("Service_ScheduledJob_Get", new { Project = "Hangfire" })
-                .Where(r => r.Enable).ToList();
+                .Where(r => r.Enable);
 
             // 依照Job的Group進行分類整理並設定到MyJobManager
             var jobGroups = enableJobList.GroupBy(i => i.Group).ToDictionary(i => i.Key, i => i.ToList());
