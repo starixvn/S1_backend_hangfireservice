@@ -107,7 +107,7 @@ namespace HangfireService.Extensions
         public static IServiceCollection RegisterHttpClient(this IServiceCollection services)
         {
             var provider = services.BuildServiceProvider();
-            
+
             var proxyConfig = provider.GetRequiredService<ConfigBLL>().GetConfigValue<ProxyConfig>("ProxySetting");
             var proxyHost = proxyConfig.ProxyHost;
             var proxyPort = proxyConfig.ProxyPort;
@@ -162,16 +162,26 @@ namespace HangfireService.Extensions
         {
             var provider = services.BuildServiceProvider();
             var configService = provider.GetRequiredService<ConfigService>();
-            var jobGroups = configService.Query<JobOption>("Service_ScheduledJob_Get", new { Project = "Hangfire" })
-               .GroupBy(i => i.Group)
-               .ToDictionary(i => i.Key, i => i.ToList());
-            services.AddSingleton(provider => jobGroups);
-            MyJobManager.SettingJob(jobGroups);
+
+            var jobGroups = configService.Query<JobOption>("Service_ScheduledJob_Get", new { Project = "Hangfire" });
+
+            // 啟用的 Job
+            var enableJobGroup = jobGroups
+                .Where(r => r.Enable)
+                .GroupBy(i => i.Group)
+                .ToDictionary(i => i.Key, i => i.ToList());
+            services.AddSingleton(serviceProvider => enableJobGroup);
+            MyJobManager.SettingJob(enableJobGroup);
+
+            // 停用的 Job
+            var disableJobGroup = jobGroups.Where(r => !r.Enable)
+                .Select(r => r.ClassName);
 
             var scheduledJobs = typeof(IScheduledJob).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IScheduledJob)));
             foreach (var job in scheduledJobs)
             {
-                services.AddSingleton(provider => (IScheduledJob)Activator.CreateInstance(job, new object[] { provider }));
+                if (disableJobGroup.Contains(job.Name)) continue;
+                services.AddSingleton(serviceProvider => (IScheduledJob)Activator.CreateInstance(job, new object[] { serviceProvider }));
             }
 
             return services;
