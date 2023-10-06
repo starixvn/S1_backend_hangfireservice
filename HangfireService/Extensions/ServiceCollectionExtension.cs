@@ -17,7 +17,6 @@ using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Promotion;
 using StackExchange.Redis;
 using HangfireService.Core.Models.SiteConfig;
-using Google.Protobuf.WellKnownTypes;
 
 namespace HangfireService.Extensions
 {
@@ -40,7 +39,7 @@ namespace HangfireService.Extensions
                             .AddSingleton<ICacheHelper, RedisCacheHelper>();
         }
 
-        public static IServiceCollection AddHangfireService(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddHangfireService(this IServiceCollection services)
         {
             var provider = services.BuildServiceProvider();
             var jobGroups = provider.GetRequiredService<Dictionary<string, List<JobOption>>>();
@@ -78,7 +77,7 @@ namespace HangfireService.Extensions
             });
         }
 
-        public static IServiceCollection RegisterServices(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection RegisterServices(this IServiceCollection services)
         {
             return services
                 .AddSingleton<HttpHelper>()
@@ -108,7 +107,7 @@ namespace HangfireService.Extensions
         public static IServiceCollection RegisterHttpClient(this IServiceCollection services)
         {
             var provider = services.BuildServiceProvider();
-            
+
             var proxyConfig = provider.GetRequiredService<ConfigBLL>().GetConfigValue<ProxyConfig>("ProxySetting");
             var proxyHost = proxyConfig.ProxyHost;
             var proxyPort = proxyConfig.ProxyPort;
@@ -159,20 +158,31 @@ namespace HangfireService.Extensions
             return services;
         }
 
-        public static IServiceCollection RegisterScheduledJobs(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection RegisterScheduledJobs(this IServiceCollection services)
         {
             var provider = services.BuildServiceProvider();
             var configService = provider.GetRequiredService<ConfigService>();
-            var jobGroups = configService.Query<JobOption>("Service_ScheduledJob_Get", new { Project = "Hangfire" })
-               .GroupBy(i => i.Group)
-               .ToDictionary(i => i.Key, i => i.ToList());
-            services.AddSingleton(provider => jobGroups);
+
+            // 取得啟用的Job
+            var enableJobList = configService.Query<JobOption>("Service_ScheduledJob_Get", new { Project = "Hangfire" })
+                .Where(r => r.Enable);
+
+            // 依照Job的Group進行分類整理並設定到MyJobManager
+            var jobGroups = enableJobList.GroupBy(i => i.Group).ToDictionary(i => i.Key, i => i.ToList());
+            services.AddSingleton(serviceProvider => jobGroups);
             MyJobManager.SettingJob(jobGroups);
 
+            // 取得有實作IScheduledJob的Class列表
             var scheduledJobs = typeof(IScheduledJob).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IScheduledJob)));
-            foreach (var job in scheduledJobs)
+
+            // 依照啟用的Job建立Instance
+            foreach (var jobOption in enableJobList)
             {
-                services.AddSingleton(provider => (IScheduledJob)Activator.CreateInstance(job, new object[] { provider }));
+                var job = scheduledJobs.FirstOrDefault(i => i.Name == jobOption.ClassName);
+                if (job != null)
+                {
+                    services.AddSingleton(serviceProvider => (IScheduledJob)Activator.CreateInstance(job, new object[] { serviceProvider }));
+                }
             }
 
             return services;

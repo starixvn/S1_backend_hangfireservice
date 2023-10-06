@@ -48,20 +48,21 @@ namespace HangfireService.Core.Jobs
             _baseTpHelper = provider.GetRequiredService<BaseTpHelper>();
             MyJobManager.GetJobGroups()?.TryGetValue("Report", out _reportJobList);
             _excelHelper = provider.GetRequiredService<ExcelHelper>();
-            
+
             var configBll = provider.GetRequiredService<ConfigBLL>();
             var proxyConfig = configBll.GetConfigValue<ProxyConfig>("ProxySetting");
             _proxyHost = proxyConfig.ProxyHost;
             _proxyPort = proxyConfig.ProxyPort;
 
             var awsConfig = configBll.GetConfigValue<AwsConfig>("HangfireAwsKey");
-            _awsAccessKey = awsConfig.AccessKey;
-            _awsSecretKey = awsConfig.SecretKey;
+            _awsAccessKey = awsConfig?.AccessKey;
+            _awsSecretKey = awsConfig?.SecretKey;
 
             // ±_ª¬ Json object ³B²z
             var configValue = configBll.GetConfigValue<dynamic>("LicenseReport");
             string jsonString = JsonConvert.SerializeObject(configValue);
             var configResult = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, LicenseReportConfig>>>(jsonString);
+            if(configResult == null) return;
             _licenseReportConfig = configResult["LicenseReportConfig"];
         }
 
@@ -80,7 +81,7 @@ namespace HangfireService.Core.Jobs
                         JsonConvert.SerializeObject(config.Value.CurrencyId));
                     var stream = _excelHelper.Export(data, "1qaz#EDC2wsx$RFV");
                     var name = $"{date.Year}{date.Month.ToString("00")}_{config.Key}";
-                    
+
                     var s3Result = UploadS3FileAsync(new MemoryStream(stream), $"{name}.csv");
                     if (s3Result.Result)
                     {
