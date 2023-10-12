@@ -11,6 +11,8 @@ using Hangfire;
 using HangfireService.Core.Helpers;
 using HangfireService.Core.Models.DBs;
 using Microsoft.Extensions.Configuration;
+using HangfireService.Core.Models;
+using HangfireService.Core.Models.Options;
 
 namespace HangfireService.Core.Jobs
 {
@@ -28,9 +30,12 @@ namespace HangfireService.Core.Jobs
             _mainDbDataLayer = provider.GetRequiredService<MainDBDataLayer>();
             _reportDbDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
             _httpHelper = provider.GetRequiredService<HttpHelper>();
-            var iConfiguration = provider.GetRequiredService<IConfiguration>();
-            _letsTalkGroupName = iConfiguration.GetValue<string>("LetsTalkConfig:Monitoring:LetsTalkGroupName");
-            _commonServiceHost = iConfiguration.GetValue<string>("AiLabServiceHost:CommonServiceHost");
+            
+            var configBll = provider.GetRequiredService<ConfigBLL>();
+
+            // 共用同一組設定
+            _letsTalkGroupName = configBll.GetConfigValue<LetsTalkConfig>("HangfireLetsTalk").MonitoringGroupName;
+            _commonServiceHost = configBll.GetConfigValue<ServiceHostConfig>("ServiceHost").CommonService;
         }
 
         [DisplayName("{0}")]
@@ -92,7 +97,7 @@ namespace HangfireService.Core.Jobs
                 };
 
                 var parameters = JsonConvert.SerializeObject(postData);
-                var httpResponse = await _httpHelper.HttpPost1Async($"{_commonServiceHost}/Common/LetsTalk/SendMessage",
+                var httpResponse = await _httpHelper.HttpPost1Async($"{_commonServiceHost}LetsTalk/SendMessage",
                     null, parameters, "application/json");
                 if (httpResponse.StatusCode == HttpStatusCode.OK)
                 {

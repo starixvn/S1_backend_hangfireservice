@@ -6,6 +6,7 @@ using MySql.Data.MySqlClient;
 using MySqlX.XDevAPI.Common;
 using OfficeOpenXml.FormulaParsing.Excel.Operators;
 using System.Data;
+using HangfireService.Core.Service;
 using System.Security.Policy;
 using HangfireService.Core.Service;
 using HangfireService.Core.Models.Finance;
@@ -239,35 +240,6 @@ namespace HangfireService.Core.DataLayers
         }
         #endregion
 
-		public async Task<int> ExpiredBanner(string bannerName, int siteId, int currencyId)
-        {
-            return await _dbClient.ExecuteAsync("Service_BannerExpired_Set", new
-            {
-                _BannerName = bannerName,
-                _SiteId = siteId,
-                _CurrencyId = currencyId
-            });
-        }    
-        
-        public int SetLastBettingTime(int siteId, int currencyId, int tpId , int gameType , DateTime? lastBettingTime , bool isExecute)
-        {
-            var parameters = new
-            {
-                _SiteId = siteId,
-                _CurrencyId = currencyId,
-                _TpId = tpId,
-                _GameType = gameType,
-                _LastBettingTime = lastBettingTime,
-                _IsExecute = isExecute
-            };
-            return _dbClient.Execute("Service_TpBettingMonitorSetting_Set", parameters);
-        }
-        
-        public IEnumerable<TpMaintain> GetTpMaintainList(int siteId)
-        {
-            return _dbClient.Query<TpMaintain>("TpMaintain_Get", new DynamicParameters(new { SiteId = siteId }));
-        }
-
         #region BonusSummary
 
         public int BonusSummaryPromotionSet(DateTime startTime , DateTime endTime , IDbTransaction trans)
@@ -306,17 +278,50 @@ namespace HangfireService.Core.DataLayers
         {
             return _dbClient.Execute("Service_Timer_Set", trans , parameters: new { _Type = type , _StartTime = time, _Memo = memo, _Id = id});
         }
-        
+
         #endregion
-        
+
+        #region Relay
+
         public int InsertRelayData(string sp, object parameters, IDbTransaction trans)
-        {
+        {        
             return _dbClient.Execute(sp, trans, parameters);
         }
 
         public int DeleteRelayData(string sp, object parameters, IDbTransaction trans)
         {
             return _dbClient.Execute(sp, trans, parameters);
+        }
+
+        #endregion
+
+        public async Task<int> ExpiredBanner(string bannerName, int siteId, int currencyId)
+        {
+            return await _dbClient.ExecuteAsync("Service_BannerExpired_Set", new
+            {
+                _BannerName = bannerName,
+                _SiteId = siteId,
+                _CurrencyId = currencyId
+            });
+        }
+        
+        public int SetLastBettingTime(int siteId, int currencyId, int tpId , int gameType , DateTime? lastBettingTime , bool isExecute)
+        {
+            var parameters = new
+            {
+                _SiteId = siteId,
+                _CurrencyId = currencyId,
+                _TpId = tpId,
+                _GameType = gameType,
+                _LastBettingTime = lastBettingTime,
+                _IsExecute = isExecute
+            };
+            return _dbClient.Execute("Service_TpBettingMonitorSetting_Set", parameters);
+        }
+        
+        public IEnumerable<TpMaintain> GetTpMaintainList(int siteId)
+        {
+            return _dbClient.Query<TpMaintain>("TpMaintain_Get", new DynamicParameters(new { SiteId = siteId }));
         }
 
         public int SetOTPStatus(OTPCheckResult result)

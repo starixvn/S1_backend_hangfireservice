@@ -16,6 +16,7 @@ using System.Net;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Promotion;
 using StackExchange.Redis;
+using HangfireService.Core.Models.SiteConfig;
 
 namespace HangfireService.Extensions
 {
@@ -34,11 +35,11 @@ namespace HangfireService.Extensions
 
         public static IServiceCollection AddRedisConnection(this IServiceCollection services, IConfiguration configuration)
         {
-            return  services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(configuration.GetValue<string>("RedisConnection")))
+            return services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(configuration.GetValue<string>("RedisConnection")))
                             .AddSingleton<ICacheHelper, RedisCacheHelper>();
         }
 
-        public static IServiceCollection AddHangfireService(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddHangfireService(this IServiceCollection services)
         {
             var provider = services.BuildServiceProvider();
             var jobGroups = provider.GetRequiredService<Dictionary<string, List<JobOption>>>();
@@ -64,9 +65,9 @@ namespace HangfireService.Extensions
                 })
             .AddHangfireConsoleExtensions()
             .AddHangfireServer(config =>
-            {               
+            {
                 config.SchedulePollingInterval = TimeSpan.FromSeconds(15);
-                var queues= jobGroups.Select(item => item.Key.ToLower()).ToList();
+                var queues = jobGroups.Select(item => item.Key.ToLower()).ToList();
                 if (!queues.Contains("default"))
                 {
                     queues.Add("default");
@@ -76,27 +77,9 @@ namespace HangfireService.Extensions
             });
         }
 
-        public static IServiceCollection RegisterServices(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection RegisterServices(this IServiceCollection services)
         {
-            var proxyHost = configuration.GetValue<string?>("ProxyHost");
-            if (!string.IsNullOrEmpty(proxyHost))
-            {
-                var proxy = new HttpClientHandler
-                {
-                    Proxy = new WebProxy(configuration.GetValue<string>("ProxyHost"), configuration.GetValue<int>("ProxyPort")),
-                    UseProxy = true
-                };
-
-                services.AddHttpClient("with_proxy")
-                .ConfigurePrimaryHttpMessageHandler(() => proxy);
-            }
-            else
-            {
-                services.AddHttpClient();
-            }
-
             return services
-                .Configure<AWSKeyConfigOption>(configuration.GetSection("ailab-cloudwatchlogs"))
                 .AddSingleton<HttpHelper>()
                 .AddSingleton<SecureHelper>()
                 .AddSingleton<ExcelHelper>()
@@ -110,21 +93,51 @@ namespace HangfireService.Extensions
                 .AddSingleton<FincanceService>()
                 .AddSingleton<CustomerService>()
                 .AddSingleton<WorldCupDepositDailySummaryService>()
+                .AddSingleton<MpaUpdateExchangeRateService>()
                 .AddSingleton<OnlineCountService>()
                 .AddSingleton<CustomerAutoLockService>()
                 .AddSingleton<CustClosingBalanceService>()
                 .AddSingleton<MpaUpdateExchangeRateService>()
                 .AddSingleton<AffiliateApi>()
                 .AddSingleton<UpdateAffiliateInfoService>()
-                .AddSingleton<ConfigService>();
+                .AddSingleton<ConfigService>()
+                .AddSingleton<ConfigBLL>();
         }
+
+        public static IServiceCollection RegisterHttpClient(this IServiceCollection services)
+        {
+            var provider = services.BuildServiceProvider();
+
+            var proxyConfig = provider.GetRequiredService<ConfigBLL>().GetConfigValue<ProxyConfig>("ProxySetting");
+            var proxyHost = proxyConfig.ProxyHost;
+            var proxyPort = proxyConfig.ProxyPort;
+
+            if (!string.IsNullOrEmpty(proxyHost))
+            {
+                var proxy = new HttpClientHandler
+                {
+                    Proxy = new WebProxy(proxyHost, proxyPort),
+                    UseProxy = true
+                };
+
+                services.AddHttpClient("with_proxy")
+                    .ConfigurePrimaryHttpMessageHandler(() => proxy);
+            }
+            else
+            {
+                services.AddHttpClient();
+            }
+
+            return services;
+        }
+
 
         public static IServiceCollection RegisterPromotion(this IServiceCollection services)
         {
             services
                 .AddSingleton<IBonusSummaryTimerService, BonusSummaryTimerService>()
                 .AddSingleton<IPromotionService, PromotionService>();
-            
+
             var provider = services.BuildServiceProvider();
             var timerService = provider.GetRequiredService<IBonusSummaryTimerService>();
             var promotionService = provider.GetRequiredService<IPromotionService>();
@@ -145,20 +158,31 @@ namespace HangfireService.Extensions
             return services;
         }
 
-        public static IServiceCollection RegisterScheduledJobs(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection RegisterScheduledJobs(this IServiceCollection services)
         {
             var provider = services.BuildServiceProvider();
             var configService = provider.GetRequiredService<ConfigService>();
-            var jobGroups = configService.Query<JobOption>("Service_ScheduledJob_Get", new { Project = "Hangfire" })
-               .GroupBy(i => i.Group)
-               .ToDictionary(i=>i.Key, i => i.ToList());
-            services.AddSingleton(provider => jobGroups);
+
+            // 取得啟用的Job
+            var enableJobList = configService.Query<JobOption>("Service_ScheduledJob_Get", new { Project = "Hangfire" })
+                .Where(r => r.Enable);
+
+            // 依照Job的Group進行分類整理並設定到MyJobManager
+            var jobGroups = enableJobList.GroupBy(i => i.Group).ToDictionary(i => i.Key, i => i.ToList());
+            services.AddSingleton(serviceProvider => jobGroups);
             MyJobManager.SettingJob(jobGroups);
 
+            // 取得有實作IScheduledJob的Class列表
             var scheduledJobs = typeof(IScheduledJob).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IScheduledJob)));
-            foreach (var job in scheduledJobs)
+
+            // 依照啟用的Job建立Instance
+            foreach (var jobOption in enableJobList)
             {
-                services.AddSingleton(provider => (IScheduledJob)Activator.CreateInstance(job, new object[] { provider }));
+                var job = scheduledJobs.FirstOrDefault(i => i.Name == jobOption.ClassName);
+                if (job != null)
+                {
+                    services.AddSingleton(serviceProvider => (IScheduledJob)Activator.CreateInstance(job, new object[] { serviceProvider }));
+                }
             }
 
             return services;
@@ -200,9 +224,37 @@ namespace HangfireService.Extensions
             return services.AddOptionListByDB<CurrencyOption>("Common_Currency_Get");
         }
 
+        public static IServiceCollection AddConfig(this IServiceCollection services)
+        {
+            return services.AddOptionListByDB<Config>("SiteConfig_Get", new { ConfigGroup = "HangfireService" });
+        }
+
         public static IServiceCollection AddServerInfo(this IServiceCollection services)
         {
             return services.AddOptionListByDB<ServerInfo>("Admin_ServerInfoList_Get");
         }
+
+        public static IServiceCollection AddSiteConfig(this IServiceCollection services)
+        {
+            var provider = services.BuildServiceProvider();
+            // 準備ServerInfo
+            var serverInfoList = new List<ServerInfo>() { new ServerInfo() { SiteId = 0, SiteName = "default" } };
+            serverInfoList.AddRange(provider.GetRequiredService<IEnumerable<ServerInfo>>());
+
+            // 準備Config
+            var siteConfigGroup = provider.GetRequiredService<IEnumerable<Config>>().GroupBy(i => i.SiteId);
+
+            foreach (var serverInfo in serverInfoList)
+            {
+                //設定SiteConfig
+                var siteConfig = siteConfigGroup.FirstOrDefault(i => i.Key == serverInfo.SiteId) ?? siteConfigGroup.First(i => i.Key == 0);
+                var config = siteConfig.ToDictionary(i => i.ConfigKey, i => i.ConfigValue);
+                services.AddSingleton(new SiteConfig(serverInfo, config));
+            }
+            return services;
+        }
     }
 }
+
+
+

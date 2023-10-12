@@ -119,6 +119,11 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Query<TpLastBetting>("Service_TpLastBetting_Get", parameters: new { _StartTime = startTime, _EndTime = endTime });
         }
 
+        public IEnumerable<dynamic> GetRelayData(string sp, object parameters, int timeoutSeconds)
+        {
+            return _dbClient.Query(sp, parameters: parameters, commandTimeout: timeoutSeconds);
+        }
+
         public IEnumerable<OTPCheck> GetOTPCheckList()
         {
             return _dbClient.Query<OTPCheck>("Service_OTPLog_Check");
@@ -148,10 +153,6 @@ namespace HangfireService.Core.DataLayers
 
         #endregion
 
-        public IEnumerable<dynamic> GetRelayData(string sp, object parameters, int timeoutSeconds)
-        {
-            return _dbClient.Query(sp, parameters: parameters, commandTimeout: timeoutSeconds);
-        }
 
         public IEnumerable<Leaderboard> GetLeaderboardList(int lBCategoryId, string eventCode, int siteId, int currencyId, int topNum, DateTime startTime, DateTime endTime)
         {
