@@ -42,7 +42,7 @@ namespace HangfireService.Core.Jobs.SMS
 
             // 共用同一組設定
             _letsTalkGroupName = configBll.GetConfigValue<LetsTalkConfig>("HangfireLetsTalk").SnsGroupName;
-            _commonServiceHost = configBll.GetConfigValue<ServiceHostConfig>("ServiceHost").CommonService;
+            _commonServiceHost = configBll.GetConfigValueByEnvironment<ServiceHostConfig>("ServiceHost").CommonService;
 
             MyJobManager.GetJobGroups()?.TryGetValue("Check", out _jobList);
         }

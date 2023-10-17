@@ -1,4 +1,5 @@
 ﻿using HangfireService.Core.Models.SiteConfig;
+using Microsoft.AspNetCore.Hosting;
 using Newtonsoft.Json;
 
 namespace HangfireService.Core.Helpers
@@ -11,6 +12,8 @@ namespace HangfireService.Core.Helpers
 
         private readonly IEnumerable<Config> _rawConfigs;
 
+        private readonly string _env;
+
         public ConfigBLL(IServiceProvider provider)
         {
             var siteConfigList = provider.GetServices<SiteConfig>();
@@ -18,6 +21,8 @@ namespace HangfireService.Core.Helpers
             var siteConfigs = siteConfigList.Where(i => i.SiteId != 0);            
             _siteIdConfigs = siteConfigs.ToDictionary(i => i.SiteId, i => i);
             _rawConfigs = provider.GetRequiredService<IEnumerable<Config>>();
+            var environment = provider.GetRequiredService<IWebHostEnvironment>();
+            _env = environment.EnvironmentName;
         }
 
         public Dictionary<int, TItem> GetConfigValuesBySiteId<TItem>(string configKey)
@@ -54,6 +59,12 @@ namespace HangfireService.Core.Helpers
             return defaultItem;
         }
 
+        public T GetConfigValueByEnvironment<T>(string configKey, int siteId = 0)
+        {
+            var json = GetConfigValue<T>($"{configKey}.{_env}.json", siteId);
+            return json;
+        }
+
         public IEnumerable<TItem> GetRawConfigValues<TItem>(string configKey)
         {
             var result = new List<TItem>();
@@ -65,6 +76,4 @@ namespace HangfireService.Core.Helpers
             return result;
         }
     }
-
-
 }
