@@ -1,6 +1,5 @@
 using Hangfire;
 using HangfireService.Core.Jobs;
-using HangfireService.Core.Models.Options;
 using HangfireService.Extensions;
 using HangfireService.Extensions.ActionFilters;
 using Serilog;
@@ -28,13 +27,16 @@ builder.Host.UseSerilog((context, Configuration) =>
 builder.Services
     .AddDatabaseConnection(builder.Configuration)
     .AddRedisConnection(builder.Configuration)
-    .RegisterServices(builder.Configuration)
+    .RegisterServices()
     .RegisterPromotion()
-    .RegisterScheduledJobs(builder.Configuration)
-    .AddHangfireService(builder.Configuration)
+    .RegisterScheduledJobs()
+    .AddHangfireService()
     .RegisterTpHelper()
     .AddOption()
-    .AddServerInfo();
+    .AddConfig()
+    .AddServerInfo()
+    .AddSiteConfig()
+    .RegisterHttpClient();
 
 var app = builder.Build();
 
