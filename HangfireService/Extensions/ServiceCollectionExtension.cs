@@ -178,7 +178,7 @@ namespace HangfireService.Extensions
             // 依照啟用的Job建立Instance
             foreach (var jobOption in enableJobList)
             {
-                var job = scheduledJobs.FirstOrDefault(i => i.Name == jobOption.ClassName);
+                var job = scheduledJobs.FirstOrDefault(i => string.Equals(i.Name, jobOption.ClassName, StringComparison.OrdinalIgnoreCase));
                 if (job != null)
                 {
                     services.AddSingleton(serviceProvider => (IScheduledJob)Activator.CreateInstance(job, new object[] { serviceProvider }));
