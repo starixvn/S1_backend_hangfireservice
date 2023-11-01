@@ -1,5 +1,7 @@
 ﻿using HangfireService.Core.Models.SiteConfig;
+
 using Microsoft.AspNetCore.Hosting;
+
 using Newtonsoft.Json;
 
 namespace HangfireService.Core.Helpers
@@ -7,7 +9,7 @@ namespace HangfireService.Core.Helpers
     public class ConfigBLL
     {
         private readonly Dictionary<string, string> _defaultSiteConfig;
-        
+
         private readonly Dictionary<int, SiteConfig> _siteIdConfigs;
 
         private readonly IEnumerable<Config> _rawConfigs;
@@ -18,7 +20,7 @@ namespace HangfireService.Core.Helpers
         {
             var siteConfigList = provider.GetServices<SiteConfig>();
             _defaultSiteConfig = siteConfigList.First(i => i.SiteId == 0).Config;
-            var siteConfigs = siteConfigList.Where(i => i.SiteId != 0);            
+            var siteConfigs = siteConfigList.Where(i => i.SiteId != 0);
             _siteIdConfigs = siteConfigs.ToDictionary(i => i.SiteId, i => i);
             _rawConfigs = provider.GetRequiredService<IEnumerable<Config>>();
             var environment = provider.GetRequiredService<IWebHostEnvironment>();

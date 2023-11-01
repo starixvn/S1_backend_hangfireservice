@@ -14,7 +14,7 @@ namespace HangfireService.Core.ThirdParty
         public bool CheckTransId => false;
         public bool BindCommonCurrency => false;
         public TimeOption TimeOptionId => TimeOption.SettledTime;
-        
+
         public int TpId => 13;
 
         private readonly ReportDBDataLayer _reportDbDataLayer;

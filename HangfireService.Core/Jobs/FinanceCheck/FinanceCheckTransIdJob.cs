@@ -1,7 +1,11 @@
-﻿using Hangfire;
+﻿using System.ComponentModel;
+using System.Text;
+
+using Hangfire;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using Hangfire.Server;
+
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Extensions;
 using HangfireService.Core.Jobs.Interfaces;
@@ -10,11 +14,12 @@ using HangfireService.Core.Models.Finance;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.ThirdParty.Interfaces;
+
 using Microsoft.Extensions.Logging;
+
 using Newtonsoft.Json;
+
 using Serilog.Context;
-using System.ComponentModel;
-using System.Text;
 
 namespace HangfireService.Core.Jobs
 {

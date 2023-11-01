@@ -1,7 +1,6 @@
-﻿using HangfireService.Core.Models.DBs;
-using HangfireService.Core.Models.Enums;
+﻿using HangfireService.Core.Models.Enums;
+
 using Newtonsoft.Json;
-using System.Text;
 
 namespace HangfireService.Core.Models.Finance
 {

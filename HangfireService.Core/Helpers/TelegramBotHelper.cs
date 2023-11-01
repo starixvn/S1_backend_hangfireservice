@@ -1,7 +1,10 @@
-﻿using HangfireService.Core.Models.Options;
+﻿using System.Text;
+
+using HangfireService.Core.Models.Options;
+
 using Microsoft.Extensions.Logging;
+
 using Newtonsoft.Json;
-using System.Text;
 
 namespace HangfireService.Core.Helpers
 {
@@ -10,7 +13,7 @@ namespace HangfireService.Core.Helpers
         protected readonly ILogger<TelegramBotHelper> _logger;
         protected readonly HttpHelper _httpHelper;
         private readonly TelegramConfig _telegramConfig;
-        
+
         public TelegramBotHelper(IServiceProvider provider)
         {
             _logger = provider.GetRequiredService<ILogger<TelegramBotHelper>>();

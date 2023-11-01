@@ -9,5 +9,5 @@ namespace HangfireService.Core.Promotion
         public WorkerType WorkerType { get; set; }
         public abstract Task<bool> Run();
     }
-    
+
 }

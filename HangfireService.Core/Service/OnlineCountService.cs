@@ -1,12 +1,8 @@
 ﻿using HangfireService.Core.DataLayers;
 using HangfireService.Core.Jobs;
 using HangfireService.Core.Models.DBs;
+
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HangfireService.Core.Service;
 

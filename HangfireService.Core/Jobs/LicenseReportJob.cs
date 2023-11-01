@@ -1,14 +1,15 @@
 using System.ComponentModel;
-using System.Dynamic;
 using System.Net;
+
 using Amazon;
-using Amazon.Runtime.Internal;
 using Amazon.S3;
 using Amazon.S3.Model;
+
 using Hangfire;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using Hangfire.Server;
+
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Extensions;
 using HangfireService.Core.Helpers;
@@ -18,10 +19,11 @@ using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.ThirdParty;
-using Microsoft.Extensions.Configuration;
+
 using Microsoft.Extensions.Logging;
+
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+
 using Serilog.Context;
 
 
@@ -62,7 +64,7 @@ namespace HangfireService.Core.Jobs
             var configValue = configBll.GetConfigValue<dynamic>("LicenseReport");
             string jsonString = JsonConvert.SerializeObject(configValue);
             var configResult = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, LicenseReportConfig>>>(jsonString);
-            if(configResult == null) return;
+            if (configResult == null) return;
             _licenseReportConfig = configResult["LicenseReportConfig"];
         }
 

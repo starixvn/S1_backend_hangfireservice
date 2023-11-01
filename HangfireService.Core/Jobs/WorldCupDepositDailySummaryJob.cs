@@ -1,16 +1,19 @@
 ﻿using System.ComponentModel;
-using System.Dynamic;
+
 using Hangfire;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using Hangfire.Server;
+
 using HangfireService.Core.Extensions;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.Service;
+
 using Microsoft.Extensions.Logging;
+
 using Newtonsoft.Json;
 
 namespace HangfireService.Core.Jobs
@@ -22,7 +25,7 @@ namespace HangfireService.Core.Jobs
     public class WorldCupDepositDailySummaryJob : BaseJob, IScheduledJob
     {
         private readonly WorldCupDepositDailySummaryService _worldCupDepositDailySummaryService;
-        
+
         public WorldCupDepositDailySummaryJob(IServiceProvider provider) : base(provider)
         {
             this._worldCupDepositDailySummaryService = provider.GetRequiredService<WorldCupDepositDailySummaryService>();
@@ -45,7 +48,7 @@ namespace HangfireService.Core.Jobs
                 return false;
             }
 
-            
+
             _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} End......");
             await _worldCupDepositDailySummaryService.InsertJobLog(jobName, WorldCupJobStatus.Success, option);
             return $"true，Date：{option.AccountDate}";

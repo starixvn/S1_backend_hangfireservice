@@ -1,5 +1,6 @@
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.Models.Promotion;
+
 using Microsoft.Extensions.Logging;
 
 namespace HangfireService.Core.Promotion
@@ -20,11 +21,11 @@ namespace HangfireService.Core.Promotion
         public override async Task<bool> Run()
         {
             int id;
-            if (ManualOption != null) 
+            if (ManualOption != null)
                 id = ManualOption.Id;
-            else 
+            else
                 id = _timerService.GetBonusSummaryTimer((int)WorkerType).Id;
-            
+
             var dto = await _promotionService.GetSummaryDataById("Service_VipUpgradeSummary_Get", id);
             var referral = dto.ToList();
             if (referral.Any())
@@ -44,12 +45,12 @@ namespace HangfireService.Core.Promotion
                     Turnover = 0,
                     ClaimDate = a.CreateTime
                 });
-            
+
                 var result = await _promotionService.InsertBonusSummaryDetail(bonusSummaryDetail);
                 if (result > 1 && ManualOption == null)
                 {
                     var lastId = referral.Max(a => a.Id);
-                    await _timerService.SetWorkerTimer((int)WorkerType, "VipLevelLog", lastId , null);
+                    await _timerService.SetWorkerTimer((int)WorkerType, "VipLevelLog", lastId, null);
                 }
             }
             return true;

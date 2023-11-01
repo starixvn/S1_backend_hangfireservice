@@ -1,13 +1,17 @@
-﻿using HangfireService.Core.DataLayers;
+﻿using System.ComponentModel;
+
+using Hangfire;
+using Hangfire.Server;
+
+using HangfireService.Core.DataLayers;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
-using HangfireService.Core.ThirdParty;
+
 using Microsoft.Extensions.Logging;
-using Serilog.Context;
+
 using Newtonsoft.Json;
-using System.ComponentModel;
-using Hangfire.Server;
-using Hangfire;
+
+using Serilog.Context;
 
 namespace HangfireService.Core.Jobs
 {

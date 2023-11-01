@@ -75,7 +75,7 @@ namespace HangfireService.Core.Helpers
                 return await factory();
             }
         }
-    
+
         public bool StringSet(string key, RedisValue value, TimeSpan? timeSpan, RedisDataBase redisDataBase = RedisDataBase.Member)
         {
             key = $"{redisDataBase}:{RemoveSpecialChars(key)}";

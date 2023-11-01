@@ -1,14 +1,14 @@
-﻿using Dapper;
+﻿using System.Data;
+
+using Dapper;
+
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
-using HangfireService.Core.Models.Options;
-using MySql.Data.MySqlClient;
-using MySqlX.XDevAPI.Common;
-using OfficeOpenXml.FormulaParsing.Excel.Operators;
-using System.Data;
-using System.Security.Policy;
-using HangfireService.Core.Service;
 using HangfireService.Core.Models.Finance;
+using HangfireService.Core.Models.Options;
+using HangfireService.Core.Service;
+
+using MySql.Data.MySqlClient;
 
 namespace HangfireService.Core.DataLayers
 {
@@ -239,7 +239,7 @@ namespace HangfireService.Core.DataLayers
         }
         #endregion
 
-		public async Task<int> ExpiredBanner(string bannerName, int siteId, int currencyId)
+        public async Task<int> ExpiredBanner(string bannerName, int siteId, int currencyId)
         {
             return await _dbClient.ExecuteAsync("Service_BannerExpired_Set", new
             {
@@ -247,9 +247,9 @@ namespace HangfireService.Core.DataLayers
                 _SiteId = siteId,
                 _CurrencyId = currencyId
             });
-        }    
-        
-        public int SetLastBettingTime(int siteId, int currencyId, int tpId , int gameType , DateTime? lastBettingTime , bool isExecute)
+        }
+
+        public int SetLastBettingTime(int siteId, int currencyId, int tpId, int gameType, DateTime? lastBettingTime, bool isExecute)
         {
             var parameters = new
             {
@@ -262,7 +262,7 @@ namespace HangfireService.Core.DataLayers
             };
             return _dbClient.Execute("Service_TpBettingMonitorSetting_Set", parameters);
         }
-        
+
         public IEnumerable<TpMaintain> GetTpMaintainList(int siteId)
         {
             return _dbClient.Query<TpMaintain>("TpMaintain_Get", new DynamicParameters(new { SiteId = siteId }));
@@ -270,45 +270,45 @@ namespace HangfireService.Core.DataLayers
 
         #region BonusSummary
 
-        public int BonusSummaryPromotionSet(DateTime startTime , DateTime endTime , IDbTransaction trans)
+        public int BonusSummaryPromotionSet(DateTime startTime, DateTime endTime, IDbTransaction trans)
         {
-            return _dbClient.Execute("Service_BonusSummaryForPromotion_Set", trans , parameters: new DynamicParameters(new { _StartTime = startTime, _EndTime = endTime }));
+            return _dbClient.Execute("Service_BonusSummaryForPromotion_Set", trans, parameters: new DynamicParameters(new { _StartTime = startTime, _EndTime = endTime }));
         }
-        
-        public int BonusSummaryVerificationSet(DateTime startTime , DateTime endTime , IDbTransaction trans)
+
+        public int BonusSummaryVerificationSet(DateTime startTime, DateTime endTime, IDbTransaction trans)
         {
-            return _dbClient.Execute("Service_BonusSummaryForVerification_Set", trans , parameters: new DynamicParameters(new { _StartTime = startTime, _EndTime = endTime }));
+            return _dbClient.Execute("Service_BonusSummaryForVerification_Set", trans, parameters: new DynamicParameters(new { _StartTime = startTime, _EndTime = endTime }));
         }
-        
-        public int BonusSummaryDrawPrizeSet(int id , IDbTransaction trans, out int maxId)
-        {
-            var props = new DynamicParameters();
-            props.Add("_Id", id);
-            props.Add("_MaxId", dbType: DbType.Int32, direction: ParameterDirection.Output);
-            var result = _dbClient.Execute("Service_BonusSummaryForDrawPrize_Set", trans,props);
-            maxId = props.Get<int?>("_MaxId") ?? 0;
-            
-            return result;
-        }
-        
-        public int BonusSummaryRebateSet(int id , IDbTransaction trans, out int maxId)
+
+        public int BonusSummaryDrawPrizeSet(int id, IDbTransaction trans, out int maxId)
         {
             var props = new DynamicParameters();
             props.Add("_Id", id);
             props.Add("_MaxId", dbType: DbType.Int32, direction: ParameterDirection.Output);
-            var result = _dbClient.Execute("Service_BonusSummaryForRebate_Set", trans,props);
+            var result = _dbClient.Execute("Service_BonusSummaryForDrawPrize_Set", trans, props);
             maxId = props.Get<int?>("_MaxId") ?? 0;
-            
+
             return result;
         }
-        
-        public int SetBonusSummaryTimer(int type , int id, DateTime? time ,string memo,IDbTransaction trans)
+
+        public int BonusSummaryRebateSet(int id, IDbTransaction trans, out int maxId)
         {
-            return _dbClient.Execute("Service_Timer_Set", trans , parameters: new { _Type = type , _StartTime = time, _Memo = memo, _Id = id});
+            var props = new DynamicParameters();
+            props.Add("_Id", id);
+            props.Add("_MaxId", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            var result = _dbClient.Execute("Service_BonusSummaryForRebate_Set", trans, props);
+            maxId = props.Get<int?>("_MaxId") ?? 0;
+
+            return result;
         }
-        
+
+        public int SetBonusSummaryTimer(int type, int id, DateTime? time, string memo, IDbTransaction trans)
+        {
+            return _dbClient.Execute("Service_Timer_Set", trans, parameters: new { _Type = type, _StartTime = time, _Memo = memo, _Id = id });
+        }
+
         #endregion
-        
+
         public int InsertRelayData(string sp, object parameters, IDbTransaction trans)
         {
             return _dbClient.Execute(sp, trans, parameters);
@@ -357,7 +357,7 @@ namespace HangfireService.Core.DataLayers
         }
 
         #endregion
-        
+
         /// <summary>
         /// 新增玩家充值總帳
         /// </summary>

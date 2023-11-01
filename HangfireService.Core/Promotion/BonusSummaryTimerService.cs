@@ -1,5 +1,3 @@
-using System.Data;
-using Dapper;
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
@@ -17,9 +15,9 @@ namespace HangfireService.Core.Promotion
             _reportDb = sqlClients.FirstOrDefault(a => a.DataBase == DataBase.Report);
         }
 
-        public async Task<int> SetWorkerTimer(int type, string memo, int id ,DateTime? time)
+        public async Task<int> SetWorkerTimer(int type, string memo, int id, DateTime? time)
         {
-            return await _mainDb.ExecuteAsync("Service_Timer_Set", new { _Type = type, _Memo = memo, _Id = id , _StartTime = time });
+            return await _mainDb.ExecuteAsync("Service_Timer_Set", new { _Type = type, _Memo = memo, _Id = id, _StartTime = time });
         }
 
         public BonusSummaryTimer GetBonusSummaryTimer(int type)

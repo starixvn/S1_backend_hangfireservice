@@ -6,12 +6,8 @@ using HangfireService.Core.Models.Finance;
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.Service;
 using HangfireService.Core.ThirdParty.Interfaces;
+
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HangfireService.Core.ThirdParty
 {

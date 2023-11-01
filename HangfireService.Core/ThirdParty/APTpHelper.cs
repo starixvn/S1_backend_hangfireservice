@@ -43,7 +43,7 @@ namespace HangfireService.Core.ThirdParty
             tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransRng_AP_Mini_cardracing_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120));
             tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransRng_AP_Mini_crash_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120));
             await Task.WhenAll(tasks);
-            
+
             var CheckData = new List<BettransCheckData>();
             foreach (var item in tasks)
             {

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace HangfireService.Core.Models.Options
+﻿namespace HangfireService.Core.Models.Options
 {
     public class CurrencyOption
     {

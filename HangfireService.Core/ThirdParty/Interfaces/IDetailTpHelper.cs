@@ -5,7 +5,7 @@ namespace HangfireService.Core.ThirdParty.Interfaces
 {
     public interface IDetailTpHelper
     {
-        int TpId { get;}
+        int TpId { get; }
 
         Task<IEnumerable<bool>> GetTpBetRecordDetailAsync(IEnumerable<TpDetailTodo> todoList, TpDetailOption option);
     }

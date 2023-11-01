@@ -43,7 +43,7 @@ public class TpMaintain
     public bool MaintainCheck(DateTime utcNow)
     {
         try
-        {         
+        {
             if (MaintainType == MaintainType.Date)
             {
                 return utcNow.IsBetween(BeginDate, EndDate);
@@ -54,13 +54,13 @@ public class TpMaintain
             {
                 return false;
             }
-                
+
             // 將當下日期與維護時間組合後進行檢查
             var date = utcNow.Date.ToString("yyyy/MM/dd");
             var begin = DateTime.ParseExact($"{date} {BeginTime}", "yyyy/MM/dd HH:mm", null);
             var end = DateTime.ParseExact($"{date} {EndTime}", "yyyy/MM/dd HH:mm", null);
             var isBetween = utcNow.IsBetween(begin, end);
-                
+
             return MaintainType switch
             {
                 MaintainType.Day => isBetween,

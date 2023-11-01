@@ -1,16 +1,11 @@
-﻿using HangfireService.Core.DataLayers;
-using HangfireService.Core.Extensions;
+﻿using System.Text.Json;
+
+using HangfireService.Core.DataLayers;
 using HangfireService.Core.Jobs;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
+
 using Microsoft.Extensions.Logging;
-using OfficeOpenXml.FormulaParsing.Excel.Operators;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace HangfireService.Core.Service;
 
@@ -59,7 +54,7 @@ public class CustomerAutoLockService
     }
 
     private async Task<IEnumerable<DormantSettingDto>> GetDormantSetting()
-        =>  await _reportDBDataLayer.GetDormantSetting();
+        => await _reportDBDataLayer.GetDormantSetting();
 
     private async Task<IEnumerable<DormantCustomerDto>> GetDormantCustomer(int siteId, int days, List<CustomerStatusEnum> statusList)
         => await _reportDBDataLayer.GetDormantCustomer(siteId, days, JsonSerializer.Serialize(statusList.Select(x => (int)x)));
@@ -68,7 +63,7 @@ public class CustomerAutoLockService
         => await _mainDBDataLayer.SetCustomerStatus(custId, (int)CustomerStatusEnum.Lock);
 
     private async Task<int> SetCustNotes(int custId, string note, string @operator)
-        =>await _mainDBDataLayer.SetCustNotes(custId, note, @operator);
+        => await _mainDBDataLayer.SetCustNotes(custId, note, @operator);
 
     private async Task<int> SetDormantSetting(int siteId)
         => await _mainDBDataLayer.SetDormantSetting(siteId);

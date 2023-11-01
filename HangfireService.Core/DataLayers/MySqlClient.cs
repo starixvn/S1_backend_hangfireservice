@@ -1,15 +1,20 @@
 ﻿using System.Data;
 using System.Diagnostics;
+
 using Dapper;
+
 using HangfireService.Core.DataLayers.Interfaces;
 using HangfireService.Core.Models.Enums;
+
 using Microsoft.Extensions.Logging;
+
 using MySql.Data.MySqlClient;
+
 using Serilog.Context;
 
 namespace HangfireService.Core.DataLayers
 {
-    public sealed class MySqlClient: IDataBaseInterface
+    public sealed class MySqlClient : IDataBaseInterface
     {
         private readonly string _connectionString;
 
@@ -21,7 +26,7 @@ namespace HangfireService.Core.DataLayers
         {
             return new MySqlConnection(_connectionString);
         }
-        
+
         public MySqlClient(string connectionString, ILogger<MySqlClient> logger, DataBase dataBase)
         {
             _connectionString = connectionString;
@@ -31,7 +36,7 @@ namespace HangfireService.Core.DataLayers
 
         #region Query
 
-         public IEnumerable<T> Query<T>(string name, object parameters = null, int? commandTimeout = null)
+        public IEnumerable<T> Query<T>(string name, object parameters = null, int? commandTimeout = null)
         {
             IEnumerable<T> result;
             var sw = Stopwatch.StartNew();
@@ -39,7 +44,7 @@ namespace HangfireService.Core.DataLayers
             {
                 using var connection = new MySqlConnection(_connectionString);
                 var command = new CommandDefinition(name, parameters,
-                    commandTimeout : commandTimeout,
+                    commandTimeout: commandTimeout,
                     commandType: CommandType.StoredProcedure,
                     flags: CommandFlags.NoCache);
                 result = connection.Query<T>(command);
@@ -123,8 +128,8 @@ namespace HangfireService.Core.DataLayers
             _logger.LogDebug($"{name} {sw.Elapsed:c}");
             return result;
         }
-        
-        public T QueryFirst<T>(string name, IDbTransaction trans , object parameters = null)
+
+        public T QueryFirst<T>(string name, IDbTransaction trans, object parameters = null)
         {
             var sw = Stopwatch.StartNew();
             T result;
@@ -171,7 +176,7 @@ namespace HangfireService.Core.DataLayers
             _logger.LogDebug($"{name} {sw.Elapsed:c}");
             return result;
         }
-        
+
         #endregion
 
         #region Execute
@@ -259,6 +264,6 @@ namespace HangfireService.Core.DataLayers
         }
 
         #endregion
-        
+
     }
 }

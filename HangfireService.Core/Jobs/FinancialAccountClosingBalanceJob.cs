@@ -1,14 +1,18 @@
 using System.ComponentModel;
+
 using Hangfire;
 using Hangfire.Server;
+
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Service;
+
 using Microsoft.Extensions.Logging;
+
 using Serilog.Context;
 
 namespace HangfireService.Core.Jobs;
-public class FinancialAccountClosingBalanceJob: BaseJob, IScheduledJob
+public class FinancialAccountClosingBalanceJob : BaseJob, IScheduledJob
 {
     private readonly FincanceService _financeService;
 
@@ -18,7 +22,7 @@ public class FinancialAccountClosingBalanceJob: BaseJob, IScheduledJob
         LogContext.PushProperty("ExecuteId", Guid.NewGuid().ToString());
         _financeService = provider.GetRequiredService<FincanceService>();
     }
-    
+
     [DisplayName("{0}")]
     public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
     {
@@ -30,13 +34,13 @@ public class FinancialAccountClosingBalanceJob: BaseJob, IScheduledJob
             var accounts = (await _financeService.GetBankFinancialTransferAccountList())
                 .OrderBy(x => x.SiteId)
                 .ThenBy(x => x.CurrencyId);
-            
+
             // step 2: 更新帳戶關帳金額
             var yyyymm = DateTimeOffset.UtcNow.AddMonths(-1).ToString("yyyyMM");
             foreach (var account in accounts)
             {
-                var accInfoStr = $"{account.SiteName}({account.SiteId}), " + 
-                                 $"{account.IsoCode}({account.CurrencyId}), {account.DisplayName}({account.Id})"; 
+                var accInfoStr = $"{account.SiteName}({account.SiteId}), " +
+                                 $"{account.IsoCode}({account.CurrencyId}), {account.DisplayName}({account.Id})";
                 try
                 {
                     var result = _financeService.SetFinancialAccountClosingBalance(account.Id, yyyymm);
@@ -55,7 +59,7 @@ public class FinancialAccountClosingBalanceJob: BaseJob, IScheduledJob
             return false;
         }
 
-        
+
         _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} End, Failed Count: {failedCnt}.");
         return true;
     }
@@ -66,9 +70,9 @@ public class FinancialAccountClosingBalanceJob: BaseJob, IScheduledJob
             ? string.Empty
             : SetClosingBalanceErrorMsgMap[result];
     }
-    
+
     private static Dictionary<int, string> SetClosingBalanceErrorMsgMap =>
-    new ()
+    new()
     {
         { 0, "Success." },
         { -1, "Account data not found." },

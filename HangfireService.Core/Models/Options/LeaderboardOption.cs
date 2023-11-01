@@ -1,5 +1,4 @@
-﻿using HangfireService.Core.Extensions;
-using HangfireService.Core.Models.Enums;
+﻿using HangfireService.Core.Models.Enums;
 
 namespace HangfireService.Core.Models.Options
 {
