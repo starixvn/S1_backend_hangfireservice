@@ -1,7 +1,9 @@
 using Hangfire;
+
 using HangfireService.Core.Jobs;
 using HangfireService.Extensions;
 using HangfireService.Extensions.ActionFilters;
+
 using Serilog;
 using Serilog.Exceptions;
 
@@ -51,6 +53,7 @@ app.UseEndpoints(endpoints =>
 {
     endpoints.MapGet("/health", () => "OK.");
 });
+
 app.UseHangfireDashboard(pathMatch: "", options: new DashboardOptions()
 {
     DashboardTitle = "AI.Lab",

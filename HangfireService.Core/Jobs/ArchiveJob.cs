@@ -1,19 +1,25 @@
-﻿using HangfireService.Core.DataLayers;
+﻿using System.Collections.Concurrent;
+using System.ComponentModel;
+
+using Hangfire;
+using Hangfire.Dashboard.Management.Metadata;
+using Hangfire.Dashboard.Management.Pages;
+using Hangfire.Dashboard.Management.Support;
+using Hangfire.Server;
+
+using HangfireService.Core.DataLayers;
+using HangfireService.Core.Extensions;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
-using Microsoft.Extensions.Logging;
-using Serilog.Context;
-using Newtonsoft.Json;
-using System.ComponentModel;
 using HangfireService.Core.Models.Options;
-using HangfireService.Core.Extensions;
-using Hangfire.Server;
-using Hangfire.Dashboard.Management.Metadata;
-using Hangfire.Dashboard.Management.Support;
-using Hangfire;
+
+using Microsoft.Extensions.Logging;
+
 using MySql.Data.MySqlClient;
-using System.Collections.Concurrent;
-using Hangfire.Dashboard.Management.Pages;
+
+using Newtonsoft.Json;
+
+using Serilog.Context;
 
 namespace HangfireService.Core.Jobs
 {
@@ -60,7 +66,7 @@ namespace HangfireService.Core.Jobs
 
                 var option = JsonConvert.DeserializeObject<ArchiveOption>(jobOption.Parameters);
                 var archiveList = _reportDBDataLayer.GetArchiveList(option.GetSP, option.LiminNum);
-                
+
                 var success = 0;
                 Parallel.ForEach(archiveList,
                     new ParallelOptions() { MaxDegreeOfParallelism = option.TaskCount },
@@ -170,7 +176,7 @@ namespace HangfireService.Core.Jobs
                 return 0;
             }
             catch (MySqlException ex)
-            {     
+            {
                 if (ex.Number == (int)MySqlErrorCode.DuplicateKeyEntry) //匯入資料重複
                 {
                     var deleteResult = _mainDBDataLayer.DeleteArchive(option.DeleteSP, data);

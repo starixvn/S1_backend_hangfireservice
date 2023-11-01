@@ -1,5 +1,7 @@
 using System.Reflection;
+
 using Microsoft.AspNetCore.Mvc;
+
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 
@@ -8,7 +10,7 @@ namespace HangfireService.Core.Helpers
 
     public class ExcelHelper
     {
-        
+
         public class ExportDataToExcel
         {
             public string SheetName { get; set; }
@@ -16,7 +18,7 @@ namespace HangfireService.Core.Helpers
             public List<string> Titles { get; set; }
 
         }
-        
+
         public byte[] Export<T>(IEnumerable<T> t, string password) where T : notnull, new()
         {
             ExcelPackage.LicenseContext = LicenseContext.Commercial;
@@ -74,7 +76,7 @@ namespace HangfireService.Core.Helpers
             }
             ws.Protection.SetPassword(password);
         }
-        
+
         private void ExportHeader(ExcelWorksheet ws, IEnumerable<PropertyInfo> propertyInfo)
         {
             SetHeader(ws, propertyInfo.Select(p => p.Name), 1);
@@ -93,7 +95,7 @@ namespace HangfireService.Core.Helpers
             }
         }
 
-        public FileContentResult ExcelFile (byte[] data, string fileName)
+        public FileContentResult ExcelFile(byte[] data, string fileName)
         {
             return new FileContentResult(data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
             {

@@ -1,18 +1,23 @@
-﻿using HangfireService.Core.DataLayers;
+﻿using System.ComponentModel;
+
+using Hangfire;
+using Hangfire.Dashboard.Management.Metadata;
+using Hangfire.Dashboard.Management.Pages;
+using Hangfire.Dashboard.Management.Support;
+using Hangfire.Server;
+
+using HangfireService.Core.DataLayers;
+using HangfireService.Core.Extensions;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
-using HangfireService.Core.Extensions;
-using Microsoft.Extensions.Logging;
-using Serilog.Context;
-using Newtonsoft.Json;
-using HangfireService.Core.ThirdParty.Interfaces;
-using System.ComponentModel;
-using Hangfire.Server;
-using Hangfire;
 using HangfireService.Core.Models.Options;
-using Hangfire.Dashboard.Management.Metadata;
-using Hangfire.Dashboard.Management.Support;
-using Hangfire.Dashboard.Management.Pages;
+using HangfireService.Core.ThirdParty.Interfaces;
+
+using Microsoft.Extensions.Logging;
+
+using Newtonsoft.Json;
+
+using Serilog.Context;
 
 namespace HangfireService.Core.Jobs
 {
@@ -47,7 +52,7 @@ namespace HangfireService.Core.Jobs
             }
 
             //避免執行太久拿到重複資料，每次進來先暫停Job狀態
-            MyJobManager.Pause(jobName);        
+            MyJobManager.Pause(jobName);
             try
             {
                 var option = JsonConvert.DeserializeObject<TpDetailOption>(jobOption.Parameters);
@@ -84,9 +89,9 @@ namespace HangfireService.Core.Jobs
         [Job]
         [DisplayName("Run {2} by ManagementPage")]
         public object Run(PerformContext context = null, IJobCancellationToken cancellationToken = null,
-            [DisplayData("JobName", ConvertType = typeof(TpDetailJobList))]string jobName = null,
-            [DisplayData("LiminNum", defaultValue:"1000")]string liminNum = "1000",
-            [DisplayData("TaskCount", defaultValue:"4")]string taskCount = "4")
+            [DisplayData("JobName", ConvertType = typeof(TpDetailJobList))] string jobName = null,
+            [DisplayData("LiminNum", defaultValue: "1000")] string liminNum = "1000",
+            [DisplayData("TaskCount", defaultValue: "4")] string taskCount = "4")
         {
             if (!_tpDetailJobList.Any())
             {

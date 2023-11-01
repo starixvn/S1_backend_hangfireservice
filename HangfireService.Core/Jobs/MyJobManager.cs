@@ -1,9 +1,12 @@
-﻿using Hangfire;
+﻿using System.ComponentModel;
+
+using Hangfire;
 using Hangfire.Dashboard.Management.Pages;
+
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
+
 using Microsoft.AspNetCore.Hosting;
-using System.ComponentModel;
 
 namespace HangfireService.Core.Jobs
 {
@@ -33,7 +36,7 @@ namespace HangfireService.Core.Jobs
                     {
                         var job = provider.GetServices<IScheduledJob>()
                             .FirstOrDefault(job => job.GetType().Name.Equals(option.ClassName, StringComparison.OrdinalIgnoreCase));
-                        
+
                         if (job != null)
                         {
                             jobManager.AddOrUpdate(
@@ -45,11 +48,11 @@ namespace HangfireService.Core.Jobs
 
                             //都先設定為暫停狀態
                             Pause(option.JobName);
-                        }                      
+                        }
                     }
                 }
             }
-            
+
             //全部job延遲時啟動
             var webHostEnvironment = provider.GetRequiredService<IWebHostEnvironment>();
             if (!webHostEnvironment.EnvironmentName.Equals("Local"))

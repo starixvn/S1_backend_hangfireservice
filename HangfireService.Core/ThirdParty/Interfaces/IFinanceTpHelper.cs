@@ -1,7 +1,9 @@
 ﻿using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
 using HangfireService.Core.Models.Options;
+
 using Microsoft.Extensions.Logging;
+
 using Newtonsoft.Json;
 
 namespace HangfireService.Core.ThirdParty.Interfaces

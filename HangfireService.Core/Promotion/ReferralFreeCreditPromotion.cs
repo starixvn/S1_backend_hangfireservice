@@ -1,5 +1,6 @@
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.Models.Promotion;
+
 using Microsoft.Extensions.Logging;
 
 namespace HangfireService.Core.Promotion
@@ -20,9 +21,9 @@ namespace HangfireService.Core.Promotion
         public override async Task<bool> Run()
         {
             int id;
-            if (ManualOption != null) 
+            if (ManualOption != null)
                 id = ManualOption.Id;
-            else 
+            else
                 id = _timerService.GetBonusSummaryTimer((int)WorkerType).Id;
 
             var dto = await _promotionService.GetSummaryDataById("Service_ReferralFreeCreditSummary_Get", id);
@@ -44,12 +45,12 @@ namespace HangfireService.Core.Promotion
                     Turnover = 0,
                     ClaimDate = a.CreateTime
                 });
-            
+
                 var result = await _promotionService.InsertBonusSummaryDetail(bonusSummaryDetail);
                 if (result > 1 && ManualOption == null)
                 {
                     var lastId = referralFreeCredit.Max(a => a.Id);
-                    await _timerService.SetWorkerTimer((int)WorkerType, "ReferralLog", lastId , null);
+                    await _timerService.SetWorkerTimer((int)WorkerType, "ReferralLog", lastId, null);
                 }
             }
             return true;

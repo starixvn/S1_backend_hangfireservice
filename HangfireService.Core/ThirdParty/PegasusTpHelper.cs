@@ -34,7 +34,7 @@ namespace HangfireService.Core.ThirdParty
             var tasks = new List<Task<IEnumerable<BettransCheckData>>>();
             tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransRng_Pegasus_Summary_Get", new { _BeginTime = checkOption.BeginTime, _EndTime = checkOption.EndTime }, 120));
             await Task.WhenAll(tasks);
-        
+
             var checkData = new List<BettransCheckData>();
             foreach (var item in tasks)
             {
@@ -72,6 +72,6 @@ namespace HangfireService.Core.ThirdParty
             }
             return tpDailyList;
         }
-        
+
     }
 }

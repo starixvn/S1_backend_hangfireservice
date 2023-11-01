@@ -1,14 +1,12 @@
-﻿using HangfireService.Core.Helpers;
-using HangfireService.Core.Jobs;
+﻿using System.Net;
+
+using HangfireService.Core.Helpers;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Options;
-using Microsoft.Extensions.Configuration;
+
 using Microsoft.Extensions.Logging;
+
 using Newtonsoft.Json;
-using System.Net;
-using System.Security.Policy;
-using System.Text;
-using Ubiety.Dns.Core;
 
 namespace HangfireService.Core.Service
 {
@@ -64,7 +62,7 @@ namespace HangfireService.Core.Service
 
             return string.Empty;
         }
-        public async Task<List<Affiliate>> QueryAffDetailInfoList(int pageIndex, int pageSize, SiteShortName site, string accessToken) 
+        public async Task<List<Affiliate>> QueryAffDetailInfoList(int pageIndex, int pageSize, SiteShortName site, string accessToken)
         {
             var postData = new
             {

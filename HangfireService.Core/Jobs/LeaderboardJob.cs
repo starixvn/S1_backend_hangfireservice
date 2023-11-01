@@ -1,18 +1,23 @@
-﻿using HangfireService.Core.DataLayers;
-using HangfireService.Core.Jobs.Interfaces;
-using HangfireService.Core.Models.Jobs;
-using Microsoft.Extensions.Logging;
-using Serilog.Context;
-using Newtonsoft.Json;
-using System.ComponentModel;
-using Hangfire.Server;
+﻿using System.ComponentModel;
+
 using Hangfire;
 using Hangfire.Dashboard.Management.Metadata;
-using HangfireService.Core.Models.Options;
 using Hangfire.Dashboard.Management.Support;
+using Hangfire.Server;
+
+using HangfireService.Core.DataLayers;
 using HangfireService.Core.Extensions;
 using HangfireService.Core.Helpers;
+using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Enums;
+using HangfireService.Core.Models.Jobs;
+using HangfireService.Core.Models.Options;
+
+using Microsoft.Extensions.Logging;
+
+using Newtonsoft.Json;
+
+using Serilog.Context;
 
 namespace HangfireService.Core.Jobs
 {
@@ -42,12 +47,12 @@ namespace HangfireService.Core.Jobs
                 var eventCode = option.EventCode;
                 var siteId = option.SiteId;
                 foreach (var beforeDay in option.beforeDays)
-                {               
+                {
                     foreach (var categoryId in option.CategoryList)
                     {
                         foreach (var currencyId in option.CurrencyList)
                         {
-                            var(startTime, endTime) = GetTimeRange(option, beforeDay);
+                            var (startTime, endTime) = GetTimeRange(option, beforeDay);
                             //Get Data
                             var leaderboardList = _reportDBDataLayer.GetLeaderboardList(categoryId, eventCode, siteId, currencyId, option.TopNum, startTime, endTime);
 
@@ -85,7 +90,7 @@ namespace HangfireService.Core.Jobs
             var now = DateTime.UtcNow;
             var startTime = option.StartTime ?? new DateTime(now.Year, now.Month, 1);
             var endTime = option.EndTime ?? startTime.GetMonthEnd();
-            
+
             if (option.ExecuteType == ExecuteType.Days)
             {
                 startTime = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);  // 當月份1號開始

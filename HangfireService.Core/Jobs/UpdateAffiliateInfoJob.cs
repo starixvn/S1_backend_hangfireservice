@@ -1,12 +1,15 @@
-﻿using Hangfire.Dashboard.Management.Metadata;
+﻿using System.ComponentModel;
+
+using Hangfire;
+using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using Hangfire.Server;
-using Hangfire;
+
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Service;
+
 using Microsoft.Extensions.Logging;
-using System.ComponentModel;
 
 namespace HangfireService.Core.Jobs
 {

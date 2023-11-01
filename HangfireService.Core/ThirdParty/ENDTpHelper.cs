@@ -36,7 +36,7 @@ namespace HangfireService.Core.ThirdParty
         public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
         {
             var BeginTime = checkOption.BeginTime.GetUnixTimeByDay();
-            var EndTime = checkOption.EndTime.GetUnixTimeByDay()  - 1;
+            var EndTime = checkOption.EndTime.GetUnixTimeByDay() - 1;
 
             var tasks = new List<Task<IEnumerable<BettransCheckData>>>();
             tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransRng_Endorphina_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }));

@@ -1,5 +1,6 @@
-﻿using HangfireService.Core.Models.Enums;
-using System.Text;
+﻿using System.Text;
+
+using HangfireService.Core.Models.Enums;
 
 namespace HangfireService.Core.Models.DBs
 {
@@ -7,7 +8,7 @@ namespace HangfireService.Core.Models.DBs
     {
         public int CurrencyId { get; set; }
         public int OTPType { get; set; }
-        public int CustId { get; set; }     
+        public int CustId { get; set; }
         public string OTPProvider { get; set; }
         public string Request_id { get; set; }
         public string OTPNum { get; set; }
@@ -18,7 +19,7 @@ namespace HangfireService.Core.Models.DBs
         private TimeSpan _offset { get; set; } = TimeSpan.Zero;
         public long CreateTimeToUnix => new DateTimeOffset(CreateTime, _offset).ToUnixTimeSeconds();
 
-        public bool IsExpire 
+        public bool IsExpire
         {
             get
             {

@@ -1,10 +1,13 @@
-﻿using HangfireService.Core.Helpers;
+﻿using System.Net;
+
+using HangfireService.Core.DataLayers;
+using HangfireService.Core.Helpers;
 using HangfireService.Core.Jobs;
 using HangfireService.Core.Models.Options;
+
 using Microsoft.Extensions.Logging;
+
 using Newtonsoft.Json;
-using System.Net;
-using HangfireService.Core.DataLayers;
 
 namespace HangfireService.Core.Service
 {

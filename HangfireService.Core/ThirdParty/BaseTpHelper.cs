@@ -1,13 +1,13 @@
-﻿using System.Globalization;
+﻿using System.Text;
+
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Helpers;
 using HangfireService.Core.Models.DBs;
+using HangfireService.Core.Models.Finance;
 
 using Microsoft.Extensions.Logging;
+
 using Newtonsoft.Json;
-using System.Text;
-using Serilog.Context;
-using HangfireService.Core.Models.Finance;
 
 namespace HangfireService.Core.ThirdParty
 {
@@ -51,7 +51,7 @@ namespace HangfireService.Core.ThirdParty
                 formData.Add(streamContent, "file", $"{name}");
 
                 var response = await _httpHelper.GetClient().PostAsync(url, formData);
-                
+
                 _logger.LogWarning($"Tp.Request.Response:{JsonConvert.SerializeObject(response)}");
 
                 response.EnsureSuccessStatusCode();
@@ -107,7 +107,7 @@ namespace HangfireService.Core.ThirdParty
         }
 
         protected string ToJson(object t)
-        { 
+        {
             return JsonConvert.SerializeObject(t, new JsonSerializerSettings
             {
                 NullValueHandling = NullValueHandling.Ignore

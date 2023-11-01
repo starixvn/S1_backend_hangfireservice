@@ -1,9 +1,12 @@
-﻿using Hangfire.Server;
+﻿using System.ComponentModel;
+
 using Hangfire;
+using Hangfire.Server;
+
+using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Service;
-using System.ComponentModel;
-using HangfireService.Core.Jobs.Interfaces;
+
 using Microsoft.Extensions.Logging;
 
 namespace HangfireService.Core.Jobs;

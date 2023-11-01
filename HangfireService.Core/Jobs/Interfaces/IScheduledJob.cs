@@ -1,5 +1,6 @@
 ﻿using Hangfire;
 using Hangfire.Server;
+
 using HangfireService.Core.Models.Jobs;
 
 namespace HangfireService.Core.Jobs.Interfaces

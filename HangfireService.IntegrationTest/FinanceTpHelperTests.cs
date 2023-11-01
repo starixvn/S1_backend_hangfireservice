@@ -1,14 +1,15 @@
-using Dapper;
 using HangfireService.Core.DataLayers;
-using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.ThirdParty.Interfaces;
 using HangfireService.Extensions;
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+
 using NSubstitute;
+
 using NUnit.Framework;
 
 namespace HangfireService.IntegrationTest
@@ -23,8 +24,8 @@ namespace HangfireService.IntegrationTest
 
         public FinanceTpHelperTests()
         {
-            var builder = WebApplication.CreateBuilder( new WebApplicationOptions() 
-            { 
+            var builder = WebApplication.CreateBuilder(new WebApplicationOptions()
+            {
                 EnvironmentName = "Local",
             });
             builder.Configuration.AddRemoteJsonConfig(builder.Configuration.GetValue<string>("ConfigService"));
@@ -39,7 +40,7 @@ namespace HangfireService.IntegrationTest
                 .AddOption();
 
             var app = builder.Build();
-       
+
             _dbClient = app.Services.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Main);
             _provider = app.Services;
         }

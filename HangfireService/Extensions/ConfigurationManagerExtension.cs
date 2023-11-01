@@ -4,6 +4,11 @@
     {
         public static ConfigurationManager AddRemoteJsonConfig(this ConfigurationManager configuration, string remoteUrl)
         {
+            if (remoteUrl is null)
+            {
+                return configuration;
+            }
+
             if (string.IsNullOrEmpty(remoteUrl))
             {
                 return configuration;
@@ -14,5 +19,5 @@
             configuration.AddJsonStream(result);
             return configuration;
         }
-    }  
+    }
 }

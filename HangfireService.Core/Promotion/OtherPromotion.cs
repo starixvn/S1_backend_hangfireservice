@@ -1,5 +1,6 @@
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.Models.Promotion;
+
 using Microsoft.Extensions.Logging;
 
 namespace HangfireService.Core.Promotion
@@ -23,14 +24,14 @@ namespace HangfireService.Core.Promotion
             try
             {
                 int id;
-                if (ManualOption != null) 
+                if (ManualOption != null)
                     id = ManualOption.Id;
-                else 
+                else
                     id = _timerService.GetBonusSummaryTimer((int)WorkerType).Id;
 
                 var dto = _promotionService.GetSummaryDataById("Service_OtherSummary_Get", id, out var maxCheckId);
                 var adjustmentInfo = dto.ToList();
-            
+
                 if (adjustmentInfo.Any())
                 {
                     var bonusSummaryDetail = adjustmentInfo.Select(a => new InsertBonusSummaryDetailDto()
@@ -48,7 +49,7 @@ namespace HangfireService.Core.Promotion
                         Turnover = 0,
                         ClaimDate = a.CreateTime
                     });
-            
+
                     var result = await _promotionService.InsertBonusSummaryDetail(bonusSummaryDetail);
                 }
                 if (maxCheckId > 1 && ManualOption == null)

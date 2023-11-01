@@ -1,12 +1,17 @@
+using System.ComponentModel;
+
+using Hangfire;
+using Hangfire.Server;
+
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
+
 using Microsoft.Extensions.Logging;
-using Serilog.Context;
+
 using Newtonsoft.Json;
-using System.ComponentModel;
-using Hangfire.Server;
-using Hangfire;
+
+using Serilog.Context;
 
 namespace HangfireService.Core.Jobs
 {
@@ -23,7 +28,7 @@ namespace HangfireService.Core.Jobs
         }
 
         [DisplayName("{0}")]
-        public async Task<object> ExecuteAsync(string jobName, JobOption jobOption , PerformContext context, IJobCancellationToken cancellationToken)
+        public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
         {
             try
             {
@@ -33,13 +38,13 @@ namespace HangfireService.Core.Jobs
                 var count = 0;
                 foreach (var todo in todoList)
                 {
-                    var result =  await _mainDBDataLayer.ExpiredBanner(todo.BannerName , todo.SiteId , todo.CurrencyId);
+                    var result = await _mainDBDataLayer.ExpiredBanner(todo.BannerName, todo.SiteId, todo.CurrencyId);
                     if (result >= 1)
                     {
                         count++;
                     }
                 }
-                
+
                 return JsonConvert.SerializeObject(new
                 {
                     Todo = todoList.Count(),
@@ -47,11 +52,11 @@ namespace HangfireService.Core.Jobs
                 });
             }
             catch (Exception ex)
-            {            
+            {
                 _logger.LogError(ex, ex.Message);
                 return JsonConvert.SerializeObject(ex);
             }
-          
+
         }
     }
 }

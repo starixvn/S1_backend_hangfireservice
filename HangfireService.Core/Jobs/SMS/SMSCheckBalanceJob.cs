@@ -1,17 +1,22 @@
-﻿using HangfireService.Core.Jobs.Interfaces;
-using HangfireService.Core.Models.Jobs;
-using Microsoft.Extensions.Logging;
-using Serilog.Context;
-using Newtonsoft.Json;
-using System.ComponentModel;
-using Hangfire.Server;
-using Hangfire;
+﻿using System.ComponentModel;
 using System.Net;
-using HangfireService.Core.Helpers;
+
+using Hangfire;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
+using Hangfire.Server;
+
+using HangfireService.Core.Helpers;
+using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models;
+using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Models.Options;
+
+using Microsoft.Extensions.Logging;
+
+using Newtonsoft.Json;
+
+using Serilog.Context;
 
 namespace HangfireService.Core.Jobs.SMS
 {
@@ -20,7 +25,7 @@ namespace HangfireService.Core.Jobs.SMS
     {
         protected readonly HttpHelper _httpHelper;
         private readonly SecureHelper _secureHelper;
-        
+
         private readonly string _letsTalkGroupName;
         private readonly string _commonServiceHost;
         private static List<JobOption> _jobList;
@@ -28,7 +33,7 @@ namespace HangfireService.Core.Jobs.SMS
         private readonly IEnumerable<NxCloudSmsConfig> _nxCloudSmsConfig;
         private readonly IEnumerable<SkyLineSmsConfig> _skyLineSmsConfig;
         private readonly IEnumerable<SkyLineOtpConfig> _skyLineOtpConfig;
-        
+
         public SMSCheckBalanceJob(IServiceProvider provider) : base(provider)
         {
             LogContext.PushProperty("ClassName", GetType().Name);

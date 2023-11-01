@@ -1,13 +1,8 @@
 ﻿using Dapper;
+
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Extensions;
 using HangfireService.Core.Models.Enums;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HangfireService.Core.Service
 {
@@ -49,7 +44,7 @@ namespace HangfireService.Core.Service
                 p.Add("YYYYMM", partitionKey);
                 tasks.Add(_mainDbClient.QueryAsync<T>(spName, parameters: p, commandTimeout: commandTimeout));
             }
-            return tasks;      
+            return tasks;
         }
 
 

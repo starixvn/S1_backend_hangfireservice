@@ -1,9 +1,12 @@
-﻿using Microsoft.Extensions.Logging;
-using Serilog.Context;
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
+
 using HangfireService.Core.Models.Options;
+
+using Microsoft.Extensions.Logging;
+
+using Serilog.Context;
 
 namespace HangfireService.Core.Helpers
 {
@@ -24,7 +27,7 @@ namespace HangfireService.Core.Helpers
             _proxyPort = proxyConfig.ProxyPort;
 
             client = _proxyHost != null
-                ? clientFactory.CreateClient("with_proxy") 
+                ? clientFactory.CreateClient("with_proxy")
                 : clientFactory.CreateClient();
         }
 
@@ -96,7 +99,7 @@ namespace HangfireService.Core.Helpers
             }
 
             _logger.LogInformation($"HttpHelper.Request.BODY:{parameters}");
-            
+
             using var data = new StringContent(parameters, Encoding.UTF8, contentType);
             var response = await client.PostAsync(url, data);
             var result = await response.Content.ReadAsStringAsync();

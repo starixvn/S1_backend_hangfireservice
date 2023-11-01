@@ -37,7 +37,7 @@ namespace HangfireService.Core.ThirdParty
         public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
         {
             var BeginTime = checkOption.BeginTime.GetUnixTimeByDay();
-            var EndTime = checkOption.EndTime.GetUnixTimeByDay() -1;
+            var EndTime = checkOption.EndTime.GetUnixTimeByDay() - 1;
 
             // bettrans 資料時間可能會有跨天或Table跨月份的問題
             var bettrans = await _wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerRng_SimplePlay_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });

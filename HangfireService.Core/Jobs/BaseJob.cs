@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+
 using Newtonsoft.Json;
 
 namespace HangfireService.Core.Jobs

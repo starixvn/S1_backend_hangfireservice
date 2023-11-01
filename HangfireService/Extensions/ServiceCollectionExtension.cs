@@ -1,22 +1,25 @@
-﻿using Hangfire;
+﻿using System.Net;
+
+using Hangfire;
 using Hangfire.Console.Extensions;
 using Hangfire.Dashboard.Management;
 using Hangfire.MemoryStorage;
+
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Helpers;
 using HangfireService.Core.Jobs;
 using HangfireService.Core.Jobs.Interfaces;
+using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Models.Options;
+using HangfireService.Core.Models.SiteConfig;
+using HangfireService.Core.Promotion;
 using HangfireService.Core.Service;
 using HangfireService.Core.ThirdParty;
 using HangfireService.Core.ThirdParty.Interfaces;
-using System.Net;
-using HangfireService.Core.Models.DBs;
-using HangfireService.Core.Promotion;
+
 using StackExchange.Redis;
-using HangfireService.Core.Models.SiteConfig;
 
 namespace HangfireService.Extensions
 {

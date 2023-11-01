@@ -1,7 +1,7 @@
 ﻿namespace HangfireService.Core.Models.Options
 {
     public class ServiceHostConfig
-    { 
+    {
         public string CommonService { get; set; }
         public string TpService { get; set; }
         public string PayService { get; set; }

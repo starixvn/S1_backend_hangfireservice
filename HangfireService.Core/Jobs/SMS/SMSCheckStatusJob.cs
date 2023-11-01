@@ -1,20 +1,26 @@
-﻿using HangfireService.Core.DataLayers;
-using HangfireService.Core.Jobs.Interfaces;
-using HangfireService.Core.Models.Jobs;
-using Microsoft.Extensions.Logging;
-using Serilog.Context;
-using Newtonsoft.Json;
-using System.ComponentModel;
-using Hangfire.Server;
+﻿using System.ComponentModel;
+using System.Net;
+
+using Amazon.CloudWatchLogs.Model;
+
 using Hangfire;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
+using Hangfire.Server;
+
+using HangfireService.Core.DataLayers;
 using HangfireService.Core.Helpers;
+using HangfireService.Core.Jobs.Interfaces;
+using HangfireService.Core.Models;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
-using System.Net;
-using Amazon.CloudWatchLogs.Model;
-using HangfireService.Core.Models;
+using HangfireService.Core.Models.Jobs;
+
+using Microsoft.Extensions.Logging;
+
+using Newtonsoft.Json;
+
+using Serilog.Context;
 
 namespace HangfireService.Core.Jobs.SMS
 {

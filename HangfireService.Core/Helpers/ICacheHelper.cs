@@ -18,7 +18,7 @@ namespace HangfireService.Core.Helpers
 
         string StringGet(string key, RedisDataBase redisDataBase = RedisDataBase.Member);
 
-        bool KeyExists(string key, RedisDataBase redisDataBase = RedisDataBase.Member);   
+        bool KeyExists(string key, RedisDataBase redisDataBase = RedisDataBase.Member);
 
         Task<bool> KeyDeleteAsync(string key, RedisDataBase redisDataBase = RedisDataBase.Member);
     }

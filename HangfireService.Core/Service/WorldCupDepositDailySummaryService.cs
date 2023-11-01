@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using HangfireService.Core.DataLayers;
+﻿using HangfireService.Core.DataLayers;
 using HangfireService.Core.Jobs;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Options;
+
 using Microsoft.Extensions.Logging;
 
 namespace HangfireService.Core.Service
@@ -154,12 +150,12 @@ namespace HangfireService.Core.Service
         public async Task<int> InsertJobLog(string jobName, WorldCupJobStatus status, WorldCupDepositDailySummaryOption option)
         {
             return await _mainDBDataLayer.InsertWorldCupJobLog(
-                jobName:jobName, 
-                siteId:option.SiteId, 
-                currencyId:option.CurrencyId,
-                custId:option.CustId,
-                accountData:option.AccountDate.Value, 
-                status:status);
+                jobName: jobName,
+                siteId: option.SiteId,
+                currencyId: option.CurrencyId,
+                custId: option.CustId,
+                accountData: option.AccountDate.Value,
+                status: status);
         }
 
         #region private method

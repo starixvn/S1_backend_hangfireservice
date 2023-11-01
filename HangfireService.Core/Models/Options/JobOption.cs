@@ -1,6 +1,4 @@
-﻿using System.Dynamic;
-
-namespace HangfireService.Core.Models.Jobs
+﻿namespace HangfireService.Core.Models.Jobs
 {
     public class JobOption
     {
