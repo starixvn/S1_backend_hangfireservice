@@ -3,7 +3,7 @@ using Hangfire;
 using HangfireService.Core.Jobs;
 using HangfireService.Extensions;
 using HangfireService.Extensions.ActionFilters;
-
+using Prometheus;
 using Serilog;
 using Serilog.Exceptions;
 
@@ -52,8 +52,13 @@ if (app.Environment.EnvironmentName.Equals("Local"))
 }
 
 app.UseRouting();
+app.UseHttpMetrics(options =>
+{
+    options.AddCustomLabel("host", context => context.Request.Host.Host);
+});
 app.UseEndpoints(endpoints =>
 {
+    endpoints.MapMetrics();
     endpoints.MapGet("/health", () => "OK.");
 });
 
