@@ -35,17 +35,5 @@ pipeline {
                 }
             }
         }
-        stage('ArgoCD'){
-            agent { node { label 'Build' } }
-                steps{
-                    dir('/jenkins/backend-manifest/dev-galaxy/leobet'){
-                        sh 'git pull'
-                        sh "yq -i '.spec.template.spec.containers[0].image = \"harbor.ailabpte.co/hangfireservice/hangfireservice:${imageversion}\"' hangfireservice-deploy.yaml"
-                        sh 'git add hangfireservice-deploy.yaml'
-                        sh "git commit -m 'update dev hangfireservice ver:${imageversion}'"
-                        sh 'git push'
-                    }
-                }
-        }
     }
 }
