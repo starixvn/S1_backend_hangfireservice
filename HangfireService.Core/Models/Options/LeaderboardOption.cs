@@ -10,7 +10,8 @@ namespace HangfireService.Core.Models.Options
         public int SiteId { get; set; }
         public int TimeoutSeconds { get; set; } = 300;
         public IEnumerable<int> beforeDays { get; set; }
-
+        public string EventCode { get; set; }
+        public int TopNum { get; set; }
         public DateTime? StartTime { get; set; }
         public DateTime? EndTime { get; set; }
     }
