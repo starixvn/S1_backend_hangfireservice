@@ -89,7 +89,7 @@ namespace HangfireService.Core.Jobs
                             var key = option.ExecuteType switch
                             {
                                 ExecuteType.Months => $"LeaderboardListMonth:{categoryId}:{siteId}:{currencyId}:{calculateDate}",
-                                ExecuteType.Days => $"LeaderboardListDays:{categoryId}:{siteId}:{currencyId}:{beforeDay}:{calculateDate}",
+                                ExecuteType.Days => $"LeaderboardListDays:{categoryId}:{siteId}:{currencyId}:{beforeDay}",
                                 _ => throw new NotImplementedException()
                             };
                             _redisHelper.StringSet(key, JsonConvert.SerializeObject(leaderboardResult), null);
