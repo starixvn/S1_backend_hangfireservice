@@ -1,4 +1,5 @@
-﻿using Dapper;
+﻿using System.Data;
+using Dapper;
 
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
@@ -155,19 +156,33 @@ namespace HangfireService.Core.DataLayers
         #endregion
 
 
-        public IEnumerable<Leaderboard> GetLeaderboardList(int lBCategoryId, string eventCode, int siteId, int currencyId, int topNum, DateTime startTime, DateTime endTime)
+        public IEnumerable<LeaderboardModel> GetLeaderboardList(int lBCategoryId, int siteId, int currencyId, DateTime startTime, DateTime endTime , out string timezone  )
         {
             var p = new DynamicParameters();
             p.Add("LBCategoryId", lBCategoryId);
-            p.Add("EventCode", eventCode);
             p.Add("SiteId", siteId);
             p.Add("CurrencyId", currencyId);
             p.Add("StartTime", startTime);
             p.Add("EndTime", endTime);
-            p.Add("TopNum", topNum);
-            var result = _dbClient.Query<Leaderboard>("Member_Leaderboard_Get", p);
+            p.Add("Timezone", direction: ParameterDirection.Output);
+            var result = _dbClient.Query<LeaderboardModel>("Member_Leaderboard_Get_V2", p);
+            
+            timezone = p.Get<string>("Timezone");
+            
             return result;
         }
 
+        #region LeaderBaordPointCalculation
+
+        public IEnumerable<LeaderboardPointCalculation> GetLeaderboardPointCalculation(int siteId, string date)
+        {
+            var p = new DynamicParameters();
+            p.Add("_SiteId", siteId);
+            p.Add("_Date", date);
+            var result = _dbClient.Query<LeaderboardPointCalculation>("Service_LeaderboardPointCalculation_Get", p);
+            return result;
+        }
+
+        #endregion
     }
 }
