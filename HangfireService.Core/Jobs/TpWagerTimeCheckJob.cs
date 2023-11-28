@@ -88,10 +88,10 @@ namespace HangfireService.Core.Jobs
                             break;
                         case 2:
                             // 重作抄單
-                            var hour4 = new List<int> { 6, 21, 24 };
+                            var hour4 = new List<int> { 6, 21, 55, 57 };
                             var hour8 = new List<int> { 36 };
-                            var day2 = new List<int> { 22, 31 };
-                            var day4 = new List<int> { 13, 28 };
+                            var day2 = new List<int> { 31 };
+                            var day4 = new List<int> { 28 };
 
                             if (hour4.Contains(data.TpId))
                             {
