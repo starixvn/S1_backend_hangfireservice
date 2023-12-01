@@ -168,5 +168,27 @@ namespace HangfireService.Core.DataLayers
             return result;
         }
 
+        public IEnumerable<BigWinSetting> GetBigWinSetting(int siteId)
+        {
+            var p = new DynamicParameters();
+            p.Add("SiteId", siteId);
+
+            var result = _dbClient.Query<BigWinSetting>("Service_BigWinSetting_Get", p);
+            return result;
+        }
+        public IEnumerable<CurrencyTimeZone> GetCurrencyTimeZone()
+        {
+            var result = _dbClient.Query<CurrencyTimeZone>("Service_CurrencyTimeZone_Get");
+            return result;            
+        }
+
+        public IEnumerable<BigWin> GetBigWin(int siteId, int currencyId, DateTime startTime, DateTime endTime, IEnumerable<int> iTpCategoryList)
+        {
+            var p = new DynamicParameters();
+            p.Add("SiteId", siteId);
+
+            var result = _dbClient.Query<BigWin>("Service_BigWin_Get", p);
+            return result;
+        }
     }
 }
