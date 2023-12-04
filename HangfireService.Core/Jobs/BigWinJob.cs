@@ -38,7 +38,7 @@ namespace HangfireService.Core.Jobs
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
                 var option = JsonConvert.DeserializeObject<BigWinOption>(jobOption.Parameters);
                 var bigWinSettingList = _reportDBDataLayer.GetBigWinSetting(option.SiteId).Where(x => x.Status == (int)BigWinSettingEnum.Open).ToList();
-                var msg = string.Empty;
+
                 foreach (var bigWinSetting in bigWinSettingList)
                 {
                     if (bigWinSetting.SettleTime.AddDays(1) < DateTime.UtcNow)
@@ -48,12 +48,11 @@ namespace HangfireService.Core.Jobs
                         var (startDate, endDate) = GetDateRange(offSet);
                         //取得有贏錢的下注紀錄
                         var bigWinList = _reportDBDataLayer.GetBigWin(option.SiteId, bigWinSetting.CurrencyId, startDate, endDate, bigWinSetting.ITpCategoryList).ToList();
-                        //取出中獎倍數最大的一筆下注紀錄
-                        var bigWinBet = bigWinList.MaxBy(x => x.ValidBet / x.WinlostAmount);
-                        var custMultipleOfWinning = bigWinBet.ValidBet / bigWinBet.WinlostAmount;
-
-                        //檢核是否有大於要顯示的倍數
-                        if (custMultipleOfWinning > bigWinSetting.MultipleOfWinning)
+                        //取出滿足中獎倍數與最低贏得金額
+                        bigWinList = bigWinList.FindAll(x => x.WinlostAmount / x.ValidBet >= bigWinSetting.MultipleOfWinning && x.WinlostAmount >= bigWinSetting.MinOfWinning);
+                        //取出贏得金額最大的一筆下注紀錄
+                        var bigWinBet = bigWinList.MaxBy(x => x.WinlostAmount);
+                        if (bigWinBet != null)
                         {
                             _mainDBDataLayer.InsertBigWinInfo(new BigWinInfo()
                             {
@@ -64,10 +63,11 @@ namespace HangfireService.Core.Jobs
                                 TpCategory = bigWinBet.CategoryId,
                                 TpGameType = bigWinBet.GameType,
                                 GameID = bigWinBet.GameID,
-                                Time = endDate
+                                Time = endDate,
+                                WinlostAmount = bigWinBet.WinlostAmount
                             });
 
-                            _logger.LogInformation($"SiteId:{option.SiteId} \r\n CurrencyId:{bigWinSetting.CurrencyId} \r\n have BigWin in {startDate}~{endDate}");
+                            _logger.LogInformation($"SiteId:{option.SiteId} \r\n CurrencyId:{bigWinSetting.CurrencyId} \r\n WinlostAmount:{bigWinBet.WinlostAmount} \r\n have BigWin in {startDate}~{endDate}");
                         }
 
                         //更新SettleTime
@@ -108,9 +108,10 @@ namespace HangfireService.Core.Jobs
         }
         private (DateTime startDate, DateTime endDate) GetDateRange(TimeSpan offset)
         {
-            var currentDate = DateTimeOffset.UtcNow.ToOffset(offset).Date;
-            var startDate = currentDate.AddDays(-1);
-            var endDate = currentDate.AddSeconds(-1);
+            var currentDate = DateTimeOffset.UtcNow.Date;
+            var startDate = currentDate.AddDays(-1).AddHours(offset.Hours).AddMinutes(offset.Minutes);
+            var endDate = currentDate.AddSeconds(-1).AddHours(offset.Hours).AddMinutes(offset.Minutes);
+
             return (startDate, endDate);
         }
         public enum BigWinSettingEnum

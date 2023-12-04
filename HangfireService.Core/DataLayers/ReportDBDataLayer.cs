@@ -3,6 +3,7 @@
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
+using Newtonsoft.Json;
 
 namespace HangfireService.Core.DataLayers
 {
@@ -185,7 +186,11 @@ namespace HangfireService.Core.DataLayers
         public IEnumerable<BigWin> GetBigWin(int siteId, int currencyId, DateTime startTime, DateTime endTime, IEnumerable<int> iTpCategoryList)
         {
             var p = new DynamicParameters();
-            p.Add("SiteId", siteId);
+            p.Add("_SiteId", siteId);
+            p.Add("_CurrencyId", currencyId);
+            p.Add("_StartTime", startTime);
+            p.Add("_EndTime", endTime);
+            p.Add("_TpCategoryList", JsonConvert.SerializeObject(iTpCategoryList));
 
             var result = _dbClient.Query<BigWin>("Service_BigWin_Get", p);
             return result;

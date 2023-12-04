@@ -26,6 +26,7 @@ namespace HangfireService.Core.Models.DBs
         public int CurrencyId { get; set; }
         public string TpCategory { get; set; }
         public int MultipleOfWinning { get; set; }
+        public decimal MinOfWinning { get; set; }
         public int Status { get; set; }
         public string CurrencyName { get; set; }
         public string SiteName { get; set; }
@@ -56,5 +57,6 @@ namespace HangfireService.Core.Models.DBs
         public int TpGameType { get; set; }
         public string GameID { get; set; }
         public DateTime Time { get; set; }
+        public decimal WinlostAmount { get; set; }
     }
 }
