@@ -4,6 +4,7 @@ using Dapper;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
+using Newtonsoft.Json;
 
 namespace HangfireService.Core.DataLayers
 {
@@ -198,7 +199,32 @@ namespace HangfireService.Core.DataLayers
             var result = _dbClient.Query<LeaderboardPointCalculation>("Service_LeaderboardPointCalculation_Get", p);
             return result;
         }
-
         #endregion
+        public IEnumerable<BigWinSetting> GetBigWinSetting(int siteId)
+        {
+            var p = new DynamicParameters();
+            p.Add("SiteId", siteId);
+
+            var result = _dbClient.Query<BigWinSetting>("Service_BigWinSetting_Get", p);
+            return result;
+        }
+        public IEnumerable<CurrencyTimeZone> GetCurrencyTimeZone()
+        {
+            var result = _dbClient.Query<CurrencyTimeZone>("Service_CurrencyTimeZone_Get");
+            return result;            
+        }
+
+        public IEnumerable<BigWin> GetBigWin(int siteId, int currencyId, DateTime startTime, DateTime endTime, IEnumerable<int> iTpCategoryList)
+        {
+            var p = new DynamicParameters();
+            p.Add("_SiteId", siteId);
+            p.Add("_CurrencyId", currencyId);
+            p.Add("_StartTime", startTime);
+            p.Add("_EndTime", endTime);
+            p.Add("_TpCategoryList", JsonConvert.SerializeObject(iTpCategoryList));
+
+            var result = _dbClient.Query<BigWin>("Service_BigWin_Get", p);
+            return result;
+        }
     }
 }
