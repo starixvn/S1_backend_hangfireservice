@@ -399,6 +399,30 @@ namespace HangfireService.Core.DataLayers
                 _SQ = SQ
             });
         }
+
+        public int InsertBigWinInfo(BigWinInfo bigWinInfo)
+        {
+            return _dbClient.Execute("Service_BigWinInfo_Set", new
+            {
+                _SiteId = bigWinInfo.SiteId,
+                _CurrencyId = bigWinInfo.CurrencyId,
+                _CustId = bigWinInfo.CustId,
+                _TpId = bigWinInfo.TpId,
+                _TpCategory = bigWinInfo.TpCategory,
+                _TpGameType = bigWinInfo.TpGameType,
+                _GameID = bigWinInfo.GameID,
+                _Time = bigWinInfo.Time,
+            });
+        }
+        public int SetBigWinSetting(int siteId, int currencyId, DateTime settleTime)
+        {
+            return _dbClient.Execute("Service_BigWinSetting_Set", new
+            {
+                _SiteId = siteId,
+                _CurrencyId = currencyId,
+                _SettleTime = settleTime
+            });
+        }
     }
 }
 
