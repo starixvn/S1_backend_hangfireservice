@@ -10,7 +10,7 @@ namespace HangfireService.Core.ThirdParty
     internal class AmigoTpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => false;
-        public bool BindCommonCurrency => true;
+        public bool BindCommonCurrency => false;
         public TimeOption TimeOptionId => TimeOption.TransTime;
 
         public int TpId => 60;
