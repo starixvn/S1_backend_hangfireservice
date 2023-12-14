@@ -98,8 +98,8 @@ namespace HangfireService.Core.Jobs
                             //根據ExecuteType設定Redis Key
                             var key = option.ExecuteType switch
                             {
-                                ExecuteType.Months => $"LeaderboardListMonth:{categoryId}:{eventCode}:{siteId}:{currencyId}:{startTime:yyyyMM}",
-                                ExecuteType.Days => $"LeaderboardListDays:{categoryId}:{eventCode}:{siteId}:{currencyId}:{beforeDay}",
+                                ExecuteType.Months => $"LeaderboardListMonth:{categoryId}:{siteId}:{currencyId}:{startTime:yyyyMM}",
+                                ExecuteType.Days => $"LeaderboardListDays:{categoryId}:{siteId}:{currencyId}:{beforeDay}",
                                 _ => throw new NotImplementedException()
                             };
                             
