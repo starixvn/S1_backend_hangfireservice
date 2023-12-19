@@ -412,6 +412,7 @@ namespace HangfireService.Core.DataLayers
                 _TpGameType = bigWinInfo.TpGameType,
                 _GameID = bigWinInfo.GameID,
                 _Time = bigWinInfo.Time,
+                _WinlostAmount = bigWinInfo.WinlostAmount,
             });
         }
         public int SetBigWinSetting(int siteId, int currencyId, DateTime settleTime)
