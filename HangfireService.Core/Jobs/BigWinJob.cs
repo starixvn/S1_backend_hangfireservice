@@ -45,7 +45,7 @@ namespace HangfireService.Core.Jobs
                     {
                         var currencyTimeZone = _currencyTimeZoneList.Find(x => x.CurrencyId == bigWinSetting.CurrencyId);
                         var offSet = TryParseTimezoneOffset(currencyTimeZone.TimeZone);
-                        var (startDate, endDate) = GetDateRange(offSet);
+                        var (startDate, endDate, settleDate) = GetDateRange(offSet);
                         //取得有贏錢的下注紀錄
                         var bigWinList = _reportDBDataLayer.GetBigWin(option.SiteId, bigWinSetting.CurrencyId, startDate, endDate, bigWinSetting.ITpCategoryList).ToList();
                         //取出滿足中獎倍數與最低贏得金額
@@ -63,7 +63,7 @@ namespace HangfireService.Core.Jobs
                                 TpCategory = bigWinBet.CategoryId,
                                 TpGameType = bigWinBet.GameType,
                                 GameID = bigWinBet.GameID,
-                                Time = endDate,
+                                Time = settleDate,
                                 WinlostAmount = bigWinBet.WinlostAmount
                             });
 
@@ -106,13 +106,14 @@ namespace HangfireService.Core.Jobs
 
             throw new Exception($"offsetString Format Fail，offsetString:{offsetString}");
         }
-        private (DateTime startDate, DateTime endDate) GetDateRange(TimeSpan offset)
+        private (DateTime startDate, DateTime endDate, DateTime settleDate) GetDateRange(TimeSpan offset)
         {
             var currentDate = DateTimeOffset.UtcNow.Date;
-            var startDate = currentDate.AddDays(-1).AddHours(offset.Hours).AddMinutes(offset.Minutes);
-            var endDate = currentDate.AddSeconds(-1).AddHours(offset.Hours).AddMinutes(offset.Minutes);
+            var settleDate = currentDate.AddDays(-1);
+            var startDate = currentDate.AddDays(-1).AddHours(-offset.Hours).AddMinutes(-offset.Minutes);
+            var endDate = currentDate.AddSeconds(-1).AddHours(-offset.Hours).AddMinutes(-offset.Minutes);
 
-            return (startDate, endDate);
+            return (startDate, endDate, settleDate);
         }
         public enum BigWinSettingEnum
         {
