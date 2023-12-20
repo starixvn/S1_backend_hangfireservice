@@ -108,7 +108,9 @@ namespace HangfireService.Core.Jobs
         }
         private (DateTime startDate, DateTime endDate, DateTime settleDate) GetDateRange(TimeSpan offset)
         {
-            var currentDate = DateTimeOffset.UtcNow.Date;
+            //取得該幣別當下的日子
+            var currentDate = DateTimeOffset.UtcNow.AddHours(offset.Hours).AddMinutes(offset.Minutes).Date;
+            //計算的日子為前一天
             var settleDate = currentDate.AddDays(-1);
             var startDate = currentDate.AddDays(-1).AddHours(-offset.Hours).AddMinutes(-offset.Minutes);
             var endDate = currentDate.AddSeconds(-1).AddHours(-offset.Hours).AddMinutes(-offset.Minutes);
