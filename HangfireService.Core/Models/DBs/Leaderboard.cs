@@ -15,7 +15,7 @@
     {
         public int CustId { get; set; }
         public string UserName { get; set; }
-        public int WTurnover { get; set; }
+        public decimal WTurnover { get; set; }
     }
     
     public class LeaderboardPointCalculation
