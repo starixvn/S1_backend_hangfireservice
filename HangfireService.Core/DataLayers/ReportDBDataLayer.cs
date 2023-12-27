@@ -1,4 +1,5 @@
-﻿using Dapper;
+﻿using System.Data;
+using Dapper;
 
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
@@ -155,7 +156,24 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Query(sp, parameters: parameters, commandTimeout: timeoutSeconds);
         }
 
-        public IEnumerable<Leaderboard> GetLeaderboardList(int lBCategoryId, string eventCode, int siteId, int currencyId, int topNum, DateTime startTime, DateTime endTime)
+        public IEnumerable<LeaderboardModel> GetLeaderboardList(int lBCategoryId, int siteId, int currencyId, DateTime startTime, DateTime endTime , out string timezone  )
+        {
+            var p = new DynamicParameters();
+            p.Add("LBCategoryId", lBCategoryId);
+            p.Add("SiteId", siteId);
+            p.Add("CurrencyId", currencyId);
+            p.Add("StartTime", startTime);
+            p.Add("EndTime", endTime);
+            p.Add("Timezone", direction: ParameterDirection.Output);
+            var result = _dbClient.Query<LeaderboardModel>("Member_Leaderboard_Get_V2", p);
+            
+            timezone = p.Get<string>("Timezone");
+            
+            return result;
+        }
+
+        public IEnumerable<Leaderboard> GetLeaderboardListOld(int lBCategoryId, string eventCode, int siteId,
+            int currencyId, int topNum, DateTime startTime, DateTime endTime)
         {
             var p = new DynamicParameters();
             p.Add("LBCategoryId", lBCategoryId);
@@ -166,8 +184,21 @@ namespace HangfireService.Core.DataLayers
             p.Add("EndTime", endTime);
             p.Add("TopNum", topNum);
             var result = _dbClient.Query<Leaderboard>("Member_Leaderboard_Get", p);
+            
             return result;
         }
+
+        #region LeaderBaordPointCalculation
+
+        public IEnumerable<LeaderboardPointCalculation> GetLeaderboardPointCalculation(int siteId, string date)
+        {
+            var p = new DynamicParameters();
+            p.Add("_SiteId", siteId);
+            p.Add("_Date", date);
+            var result = _dbClient.Query<LeaderboardPointCalculation>("Service_LeaderboardPointCalculation_Get", p);
+            return result;
+        }
+        #endregion
 
         public IEnumerable<BigWinSetting> GetBigWinSetting(int siteId)
         {
@@ -180,7 +211,7 @@ namespace HangfireService.Core.DataLayers
         public IEnumerable<CurrencyTimeZone> GetCurrencyTimeZone()
         {
             var result = _dbClient.Query<CurrencyTimeZone>("Service_CurrencyTimeZone_Get");
-            return result;            
+            return result;
         }
 
         public IEnumerable<BigWin> GetBigWin(int siteId, int currencyId, DateTime startTime, DateTime endTime, IEnumerable<int> iTpCategoryList)
