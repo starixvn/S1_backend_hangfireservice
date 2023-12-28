@@ -15,12 +15,14 @@ public class AWSCloudWatchLogsHelper
 {
     private readonly IAmazonCloudWatchLogs _client;
     private readonly ILogger<AWSCloudWatchLogsHelper> _logger;
+
     public AWSCloudWatchLogsHelper(IServiceProvider provider)
     {
         _logger = provider.GetRequiredService<ILogger<AWSCloudWatchLogsHelper>>();
 
         var configBll = provider.GetRequiredService<ConfigBLL>();
-        var proxyConfig = configBll.GetConfigValue<ProxyConfig>("ProxySetting");
+        var configPrefixHelper = provider.GetRequiredService<ConfigPrefixHelper>();
+        var proxyConfig = configBll.GetConfigValue<ProxyConfig>(configPrefixHelper.ProxySetting);
 
         var config = new AmazonCloudWatchLogsConfig
         {
