@@ -52,7 +52,8 @@ namespace HangfireService.Core.Jobs
             _excelHelper = provider.GetRequiredService<ExcelHelper>();
 
             var configBll = provider.GetRequiredService<ConfigBLL>();
-            var proxyConfig = configBll.GetConfigValue<ProxyConfig>("ProxySetting");
+            var configPrefixHelper = provider.GetRequiredService<ConfigPrefixHelper>();
+            var proxyConfig = configBll.GetConfigValue<ProxyConfig>(configPrefixHelper.ProxySetting);
             _proxyHost = proxyConfig.ProxyHost;
             _proxyPort = proxyConfig.ProxyPort;
 
