@@ -60,7 +60,7 @@ namespace HangfireService.Core.Jobs
             _awsAccessKey = awsConfig?.AccessKey;
             _awsSecretKey = awsConfig?.SecretKey;
 
-            // ±_™¨ Json object ≥B≤z
+            // Â∑¢ÁãÄ Json object ËôïÁêÜ
             var configValue = configBll.GetConfigValue<dynamic>("LicenseReport");
             string jsonString = JsonConvert.SerializeObject(configValue);
             var configResult = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, LicenseReportConfig>>>(jsonString);

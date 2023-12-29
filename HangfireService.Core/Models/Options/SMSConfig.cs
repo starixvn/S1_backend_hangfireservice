@@ -9,6 +9,8 @@
         public string Key2 { get; set; }
         public int MiniMumLimit { get; set; }
         public string CheckUrl { get; set; }
+        public string ApiKey { get; set; }
+        public string ApiSecret { get; set; }
     }
 
     public class NxCloudSmsConfig : SmsWithOtpBaseConfig { }

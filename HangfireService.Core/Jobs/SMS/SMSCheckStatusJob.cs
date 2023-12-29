@@ -1,13 +1,10 @@
 ﻿using System.ComponentModel;
 using System.Net;
-
 using Amazon.CloudWatchLogs.Model;
-
 using Hangfire;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using Hangfire.Server;
-
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Helpers;
 using HangfireService.Core.Jobs.Interfaces;
@@ -15,11 +12,8 @@ using HangfireService.Core.Models;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Jobs;
-
 using Microsoft.Extensions.Logging;
-
 using Newtonsoft.Json;
-
 using Serilog.Context;
 
 namespace HangfireService.Core.Jobs.SMS
@@ -27,7 +21,7 @@ namespace HangfireService.Core.Jobs.SMS
     [ManagementPage("SMSCheckStatus", queue: "check")]
     public class SMSCheckStatusJob : BaseJob, IScheduledJob
     {
-        protected readonly HttpHelper _httpHelper;
+        private readonly HttpHelper _httpHelper;
         private readonly SecureHelper _secureHelper;
         private readonly AWSCloudWatchLogsHelper _awsSnsHelper;
 
@@ -101,13 +95,19 @@ namespace HangfireService.Core.Jobs.SMS
             try
             {
                 var smsOption = GetSkyLineOption(otpCheck);
-                var account = smsOption.Key1;
-                var passWord = smsOption.Key2;
-                var dateTime = DateTime.UtcNow.AddHours(8).ToString("yyyyMMddHHmmss");
-                var sign = _secureHelper.ToMD5($"{account}{passWord}{dateTime}");
-                var url = $"{smsOption.CheckUrl}?account={account}&sign={sign}&datetime={dateTime}&ids={otpCheck.Request_id}";
+                var timestamp = new DateTimeOffset(DateTime.Now).ToOffset(new TimeSpan(8, 0, 0)).ToUnixTimeSeconds();
+                var sign = _secureHelper.ToMD5($"{smsOption.ApiKey}{smsOption.ApiSecret}{timestamp}");
+                var url = $"{smsOption.CheckUrl}?appId={smsOption.Key1}&msgIds={otpCheck.Request_id}";
 
-                using var result = await _httpHelper.GetClient().GetAsync(url);
+                var headerParams = new Dictionary<string, string>
+                {
+                    { "content-type", "application/json" },
+                    { "Sign", sign },
+                    { "Timestamp", timestamp.ToString() },
+                    { "Api-Key", smsOption.ApiKey },
+                };
+                
+                using var result = await _httpHelper.HttpGetAsync(url ,headerParams , null);
                 if (result.StatusCode != HttpStatusCode.OK)
                 {
                     _logger.LogError($"SkyLine httpResponse error URL : {url}  StatusCode: {result.StatusCode}");
