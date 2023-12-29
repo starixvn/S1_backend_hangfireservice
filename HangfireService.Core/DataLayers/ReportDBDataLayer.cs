@@ -211,7 +211,7 @@ namespace HangfireService.Core.DataLayers
         public IEnumerable<CurrencyTimeZone> GetCurrencyTimeZone()
         {
             var result = _dbClient.Query<CurrencyTimeZone>("Service_CurrencyTimeZone_Get");
-            return result;            
+            return result;
         }
 
         public IEnumerable<BigWin> GetBigWin(int siteId, int currencyId, DateTime startTime, DateTime endTime, IEnumerable<int> iTpCategoryList)

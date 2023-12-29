@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
-
+using System.Web;
 using HangfireService.Core.Models.Options;
 
 using Microsoft.Extensions.Logging;
@@ -12,27 +12,26 @@ namespace HangfireService.Core.Helpers
 {
     public class HttpHelper
     {
-        private readonly HttpClient client;
+        private readonly HttpClient _client;
         private readonly ILogger<HttpHelper> _logger;
-        public readonly string _proxyHost;
-        public readonly int _proxyPort;
+        private readonly string _proxyHost;
+        private readonly int _proxyPort;
 
         public HttpHelper(IServiceProvider provider)
         {
             var clientFactory = provider.GetRequiredService<IHttpClientFactory>();
             _logger = provider.GetRequiredService<ILogger<HttpHelper>>();
-            var configPrefixHelper = provider.GetRequiredService<ConfigPrefixHelper>();
-            var proxyConfig = provider.GetRequiredService<ConfigBLL>().GetConfigValue<ProxyConfig>(configPrefixHelper.ProxySetting);
+            var proxyConfig = provider.GetRequiredService<ConfigBLL>().GetConfigValue<ProxyConfig>("ProxySetting");
 
             _proxyHost = proxyConfig.ProxyHost;
             _proxyPort = proxyConfig.ProxyPort;
 
-            client = _proxyHost != null
+            _client = _proxyHost != null
                 ? clientFactory.CreateClient("with_proxy")
                 : clientFactory.CreateClient();
         }
 
-        public HttpClient GetClient() => client;
+        public HttpClient GetClient() => _client;
 
         public HttpClient GetClientWithHandler(HttpClientHandler handler) => new HttpClient(handler);
 
@@ -147,5 +146,44 @@ namespace HangfireService.Core.Helpers
             return response;
 
         }
+        
+        public async Task<HttpResponseMessage> HttpGetAsync(string url, Dictionary<string, string> headerParams, string contentType)
+        {
+            HttpClientHandler handler;
+            if (!string.IsNullOrEmpty(_proxyHost))
+            {
+                handler = new HttpClientHandler
+                {
+                    Proxy = new WebProxy(_proxyHost, _proxyPort),
+                    UseProxy = true,
+                };
+            }
+            else
+            {
+                handler = new HttpClientHandler();
+            }
+
+            using var client = new HttpClient(handler);
+            if (contentType != null)
+            {
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(contentType));
+            }
+
+            if (headerParams != null)
+            {
+                foreach (var param in headerParams)
+                {
+                    client.DefaultRequestHeaders.Add(param.Key, param.Value);
+                }
+            }
+
+            LogContext.PushProperty("HttpHelper.Request.URL", url);
+            using var data = new HttpRequestMessage(HttpMethod.Get, url);
+            data.Content = new StringContent("", Encoding.UTF8, contentType);
+            var response = await client.SendAsync(data);
+            _logger.LogInformation($"HttpHelper.Request.Response:{response.Content.ReadAsStringAsync().Result}");
+            return response;
+        }
+        
     }
 }

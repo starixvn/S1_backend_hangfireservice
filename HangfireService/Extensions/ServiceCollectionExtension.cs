@@ -104,15 +104,14 @@ namespace HangfireService.Extensions
                 .AddSingleton<AffiliateApi>()
                 .AddSingleton<UpdateAffiliateInfoService>()
                 .AddSingleton<ConfigService>()
-                .AddSingleton<ConfigBLL>()
-                .AddSingleton<ConfigPrefixHelper>();
+                .AddSingleton<ConfigBLL>();
         }
 
         public static IServiceCollection RegisterHttpClient(this IServiceCollection services)
         {
             var provider = services.BuildServiceProvider();
-            var configPrefixHelper = provider.GetRequiredService<ConfigPrefixHelper>();
-            var proxyConfig = provider.GetRequiredService<ConfigBLL>().GetConfigValue<ProxyConfig>(configPrefixHelper.ProxySetting);
+
+            var proxyConfig = provider.GetRequiredService<ConfigBLL>().GetConfigValue<ProxyConfig>("ProxySetting");
             var proxyHost = proxyConfig.ProxyHost;
             var proxyPort = proxyConfig.ProxyPort;
 
