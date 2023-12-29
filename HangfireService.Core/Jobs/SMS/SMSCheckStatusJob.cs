@@ -1,13 +1,10 @@
 ﻿using System.ComponentModel;
 using System.Net;
-
 using Amazon.CloudWatchLogs.Model;
-
 using Hangfire;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using Hangfire.Server;
-
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Helpers;
 using HangfireService.Core.Jobs.Interfaces;
@@ -15,11 +12,8 @@ using HangfireService.Core.Models;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Jobs;
-
 using Microsoft.Extensions.Logging;
-
 using Newtonsoft.Json;
-
 using Serilog.Context;
 
 namespace HangfireService.Core.Jobs.SMS
@@ -27,7 +21,7 @@ namespace HangfireService.Core.Jobs.SMS
     [ManagementPage("SMSCheckStatus", queue: "check")]
     public class SMSCheckStatusJob : BaseJob, IScheduledJob
     {
-        protected readonly HttpHelper _httpHelper;
+        private readonly HttpHelper _httpHelper;
         private readonly SecureHelper _secureHelper;
         private readonly AWSCloudWatchLogsHelper _awsSnsHelper;
 
@@ -101,13 +95,18 @@ namespace HangfireService.Core.Jobs.SMS
             try
             {
                 var smsOption = GetSkyLineOption(otpCheck);
-                var account = smsOption.Key1;
-                var passWord = smsOption.Key2;
-                var dateTime = DateTime.UtcNow.AddHours(8).ToString("yyyyMMddHHmmss");
-                var sign = _secureHelper.ToMD5($"{account}{passWord}{dateTime}");
-                var url = $"{smsOption.CheckUrl}?account={account}&sign={sign}&datetime={dateTime}&ids={otpCheck.Request_id}";
+                var timestamp = new DateTimeOffset(DateTime.Now).ToOffset(new TimeSpan(8, 0, 0)).ToUnixTimeSeconds();
+                var sign = _secureHelper.ToMD5($"{smsOption.ApiKey}{smsOption.ApiSecret}{timestamp}");
+                var url = $"{smsOption.CheckUrl}?appId={smsOption.Key1}&msgIds={otpCheck.Request_id}";
 
-                using var result = await _httpHelper.GetClient().GetAsync(url);
+                var headerParams = new Dictionary<string, string>
+                {
+                    { "Sign", sign },
+                    { "Timestamp", timestamp.ToString() },
+                    { "Api-Key", smsOption.ApiKey },
+                };
+                
+                using var result = await _httpHelper.HttpGetAsync(url ,headerParams , "application/json");
                 if (result.StatusCode != HttpStatusCode.OK)
                 {
                     _logger.LogError($"SkyLine httpResponse error URL : {url}  StatusCode: {result.StatusCode}");
@@ -115,7 +114,7 @@ namespace HangfireService.Core.Jobs.SMS
                 }
 
                 var contentResult = await result.Content.ReadAsStringAsync();
-                var resultResp = JsonConvert.DeserializeObject<SKYLineSMSResult>(contentResult);
+                var resultResp = JsonConvert.DeserializeObject<SKYLineOTPResult>(contentResult);
 
                 if (resultResp.status != 0)
                 {
@@ -123,21 +122,21 @@ namespace HangfireService.Core.Jobs.SMS
                     return otpCheck.GetResult(OTPStatus.SendToProvider);
                 }
 
-                var smsResult = resultResp.array?.FirstOrDefault();
-                if (smsResult == null || smsResult[0] != otpCheck.Request_id) //回傳的array找不到同一個Request_id
+                var smsResult = resultResp.array.FirstOrDefault(x=>x.msgId == otpCheck.Request_id);
+                if (smsResult == null) //回傳的array找不到同一個Request_id
                 {
                     return otpCheck.GetResult(OTPStatus.Fail, $" || SkyLine no found Request_id:{otpCheck.Request_id}.");
                 }
 
-                var status = smsResult[3] switch
+                var status = smsResult.status switch
                 {
-                    "0" => OTPStatus.CustomerVerified, //发送成功              
-                    "1" => OTPStatus.SendToProvider, //未发送
-                    "2" => OTPStatus.SendToProvider, //正在发送
+                    "0" => OTPStatus.SendToCustomer, //发送成功              
+                    "1" => OTPStatus.Fail, //未发送
+                    "-1" => OTPStatus.SendToProvider, //正在发送
                     _ => OTPStatus.Fail,
                 };
 
-                return otpCheck.GetResult(status, $"check status is {smsResult[3]}");
+                return otpCheck.GetResult(status, $"check status is {smsResult.status}");
             }
             catch (Exception ex)
             {
