@@ -179,6 +179,7 @@ namespace HangfireService.Core.Helpers
 
             LogContext.PushProperty("HttpHelper.Request.URL", url);
             using var data = new HttpRequestMessage(HttpMethod.Get, url);
+            data.Content = new StringContent("", Encoding.UTF8, contentType);
             var response = await client.SendAsync(data);
             _logger.LogInformation($"HttpHelper.Request.Response:{response.Content.ReadAsStringAsync().Result}");
             return response;

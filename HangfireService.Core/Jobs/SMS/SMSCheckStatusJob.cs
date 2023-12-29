@@ -101,13 +101,12 @@ namespace HangfireService.Core.Jobs.SMS
 
                 var headerParams = new Dictionary<string, string>
                 {
-                    { "content-type", "application/json" },
                     { "Sign", sign },
                     { "Timestamp", timestamp.ToString() },
                     { "Api-Key", smsOption.ApiKey },
                 };
                 
-                using var result = await _httpHelper.HttpGetAsync(url ,headerParams , null);
+                using var result = await _httpHelper.HttpGetAsync(url ,headerParams , "application/json");
                 if (result.StatusCode != HttpStatusCode.OK)
                 {
                     _logger.LogError($"SkyLine httpResponse error URL : {url}  StatusCode: {result.StatusCode}");
@@ -115,7 +114,7 @@ namespace HangfireService.Core.Jobs.SMS
                 }
 
                 var contentResult = await result.Content.ReadAsStringAsync();
-                var resultResp = JsonConvert.DeserializeObject<SKYLineSMSResult>(contentResult);
+                var resultResp = JsonConvert.DeserializeObject<SKYLineOTPResult>(contentResult);
 
                 if (resultResp.status != 0)
                 {
@@ -123,21 +122,21 @@ namespace HangfireService.Core.Jobs.SMS
                     return otpCheck.GetResult(OTPStatus.SendToProvider);
                 }
 
-                var smsResult = resultResp.array?.FirstOrDefault();
-                if (smsResult == null || smsResult[0] != otpCheck.Request_id) //回傳的array找不到同一個Request_id
+                var smsResult = resultResp.array.FirstOrDefault(x=>x.msgId == otpCheck.Request_id);
+                if (smsResult == null) //回傳的array找不到同一個Request_id
                 {
                     return otpCheck.GetResult(OTPStatus.Fail, $" || SkyLine no found Request_id:{otpCheck.Request_id}.");
                 }
 
-                var status = smsResult[3] switch
+                var status = smsResult.status switch
                 {
-                    "0" => OTPStatus.CustomerVerified, //发送成功              
-                    "1" => OTPStatus.SendToProvider, //未发送
-                    "2" => OTPStatus.SendToProvider, //正在发送
+                    "0" => OTPStatus.SendToCustomer, //发送成功              
+                    "1" => OTPStatus.Fail, //未发送
+                    "-1" => OTPStatus.SendToProvider, //正在发送
                     _ => OTPStatus.Fail,
                 };
 
-                return otpCheck.GetResult(status, $"check status is {smsResult[3]}");
+                return otpCheck.GetResult(status, $"check status is {smsResult.status}");
             }
             catch (Exception ex)
             {
