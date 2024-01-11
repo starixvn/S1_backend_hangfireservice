@@ -95,6 +95,7 @@ namespace HangfireService.Core.Jobs
             }
             catch (Exception ex)
             {
+                BackgroundJob.Schedule(() => ExecuteAsync(jobName, jobOption, null, null), TimeSpan.FromSeconds(15));
                 message += $" || {ex.Message}";
                 _logger.LogError(ex, message);
             }
