@@ -30,6 +30,7 @@ namespace HangfireService.Core.Jobs
 
             foreach (var jobGroup in _jobGroups)
             {
+                var queue = jobGroup.Key.ToLower();
                 foreach (var option in jobGroup.Value)
                 {
                     if (option.Enable)
@@ -43,11 +44,16 @@ namespace HangfireService.Core.Jobs
                               recurringJobId: option.JobName,
                               methodCall: () => job.ExecuteAsync(option.JobName, option, null, null),
                               cronExpression: option.Cron,
-                              queue: jobGroup.Key.ToLower(),
+                              queue: queue,
                               timeZone: TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time"));
 
                             //都先設定為暫停狀態
                             Pause(option.JobName);
+                      
+                            if (queue == "archive")
+                            {
+                                BackgroundJob.Schedule(() => job.ExecuteAsync(option.JobName, option, null, null), TimeSpan.FromSeconds(10));
+                            }                        
                         }
                     }
                 }
@@ -59,14 +65,8 @@ namespace HangfireService.Core.Jobs
             {
                 AllDelayStart();
             }
-
         }
 
-        public static void PauseThenRestart(string jobName, int pauseHours, string reason)
-        {
-            Pause(jobName);
-            BackgroundJob.Schedule(() => RestartByHours(jobName, pauseHours, reason), TimeSpan.FromHours(pauseHours));
-        }
         public static void Pause(string jobName)
         {
             using var connection = JobStorage.Current.GetConnection();

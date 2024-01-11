@@ -32,8 +32,6 @@ namespace HangfireService.Core.Jobs
 
         private static List<JobOption> _archiveJobList;
 
-        private static readonly ConcurrentDictionary<string, string> _JobStateList = new();
-
         public ArchiveJob(IServiceProvider provider) : base(provider)
         {
             LogContext.PushProperty("ClassName", GetType().Name);
@@ -57,18 +55,11 @@ namespace HangfireService.Core.Jobs
 
                 message += $"{jobName} || ";
                 _logger.LogInformation(message + context.BackgroundJob.Id);
-                if (IsProcessing(jobName, context.BackgroundJob.Id, out var lastjobId))
-                {
-                    message += $"{lastjobId} is Processing.";
-                    _logger.LogWarning(message);
-                    return message;
-                }
-                // 暫停Job
-                MyJobManager.Pause(jobName);
 
                 var option = JsonConvert.DeserializeObject<ArchiveOption>(jobOption.Parameters);
-                var archiveList = _reportDBDataLayer.GetArchiveList(option.GetSP, option.LiminNum);
 
+                //執行Archive作業
+                var archiveList = _reportDBDataLayer.GetArchiveList(option.GetSP, option.LiminNum);
                 var success = 0;
                 Parallel.ForEach(archiveList,
                     new ParallelOptions() { MaxDegreeOfParallelism = option.TaskCount },
@@ -79,10 +70,15 @@ namespace HangfireService.Core.Jobs
                         cancellationToken.ThrowIfCancellationRequested();
                     });
 
-                if (PauseCheck(archiveList.Count(), option.LiminNum, success, out var reason))
+                //判斷是否完成或啟動下一次Job
+                if (CompleteCheck(archiveList.Count(), option.LiminNum, success, out var reason))
                 {
                     message += $"{reason} || ";
-                    Pause(jobName, reason, option.PauseHours);
+                    Complete(jobName);
+                }
+                else
+                {
+                    BackgroundJob.Schedule(() => ExecuteAsync(jobName, jobOption, null, null), TimeSpan.FromSeconds(5));
                 }
 
                 if (success > 0)
@@ -101,12 +97,6 @@ namespace HangfireService.Core.Jobs
             {
                 message += $" || {ex.Message}";
                 _logger.LogError(ex, message);
-            }
-            finally
-            {
-                // 重新啟動Job
-                MyJobManager.Start(jobName);
-                _JobStateList.TryRemove(jobName, out _);
             }
             return message;
         }
@@ -196,18 +186,7 @@ namespace HangfireService.Core.Jobs
             }
         }
 
-        private static bool IsProcessing(string jobName, string jobId, out string lastjobId)
-        {
-            if (_JobStateList.TryGetValue(jobName, out lastjobId))
-            {
-                return true;
-            }
-
-            _JobStateList.TryAdd(jobName, jobId);
-            return false;
-        }
-
-        private static bool PauseCheck(int archiveData, int liminNum, int success, out string reason)
+        private static bool CompleteCheck(int archiveData, int liminNum, int success, out string reason)
         {
             reason = string.Empty;
             //小於批次數量暫停
@@ -227,10 +206,9 @@ namespace HangfireService.Core.Jobs
             return false;
         }
 
-        private void Pause(string jobName, string reason, int pauseHours)
+        private void Complete(string jobName)
         {
-            _logger.LogWarning($"{jobName} restart after {pauseHours} hours, because {reason}.");
-            MyJobManager.PauseThenRestart(jobName, pauseHours, reason);
+            _logger.LogWarning($"{jobName} today archive data complete.");
         }
     }
 }
