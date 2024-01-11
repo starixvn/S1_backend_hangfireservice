@@ -63,6 +63,8 @@ namespace HangfireService.Core.Jobs
                     _logger.LogWarning(message);
                     return message;
                 }
+                // 暫停Job
+                MyJobManager.Pause(jobName);
 
                 var option = JsonConvert.DeserializeObject<ArchiveOption>(jobOption.Parameters);
                 var archiveList = _reportDBDataLayer.GetArchiveList(option.GetSP, option.LiminNum);
@@ -102,6 +104,8 @@ namespace HangfireService.Core.Jobs
             }
             finally
             {
+                // 重新啟動Job
+                MyJobManager.Start(jobName);
                 _JobStateList.TryRemove(jobName, out _);
             }
             return message;
