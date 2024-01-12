@@ -78,7 +78,7 @@ namespace HangfireService.Core.Jobs
                 }
                 else
                 {
-                    BackgroundJob.Schedule(() => ExecuteAsync(jobName, jobOption, null, null), TimeSpan.FromSeconds(5));
+                    BackgroundJob.Schedule(() => ExecuteAsync(jobName, jobOption, null, null), TimeSpan.FromSeconds(1));
                 }
 
                 if (success > 0)
