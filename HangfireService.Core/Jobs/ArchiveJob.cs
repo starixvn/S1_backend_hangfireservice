@@ -55,8 +55,16 @@ namespace HangfireService.Core.Jobs
 
                 message += $"{jobName} || ";
                 _logger.LogInformation(message + context.BackgroundJob.Id);
-
+             
                 var option = JsonConvert.DeserializeObject<ArchiveOption>(jobOption.Parameters);
+                
+                // 檢查是否在DB離峰時間
+                var taipeiLocalTime = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(8)).DateTime;
+                if (!taipeiLocalTime.IsBetween(option.SafeRangeStartTime, option.SafeRangeEndTime))
+                {
+                    message += "Database is busy.";
+                    return message;
+                }
 
                 //執行Archive作業
                 var archiveList = _reportDBDataLayer.GetArchiveList(option.GetSP, option.LiminNum);
