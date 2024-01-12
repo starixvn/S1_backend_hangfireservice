@@ -26,11 +26,13 @@ namespace HangfireService.Core.Jobs
 
         public static void AddRecurringJob(IServiceProvider provider)
         {
+            var webHostEnvironment = provider.GetRequiredService<IWebHostEnvironment>();
             var jobManager = new RecurringJobManager();
 
             foreach (var jobGroup in _jobGroups)
             {
                 var queue = jobGroup.Key.ToLower();
+                var mins = 0;
                 foreach (var option in jobGroup.Value)
                 {
                     if (option.Enable)
@@ -49,18 +51,19 @@ namespace HangfireService.Core.Jobs
 
                             //都先設定為暫停狀態
                             Pause(option.JobName);
-                      
-                            if (queue == "archive")
+
+                            //避免archiveJob中斷，所以需要先啟動一次
+                            if (queue == "archive" && !webHostEnvironment.EnvironmentName.Equals("Local"))
                             {
-                                BackgroundJob.Schedule(() => job.ExecuteAsync(option.JobName, option, null, null), TimeSpan.FromSeconds(10));
+                                BackgroundJob.Schedule(() => job.ExecuteAsync(option.JobName, option, null, null), TimeSpan.FromMinutes(mins));
+                                mins += 1;
                             }                        
                         }
                     }
                 }
             }
 
-            //全部job延遲時啟動
-            var webHostEnvironment = provider.GetRequiredService<IWebHostEnvironment>();
+            //全部job延遲時啟動    
             if (!webHostEnvironment.EnvironmentName.Equals("Local"))
             {
                 AllDelayStart();
