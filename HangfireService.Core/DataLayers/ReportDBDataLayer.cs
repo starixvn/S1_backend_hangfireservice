@@ -27,6 +27,11 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Query(sp, parameters: new { LIMINNUM = liminNum });
         }
 
+        public IEnumerable<dynamic> GetArchiveList(string sp, int liminNum, DateTime archiveTime)
+        {
+            return _dbClient.Query(sp, parameters: new { LIMINNUM = liminNum, ArchiveTime = archiveTime });
+        }
+
         public IEnumerable<LicenseReport> GetBalanceForLicense(int siteId, DateTime time, string currencyIds)
         {
             return _dbClient.Query<LicenseReport>("Service_BalanceForLicense_Get_V2", parameters: new { _Time = time, _SiteId = siteId, _CurrencyIds = currencyIds });
