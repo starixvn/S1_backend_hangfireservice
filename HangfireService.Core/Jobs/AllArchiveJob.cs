@@ -1,14 +1,8 @@
-﻿using System.Collections.Concurrent;
-using System.ComponentModel;
-
-using Google.Protobuf.WellKnownTypes;
+﻿using System.ComponentModel;
 
 using Hangfire;
 using Hangfire.Dashboard.Management.Metadata;
-using Hangfire.Dashboard.Management.Pages;
-using Hangfire.Dashboard.Management.Support;
 using Hangfire.Server;
-using Hangfire.Storage.Monitoring;
 
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Extensions;
@@ -48,10 +42,19 @@ namespace HangfireService.Core.Jobs
         [DisplayName("{0}")]
         public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
         {
-            var message = string.Empty;
+            var lockKey = $"AllArchiveJob";
+            var lockValue = context.BackgroundJob.Id; // 每次取鎖使用唯一值，確保為同一個執行序所執行
+            var lockExpiry = TimeSpan.FromMinutes(3); //lock 3 mins   
+            var message = $"{jobName} || ";
+
+            if (!_redisHelper.TryCreateLock(lockKey, lockValue, lockExpiry))
+            {
+                message += "Job is lock.";
+                return message;
+            }
+
             try
             {
-                message += $"{jobName} || ";
                 var option = JsonConvert.DeserializeObject<AllArchiveOption>(jobOption.Parameters);
 
                 // 檢查是否在DB離峰時間
@@ -74,9 +77,9 @@ namespace HangfireService.Core.Jobs
                 var success = 0;
                 Parallel.ForEach(
                     archiveList,
-                    new ParallelOptions() 
-                    { 
-                        MaxDegreeOfParallelism = option.TaskCount 
+                    new ParallelOptions()
+                    {
+                        MaxDegreeOfParallelism = option.TaskCount
                     },
                     async (data) =>
                     {
@@ -85,10 +88,10 @@ namespace HangfireService.Core.Jobs
                         cancellationToken.ThrowIfCancellationRequested();
                     });
 
-                //判斷是否完成或啟動下一次Job
+                //判斷是否啟動下一次Job
                 if (isContinue)
                 {
-                    BackgroundJob.Schedule(() => ExecuteAsync(jobName, jobOption, null, null), TimeSpan.FromSeconds(1));
+                    BackgroundJob.Enqueue(() => ExecuteAsync(jobName, jobOption, null, null));
                 }
 
                 if (success > 0)
@@ -96,7 +99,7 @@ namespace HangfireService.Core.Jobs
                     message += $"{archiveDetail.ArchiveName} archive {success} data complete.";
                 }
 
-                _logger.LogInformation(message);
+                _logger.LogInformation(message);                
             }
             catch (OperationCanceledException ex)
             {
@@ -109,6 +112,10 @@ namespace HangfireService.Core.Jobs
                 message += $" || {ex.Message}";
                 _logger.LogError(ex, message);
             }
+            finally
+            {
+                _redisHelper.UnLock(lockKey, lockValue);
+            }
             return message;
         }
 
@@ -117,10 +124,10 @@ namespace HangfireService.Core.Jobs
             isContinue = false;
             var redisKey = "GetArchiveData";
             var redisCacheTime = TimeSpan.FromMinutes(5);
-            
+
             var checkCount = option.LiminNum / 10; //避免有資料異常卡住，用此數量判斷是否還有資料沒搬完            
             try
-            {        
+            {
                 // 先檢查Redis有沒有正在搬移的資料
                 if (_redisHelper.KeyExists(redisKey, RedisDataBase.Shared))
                 {
