@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics;
 
 using Hangfire;
 using Hangfire.Dashboard.Management.Metadata;
@@ -42,6 +43,7 @@ namespace HangfireService.Core.Jobs
         [DisplayName("{0}")]
         public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
         {
+            var sw = Stopwatch.StartNew();
             var lockKey = $"AllArchiveJob";
             var lockValue = context.BackgroundJob.Id; // 每次取鎖使用唯一值，確保為同一個執行序所執行
             var lockExpiry = TimeSpan.FromMinutes(3); //lock 3 mins   
@@ -49,6 +51,8 @@ namespace HangfireService.Core.Jobs
 
             if (!_redisHelper.TryCreateLock(lockKey, lockValue, lockExpiry))
             {
+                // 三分鐘解鎖過後再試
+                BackgroundJob.Schedule(() => ExecuteAsync(jobName, jobOption, null, null), TimeSpan.FromMinutes(3));
                 message += "Job is lock.";
                 return message;
             }
@@ -96,7 +100,7 @@ namespace HangfireService.Core.Jobs
 
                 if (success > 0)
                 {
-                    message += $"{archiveDetail.ArchiveName} archive {success} data complete.";
+                    message += $"{archiveDetail.ArchiveName} archive {success} data complete. TotalSeconds:{sw.Elapsed.TotalSeconds}.";
                 }
 
                 _logger.LogInformation(message);                
