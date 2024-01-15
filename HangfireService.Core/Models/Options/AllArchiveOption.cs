@@ -51,5 +51,6 @@
         public string InsertSP { get; set; } = string.Empty;
         public string DeleteSP { get; set; } = string.Empty;
         public int ArchiveDays { get; set; } = 7;
+        public string ArchiveType { get; set; }
     }
 }
