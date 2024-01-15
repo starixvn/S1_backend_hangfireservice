@@ -50,14 +50,7 @@ namespace HangfireService.Core.Jobs
                               timeZone: TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time"));
 
                             //都先設定為暫停狀態
-                            Pause(option.JobName);
-
-                            //避免archiveJob中斷，所以需要先啟動一次
-                            if (queue == "archive" && !webHostEnvironment.EnvironmentName.Equals("Local"))
-                            {
-                                BackgroundJob.Schedule(() => job.ExecuteAsync(option.JobName, option, null, null), TimeSpan.FromMinutes(mins));
-                                mins += 1;
-                            }                        
+                            Pause(option.JobName);                    
                         }
                     }
                 }
