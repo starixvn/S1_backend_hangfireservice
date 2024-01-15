@@ -46,13 +46,11 @@ namespace HangfireService.Core.Jobs
             var sw = Stopwatch.StartNew();
             var lockKey = $"AllArchiveJob";
             var lockValue = context.BackgroundJob.Id; // 每次取鎖使用唯一值，確保為同一個執行序所執行
-            var lockExpiry = TimeSpan.FromMinutes(3); //lock 3 mins   
+            var lockExpiry = TimeSpan.FromMinutes(2); //lock 2 mins   
             var message = $"{jobName} || ";
 
             if (!_redisHelper.TryCreateLock(lockKey, lockValue, lockExpiry))
-            {
-                // 三分鐘解鎖過後再試
-                BackgroundJob.Schedule(() => ExecuteAsync(jobName, jobOption, null, null), TimeSpan.FromMinutes(3));
+            {                                
                 message += "Job is lock.";
                 return message;
             }
@@ -169,7 +167,7 @@ namespace HangfireService.Core.Jobs
         private IEnumerable<dynamic> GetArchiveList(AllArchiveOption option, ArchiveDetail archiveDetail)
         {
             var archiveTime = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(8)).AddDays(archiveDetail.ArchiveDays * -1);
-            var time = archiveDetail.ArchiveType == "DateTime" ? archiveTime.DateTime : archiveTime.Date;
+            var time = archiveDetail.ArchiveType == "Date" ? archiveTime.Date : archiveTime.DateTime;
             var archiveList = _reportDBDataLayer.GetArchiveList(archiveDetail.GetSP, option.LiminNum, time);
             return archiveList;
         }
