@@ -49,6 +49,8 @@ namespace HangfireService.Core.Jobs
 
             if (!_redisHelper.TryCreateLock(lockKey, lockValue, lockExpiry))
             {
+                // 三分鐘解鎖過後再試
+                BackgroundJob.Schedule(() => ExecuteAsync(jobName, jobOption, null, null), TimeSpan.FromMinutes(3));
                 message += "Job is lock.";
                 return message;
             }
