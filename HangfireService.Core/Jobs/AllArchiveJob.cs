@@ -158,7 +158,8 @@ namespace HangfireService.Core.Jobs
         private IEnumerable<dynamic> GetArchiveList(AllArchiveOption option, ArchiveDetail archiveDetail)
         {
             var archiveTime = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(8)).AddDays(archiveDetail.ArchiveDays * -1);
-            var archiveList = _reportDBDataLayer.GetArchiveList(archiveDetail.GetSP, option.LiminNum, archiveTime.DateTime);
+            var time = archiveDetail.ArchiveType == "DateTime" ? archiveTime.DateTime : archiveTime.Date;
+            var archiveList = _reportDBDataLayer.GetArchiveList(archiveDetail.GetSP, option.LiminNum, time);
             return archiveList;
         }
 
