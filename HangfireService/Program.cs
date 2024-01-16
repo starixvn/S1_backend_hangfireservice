@@ -65,4 +65,9 @@ app.UseHangfireDashboard(pathMatch: "", options: new DashboardOptions()
 });
 
 MyJobManager.AddRecurringJob(app.Services);
+
+var minWorkers = Environment.ProcessorCount * 8;
+var minIOCPs = Environment.ProcessorCount * 8;
+ThreadPool.SetMinThreads(minWorkers, minIOCPs);
+
 app.Run();

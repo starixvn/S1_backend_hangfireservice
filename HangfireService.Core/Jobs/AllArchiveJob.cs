@@ -44,15 +44,14 @@ namespace HangfireService.Core.Jobs
         public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
         {
             var sw = Stopwatch.StartNew();
+            var message = $"{jobName} ||";
+
             var lockKey = $"AllArchiveJob";
             var lockValue = context.BackgroundJob.Id; // 每次取鎖使用唯一值，確保為同一個執行序所執行
             var lockExpiry = TimeSpan.FromMinutes(2); //lock 2 mins   
-            var message = $"{jobName} || ";
-
             if (!_redisHelper.TryCreateLock(lockKey, lockValue, lockExpiry))
             {                                
-                message += "Job is lock.";
-                return message;
+                return EndJob($"{message} Job is lock.");
             }
 
             try
@@ -63,16 +62,14 @@ namespace HangfireService.Core.Jobs
                 var taipeiLocalTime = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(8)).DateTime;
                 if (!taipeiLocalTime.IsBetween(option.SafeRangeStartTime, option.SafeRangeEndTime))
                 {
-                    message += "Database is busy.";
-                    return message;
+                    return EndJob($"{message} Database is busy.");
                 }
 
                 // 判斷目前要搬哪個Archive
                 var (archiveDetail, archiveList) = GetArchiveData(option, out bool isContinue);
                 if (archiveDetail == null)
                 {
-                    message += "archive data complete.";
-                    return message;
+                    return EndJob($"{message} archive data complete.");
                 }
 
                 //執行Archive作業
@@ -99,9 +96,7 @@ namespace HangfireService.Core.Jobs
                 if (success > 0)
                 {
                     message += $"{archiveDetail.ArchiveName} archive {success} data complete. TotalSeconds:{sw.Elapsed.TotalSeconds}.";
-                }
-
-                _logger.LogInformation(message);                
+                }                  
             }
             catch (OperationCanceledException ex)
             {
@@ -118,7 +113,13 @@ namespace HangfireService.Core.Jobs
             {
                 _redisHelper.UnLock(lockKey, lockValue);
             }
-            return message;
+            return EndJob(message);
+
+            string EndJob(string message)
+            {
+                _logger.LogInformation(message);
+                return message;
+            }
         }
 
         private (ArchiveDetail archiveDetail, IEnumerable<dynamic> archiveList) GetArchiveData(AllArchiveOption option, out bool isContinue)
