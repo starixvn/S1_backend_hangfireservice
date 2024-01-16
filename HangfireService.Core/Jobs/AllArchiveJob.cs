@@ -51,7 +51,7 @@ namespace HangfireService.Core.Jobs
             var lockExpiry = TimeSpan.FromMinutes(2); //lock 2 mins   
             if (!_redisHelper.TryCreateLock(lockKey, lockValue, lockExpiry))
             {
-                BackgroundJob.Schedule(() => ExecuteAsync(jobName, jobOption, null, null), TimeSpan.FromMinutes(2));
+                BackgroundJob.Schedule(() => ExecuteAsync(jobName, jobOption, null, null), lockExpiry);
                 return EndJob($"{message} Job is lock.");
             }
 
