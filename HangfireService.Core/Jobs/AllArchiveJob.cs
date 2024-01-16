@@ -140,6 +140,7 @@ namespace HangfireService.Core.Jobs
                     if (archiveList.Count() > checkCount)
                     {
                         isContinue = true;
+                        _redisHelper.StringSet(redisKey, archiveName, redisCacheTime, RedisDataBase.Shared);
                         return (archiveDetail, archiveList);
                     }
                 }
