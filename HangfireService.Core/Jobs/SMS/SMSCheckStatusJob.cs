@@ -94,6 +94,12 @@ namespace HangfireService.Core.Jobs.SMS
         {
             try
             {
+                // SkyLine發送SMS走舊的domain發送，舊的domain無法正常檢查，先改成Pass
+                if (string.IsNullOrWhiteSpace(otpCheck.OTPNum))
+                {
+                    return otpCheck.GetResult(OTPStatus.SendToCustomer);
+                }
+
                 var smsOption = GetSkyLineOption(otpCheck);
                 var timestamp = new DateTimeOffset(DateTime.Now).ToOffset(new TimeSpan(8, 0, 0)).ToUnixTimeSeconds();
                 var sign = _secureHelper.ToMD5($"{smsOption.ApiKey}{smsOption.ApiSecret}{timestamp}");
