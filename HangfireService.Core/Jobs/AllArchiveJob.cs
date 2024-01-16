@@ -49,7 +49,7 @@ namespace HangfireService.Core.Jobs
             var lockKey = $"AllArchiveJob";
             var lockValue = context.BackgroundJob.Id; // 每次取鎖使用唯一值，確保為同一個執行序所執行
             var lockExpiry = TimeSpan.FromMinutes(2); //lock 2 mins   
-            if (!_redisHelper.TryCreateLock(lockKey, lockValue, lockExpiry))
+            if (!_redisHelper.TryCreateLock(lockKey, lockValue, lockExpiry, RedisDataBase.Shared))
             {                
                 return EndJob($"{message} Job is lock.");
             }
@@ -111,7 +111,7 @@ namespace HangfireService.Core.Jobs
             }
             finally
             {
-                _redisHelper.UnLock(lockKey, lockValue);
+                _redisHelper.UnLock(lockKey, lockValue, RedisDataBase.Shared);
             }
             return EndJob(message);
 
