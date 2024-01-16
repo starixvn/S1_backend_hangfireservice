@@ -50,7 +50,8 @@ namespace HangfireService.Core.Jobs
             var lockValue = context.BackgroundJob.Id; // 每次取鎖使用唯一值，確保為同一個執行序所執行
             var lockExpiry = TimeSpan.FromMinutes(2); //lock 2 mins   
             if (!_redisHelper.TryCreateLock(lockKey, lockValue, lockExpiry))
-            {                                
+            {
+                BackgroundJob.Schedule(() => ExecuteAsync(jobName, jobOption, null, null), TimeSpan.FromMinutes(2));
                 return EndJob($"{message} Job is lock.");
             }
 
