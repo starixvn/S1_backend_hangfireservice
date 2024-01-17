@@ -135,7 +135,7 @@ namespace HangfireService.Core.Jobs
                 if (_redisHelper.KeyExists(redisKey, RedisDataBase.Shared))
                 {
                     var archiveName = _redisHelper.StringGet(redisKey, RedisDataBase.Shared);
-                    var archiveDetail = option.ArchiveList.Find(i => i.ArchiveName == archiveName);
+                    var archiveDetail = option.ArchiveList.Find(i => i.ArchiveName == archiveName) ?? option.ArchiveList.First();
                     var archiveList = GetArchiveList(option, archiveDetail);
                     if (archiveList.Count() > checkCount)
                     {
