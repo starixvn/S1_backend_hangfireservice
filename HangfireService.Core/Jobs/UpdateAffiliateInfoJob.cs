@@ -11,6 +11,8 @@ using HangfireService.Core.Service;
 
 using Microsoft.Extensions.Logging;
 
+using Serilog.Context;
+
 namespace HangfireService.Core.Jobs
 {
     [ManagementPage("UpdateAffiliateInfoJob", queue: "member")]
@@ -20,6 +22,7 @@ namespace HangfireService.Core.Jobs
 
         public UpdateAffiliateInfoJob(IServiceProvider provider) : base(provider)
         {
+            LogContext.PushProperty("ClassName", GetType().Name);
             _updateAffiliateInfoService = provider.GetRequiredService<UpdateAffiliateInfoService>();
         }
 

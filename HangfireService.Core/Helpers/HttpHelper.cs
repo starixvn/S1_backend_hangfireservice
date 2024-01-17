@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Web;
+
 using HangfireService.Core.Models.Options;
 
 using Microsoft.Extensions.Logging;
@@ -146,7 +146,7 @@ namespace HangfireService.Core.Helpers
             return response;
 
         }
-        
+
         public async Task<HttpResponseMessage> HttpGetAsync(string url, Dictionary<string, string> headerParams, string contentType)
         {
             HttpClientHandler handler;
@@ -184,6 +184,6 @@ namespace HangfireService.Core.Helpers
             _logger.LogInformation($"HttpHelper.Request.Response:{response.Content.ReadAsStringAsync().Result}");
             return response;
         }
-        
+
     }
 }

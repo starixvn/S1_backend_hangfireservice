@@ -1,9 +1,11 @@
 ﻿using System.Data;
+
 using Dapper;
 
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
+
 using Newtonsoft.Json;
 
 namespace HangfireService.Core.DataLayers
@@ -20,11 +22,6 @@ namespace HangfireService.Core.DataLayers
         public IEnumerable<ThirdPartyModel> GetAllTpList()
         {
             return _dbClient.Query<ThirdPartyModel>("Service_TpList_GetAll");
-        }
-
-        public IEnumerable<dynamic> GetArchiveList(string sp, int liminNum)
-        {
-            return _dbClient.Query(sp, parameters: new { LIMINNUM = liminNum });
         }
 
         public IEnumerable<dynamic> GetArchiveList(string sp, int liminNum, DateTime archiveTime)
@@ -142,14 +139,10 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.QueryFirst<Customer>("Customer_Get", parameters: new { CustId });
         }
 
-        #region Statistical-Online Count
 
         public async Task<IEnumerable<OnlineCountDto>> GetOnlineCount()
             => await _dbClient.QueryAsync<OnlineCountDto>("Service_OnlineUsers_Get_V2", commandTimeout: 120);
 
-        #endregion
-
-        #region Statistical-Customer Auto Lock
 
         public async Task<IEnumerable<DormantSettingDto>> GetDormantSetting()
             => await _dbClient.QueryAsync<DormantSettingDto>("Service_DormantSetting_Get");
@@ -159,10 +152,12 @@ namespace HangfireService.Core.DataLayers
                parameters: new { SiteId = siteId, Day = days, StatusList = statusStr },
                commandTimeout: 180);
 
-        #endregion
+        public IEnumerable<dynamic> GetRelayData(string sp, object parameters, int timeoutSeconds)
+        {
+            return _dbClient.Query(sp, parameters: parameters, commandTimeout: timeoutSeconds);
+        }
 
-
-        public IEnumerable<LeaderboardModel> GetLeaderboardList(int lBCategoryId, int siteId, int currencyId, DateTime startTime, DateTime endTime , out string timezone  )
+        public IEnumerable<LeaderboardModel> GetLeaderboardList(int lBCategoryId, int siteId, int currencyId, DateTime startTime, DateTime endTime, out string timezone)
         {
             var p = new DynamicParameters();
             p.Add("LBCategoryId", lBCategoryId);
@@ -172,9 +167,9 @@ namespace HangfireService.Core.DataLayers
             p.Add("EndTime", endTime);
             p.Add("Timezone", direction: ParameterDirection.Output);
             var result = _dbClient.Query<LeaderboardModel>("Member_Leaderboard_Get_V2", p);
-            
+
             timezone = p.Get<string>("Timezone");
-            
+
             return result;
         }
 
@@ -190,11 +185,9 @@ namespace HangfireService.Core.DataLayers
             p.Add("EndTime", endTime);
             p.Add("TopNum", topNum);
             var result = _dbClient.Query<Leaderboard>("Member_Leaderboard_Get", p);
-            
+
             return result;
         }
-
-        #region LeaderBaordPointCalculation
 
         public IEnumerable<LeaderboardPointCalculation> GetLeaderboardPointCalculation(int siteId, string date)
         {
@@ -204,7 +197,8 @@ namespace HangfireService.Core.DataLayers
             var result = _dbClient.Query<LeaderboardPointCalculation>("Service_LeaderboardPointCalculation_Get", p);
             return result;
         }
-        #endregion
+
+
         public IEnumerable<BigWinSetting> GetBigWinSetting(int siteId)
         {
             var p = new DynamicParameters();
@@ -213,6 +207,7 @@ namespace HangfireService.Core.DataLayers
             var result = _dbClient.Query<BigWinSetting>("Service_BigWinSetting_Get", p);
             return result;
         }
+
         public IEnumerable<CurrencyTimeZone> GetCurrencyTimeZone()
         {
             var result = _dbClient.Query<CurrencyTimeZone>("Service_CurrencyTimeZone_Get");

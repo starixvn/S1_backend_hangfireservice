@@ -19,7 +19,6 @@ public class FinancialAccountClosingBalanceJob : BaseJob, IScheduledJob
     public FinancialAccountClosingBalanceJob(IServiceProvider provider) : base(provider)
     {
         LogContext.PushProperty("ClassName", GetType().Name);
-        LogContext.PushProperty("ExecuteId", Guid.NewGuid().ToString());
         _financeService = provider.GetRequiredService<FincanceService>();
     }
 
