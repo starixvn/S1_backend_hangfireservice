@@ -24,13 +24,6 @@ namespace HangfireService.Core.ThirdParty
         {
             return _reportDBDataLayer.GetAllTpList();
         }
-
-        public async Task<IEnumerable<bool>> ResetTpDetailTodo(IEnumerable<TpDetailTodo> todoList)
-        {
-            var count = todoList.Count();
-            var result = await _mainDBDataLayer.ResetTpDetailTodo();
-            return todoList.Select(item => count == result);
-        }
     }
 }
 

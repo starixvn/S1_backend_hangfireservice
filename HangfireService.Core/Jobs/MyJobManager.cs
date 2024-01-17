@@ -50,7 +50,7 @@ namespace HangfireService.Core.Jobs
                               timeZone: TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time"));
 
                             //都先設定為暫停狀態
-                            Pause(option.JobName);                    
+                            Pause(option.JobName);
                         }
                     }
                 }
