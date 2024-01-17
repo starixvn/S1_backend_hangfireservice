@@ -41,7 +41,7 @@ namespace HangfireService.Core.ThirdParty
             var bettrans = await _wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerTFG_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
             foreach (var item in bettrans)
             {
-                if (item.TpCurrencyId == "RMB")
+                if(item.TpCurrencyId == "RMB")
                 {
                     item.TpCurrencyId = "CNY";
                 }

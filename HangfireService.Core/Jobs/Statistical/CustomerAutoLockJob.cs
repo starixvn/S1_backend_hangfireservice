@@ -10,8 +10,6 @@ using HangfireService.Core.Service;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-using Serilog.Context;
-
 namespace HangfireService.Core.Jobs;
 public class CustomerAutoLockJob : BaseJob, IScheduledJob
 {
@@ -19,7 +17,6 @@ public class CustomerAutoLockJob : BaseJob, IScheduledJob
     private readonly IHostEnvironment _environment;
     public CustomerAutoLockJob(IServiceProvider provider) : base(provider)
     {
-        LogContext.PushProperty("ClassName", GetType().Name);
         _customerAutoLockService = provider.GetRequiredService<CustomerAutoLockService>();
         _environment = provider.GetRequiredService<IHostEnvironment>();
     }

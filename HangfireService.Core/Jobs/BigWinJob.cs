@@ -1,20 +1,19 @@
-﻿using System.ComponentModel;
-
-using Hangfire;
+﻿using Hangfire;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Server;
-
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.DBs;
+using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Models.Options;
-
 using Microsoft.Extensions.Logging;
-
+using MySqlX.XDevAPI.Common;
 using Newtonsoft.Json;
-
-using Serilog.Context;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Drawing;
+using System.Security.Policy;
 
 namespace HangfireService.Core.Jobs
 {
@@ -27,7 +26,6 @@ namespace HangfireService.Core.Jobs
 
         public BigWinJob(IServiceProvider provider) : base(provider)
         {
-            LogContext.PushProperty("ClassName", GetType().Name);
             _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
             _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
             _currencyTimeZoneList = _reportDBDataLayer.GetCurrencyTimeZone().ToList();

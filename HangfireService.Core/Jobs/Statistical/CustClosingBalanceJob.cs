@@ -9,8 +9,6 @@ using HangfireService.Core.Service;
 
 using Microsoft.Extensions.Logging;
 
-using Serilog.Context;
-
 namespace HangfireService.Core.Jobs;
 public class CustClosingBalanceJob : BaseJob, IScheduledJob
 {
@@ -18,7 +16,6 @@ public class CustClosingBalanceJob : BaseJob, IScheduledJob
 
     public CustClosingBalanceJob(IServiceProvider provider) : base(provider)
     {
-        LogContext.PushProperty("ClassName", GetType().Name);
         _custClosingBalanceService = provider.GetRequiredService<CustClosingBalanceService>();
     }
 

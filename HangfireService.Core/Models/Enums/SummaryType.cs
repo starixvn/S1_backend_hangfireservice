@@ -7,7 +7,7 @@
         TpRewardFreeGame = 3,//活動免費遊戲
         TpRewardCash = 4,//活動現金獎勵
     }
-
+    
     public enum TpCategoryEnum
     {
         Sports = 1,

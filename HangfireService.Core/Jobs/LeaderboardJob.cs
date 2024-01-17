@@ -1,10 +1,8 @@
 ﻿using System.ComponentModel;
-
 using Hangfire;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using Hangfire.Server;
-
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Extensions;
 using HangfireService.Core.Helpers;
@@ -39,7 +37,7 @@ namespace HangfireService.Core.Jobs
 
         [DisplayName("{0}")]
         public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
-        {
+         {
             try
             {
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
@@ -55,36 +53,36 @@ namespace HangfireService.Core.Jobs
                         {
                             var (startTime, endTime) = GetTimeRange(option, beforeDay);
                             List<Leaderboard> leaderboardResult;
-
+                            
                             if (siteId == (int)SiteId.Nova88)
                             {
                                 //Get Data
                                 var leaderboardList = _reportDBDataLayer.GetLeaderboardList(categoryId, siteId, currencyId, startTime, endTime, out var timezone).ToList();
-
+                                
                                 // 計算WTurnover
                                 timezone = timezone.Replace("+", "");
                                 var calculateDate = option.ExecuteType == ExecuteType.Months ?
                                     startTime.ToString("yyyyMM") : new DateTimeOffset(startTime, TimeSpan.Parse(timezone)).ToString("yyyyMM");
-
+                                
                                 var pointCalculation = _reportDBDataLayer.GetLeaderboardPointCalculation(siteId, calculateDate);
                                 foreach (var detail in leaderboardList)
                                 {
                                     var cal = pointCalculation.FirstOrDefault(x =>
-                                        x.SiteId == detail.SiteId && x.CurrencyId == detail.CurrencyId);
-
+                                        x.SiteId == detail.SiteId && x.CurrencyId == detail.CurrencyId );
+                    
                                     if (cal != null)
                                     {
                                         detail.WTurnover = detail.CategoryId switch
                                         {
                                             (int)TpCategoryEnum.Sports => (int)(detail.Turnover / cal.SportTurnover),
                                             (int)TpCategoryEnum.Casino => (int)(detail.Turnover / cal.SlotTurnover),
-                                            (int)TpCategoryEnum.LiveCasino => (int)(detail.Turnover / cal.LiveCasinoTurnover),
+                                            (int)TpCategoryEnum.LiveCasino => (int)( detail.Turnover / cal.LiveCasinoTurnover),
                                             _ => 0
                                         };
                                     }
                                 }
-
-                                leaderboardResult = leaderboardList.GroupBy(x => new { x.CustId, x.UserName })
+                                
+                                leaderboardResult = leaderboardList.GroupBy(x => new { x.CustId , x.UserName })
                                     .Select(x => new Leaderboard
                                     {
                                         CustId = x.Key.CustId,
@@ -92,7 +90,7 @@ namespace HangfireService.Core.Jobs
                                         WTurnover = x.Sum(y => y.WTurnover)
                                     }).ToList();
                             }
-                            else
+                            else 
                             {
                                 //Get Data
                                 leaderboardResult = _reportDBDataLayer.GetLeaderboardListOld(categoryId, eventCode, siteId, currencyId, option.TopNum, startTime, endTime).ToList();
@@ -104,7 +102,7 @@ namespace HangfireService.Core.Jobs
                                 ExecuteType.Days => $"LeaderboardListDays:{categoryId}:{siteId}:{currencyId}:{beforeDay}",
                                 _ => throw new NotImplementedException()
                             };
-
+                            
                             _redisHelper.StringSet(key, JsonConvert.SerializeObject(leaderboardResult), null);
                             result.Add($"beforeDay:{beforeDay}_categoryId:{categoryId}_currencyId:{currencyId}", leaderboardResult.Count);
                             Thread.Sleep(5000);

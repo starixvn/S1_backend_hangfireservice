@@ -10,14 +10,14 @@
         public decimal Turnover { get; set; }
         public int WTurnover { get; set; }
     }
-
+    
     public class Leaderboard
     {
         public int CustId { get; set; }
         public string UserName { get; set; }
         public decimal WTurnover { get; set; }
     }
-
+    
     public class LeaderboardPointCalculation
     {
         public string Date { get; set; }

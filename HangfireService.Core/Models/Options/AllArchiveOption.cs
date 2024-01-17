@@ -4,7 +4,7 @@
     {
         public int LiminNum { get; set; } = 10000;
         public int TaskCount { get; set; } = 8;
-
+       
         /// <summary>
         /// DB離峰開始小時(+08:00)
         /// </summary>
@@ -18,7 +18,7 @@
         /// <summary>
         /// DB離峰開始時間(+08:00)
         /// </summary>
-        public DateTime SafeRangeStartTime
+        public DateTime SafeRangeStartTime 
         {
             get
             {

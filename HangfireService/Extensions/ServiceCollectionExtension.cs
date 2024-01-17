@@ -95,6 +95,8 @@ namespace HangfireService.Extensions
                 .AddSingleton<PartitionService>()
                 .AddSingleton<FincanceService>()
                 .AddSingleton<CustomerService>()
+                .AddSingleton<WorldCupDepositDailySummaryService>()
+                .AddSingleton<MpaUpdateExchangeRateService>()
                 .AddSingleton<OnlineCountService>()
                 .AddSingleton<CustomerAutoLockService>()
                 .AddSingleton<CustClosingBalanceService>()
@@ -195,6 +197,12 @@ namespace HangfireService.Extensions
             services.AddSingleton<BaseTpHelper>();
             var tpList = provider.GetRequiredService<ThirdPartyManager>().GetAllTpList();
             services.AddSingleton(provider => tpList);
+
+            var detailTypes = typeof(IDetailTpHelper).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IDetailTpHelper)));
+            foreach (var tp in detailTypes)
+            {
+                services.AddSingleton(provider => (IDetailTpHelper)Activator.CreateInstance(tp, new object[] { provider }));
+            }
 
             var financeTypes = typeof(IFinanceTpHelper).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IFinanceTpHelper)));
             foreach (var tp in financeTypes)
