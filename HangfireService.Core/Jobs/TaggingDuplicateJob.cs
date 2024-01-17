@@ -24,7 +24,6 @@ public class TaggingDuplicateJob : BaseJob, IScheduledJob
     public TaggingDuplicateJob(IServiceProvider provider) : base(provider)
     {
         LogContext.PushProperty("ClassName", GetType().Name);
-        LogContext.PushProperty("ExecuteId", Guid.NewGuid().ToString());
         _customerService = provider.GetRequiredService<CustomerService>();
         _serverInfos = provider.GetRequiredService<IEnumerable<ServerInfo>>();
     }

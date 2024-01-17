@@ -1,10 +1,13 @@
 ﻿using System.ComponentModel;
 using System.Net;
+
 using Amazon.CloudWatchLogs.Model;
+
 using Hangfire;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using Hangfire.Server;
+
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Helpers;
 using HangfireService.Core.Jobs.Interfaces;
@@ -12,8 +15,11 @@ using HangfireService.Core.Models;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Jobs;
+
 using Microsoft.Extensions.Logging;
+
 using Newtonsoft.Json;
+
 using Serilog.Context;
 
 namespace HangfireService.Core.Jobs.SMS
@@ -111,8 +117,8 @@ namespace HangfireService.Core.Jobs.SMS
                     { "Timestamp", timestamp.ToString() },
                     { "Api-Key", smsOption.ApiKey },
                 };
-                
-                using var result = await _httpHelper.HttpGetAsync(url ,headerParams , "application/json");
+
+                using var result = await _httpHelper.HttpGetAsync(url, headerParams, "application/json");
                 if (result.StatusCode != HttpStatusCode.OK)
                 {
                     _logger.LogError($"SkyLine httpResponse error URL : {url}  StatusCode: {result.StatusCode}");
@@ -128,7 +134,7 @@ namespace HangfireService.Core.Jobs.SMS
                     return otpCheck.GetResult(OTPStatus.SendToProvider);
                 }
 
-                var smsResult = resultResp.array.FirstOrDefault(x=>x.msgId == otpCheck.Request_id);
+                var smsResult = resultResp.array.FirstOrDefault(x => x.msgId == otpCheck.Request_id);
                 if (smsResult == null) //回傳的array找不到同一個Request_id
                 {
                     return otpCheck.GetResult(OTPStatus.Fail, $" || SkyLine no found Request_id:{otpCheck.Request_id}.");

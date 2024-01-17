@@ -2,7 +2,6 @@
 
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Helpers;
-using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Finance;
 
 using Microsoft.Extensions.Logging;
@@ -29,16 +28,6 @@ namespace HangfireService.Core.ThirdParty
             _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
         }
 
-        protected async Task<bool> AddTpBetRecordDetail(TpBetRecordDetail detail)
-        {
-            return await _mainDBDataLayer.AddTpBetRecordDetail(detail);
-        }
-
-        protected async Task<bool> UpdateTpDetailTodo(TpBetRecordDetail detail)
-        {
-            return await _mainDBDataLayer.UpdateTpDetailTodo(detail);
-        }
-
         public async Task<HttpResponseMessage> HttpPostAsync(string url, byte[] data, string name, string contentType)
         {
             try
@@ -63,7 +52,6 @@ namespace HangfireService.Core.ThirdParty
                 throw;
             }
         }
-
         protected async Task<HttpResponseMessage> HttpPostAsync(string url, Dictionary<string, string> parameters)
         {
             try
