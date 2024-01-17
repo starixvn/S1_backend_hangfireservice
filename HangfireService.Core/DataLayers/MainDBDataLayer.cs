@@ -118,7 +118,6 @@ namespace HangfireService.Core.DataLayers
 
         #endregion
 
-        #region Relay
         public int InsertRelayData(string sp, object parameters, IDbTransaction trans)
         {
             return _dbClient.Execute(sp, trans, parameters);
@@ -127,37 +126,6 @@ namespace HangfireService.Core.DataLayers
         public int DeleteRelayData(string sp, object parameters, IDbTransaction trans)
         {
             return _dbClient.Execute(sp, trans, parameters);
-        }
-
-        #endregion
-
-        public async Task<int> ExpiredBanner(string bannerName, int siteId, int currencyId)
-        {
-            return await _dbClient.ExecuteAsync("Service_BannerExpired_Set", new
-            {
-                _BannerName = bannerName,
-                _SiteId = siteId,
-                _CurrencyId = currencyId
-            });
-        }
-
-        public int SetLastBettingTime(int siteId, int currencyId, int tpId, int gameType, DateTime? lastBettingTime, bool isExecute)
-        {
-            var parameters = new
-            {
-                _SiteId = siteId,
-                _CurrencyId = currencyId,
-                _TpId = tpId,
-                _GameType = gameType,
-                _LastBettingTime = lastBettingTime,
-                _IsExecute = isExecute
-            };
-            return _dbClient.Execute("Service_TpBettingMonitorSetting_Set", parameters);
-        }
-
-        public IEnumerable<TpMaintain> GetTpMaintainList(int siteId)
-        {
-            return _dbClient.Query<TpMaintain>("TpMaintain_Get", new DynamicParameters(new { SiteId = siteId }));
         }
 
         public int SetOTPStatus(OTPCheckResult result)
