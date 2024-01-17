@@ -59,7 +59,7 @@ app.UseEndpoints(endpoints =>
 
 app.UseHangfireDashboard(pathMatch: "", options: new DashboardOptions()
 {
-    DashboardTitle = "AI.Lab",
+    DashboardTitle = "AILab",
     AppPath = null,
     Authorization = new[] { new LocalAuthorizationFilter() }
 });
