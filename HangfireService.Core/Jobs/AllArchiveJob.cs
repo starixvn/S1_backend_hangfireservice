@@ -127,8 +127,7 @@ namespace HangfireService.Core.Jobs
             isContinue = false;
             var redisKey = "GetArchiveData";
             var redisCacheTime = TimeSpan.FromMinutes(5);
-
-            var checkCount = option.LiminNum / 10; //避免有資料異常卡住，用此數量判斷是否還有資料沒搬完            
+        
             try
             {
                 // 先檢查Redis有沒有正在搬移的資料
@@ -137,7 +136,7 @@ namespace HangfireService.Core.Jobs
                     var archiveName = _redisHelper.StringGet(redisKey, RedisDataBase.Shared);
                     var archiveDetail = option.ArchiveList.Find(i => i.ArchiveName == archiveName) ?? option.ArchiveList.First();
                     var archiveList = GetArchiveList(option, archiveDetail);
-                    if (archiveList.Count() > checkCount)
+                    if (archiveList.Count() == option.LiminNum)
                     {
                         isContinue = true;
                         _redisHelper.StringSet(redisKey, archiveName, redisCacheTime, RedisDataBase.Shared);
@@ -149,7 +148,7 @@ namespace HangfireService.Core.Jobs
                 foreach (var archive in option.ArchiveList)
                 {
                     var archiveList = GetArchiveList(option, archive);
-                    if (archiveList.Count() > checkCount)
+                    if (archiveList.Count() == option.LiminNum)
                     {
                         isContinue = true;
                         _redisHelper.StringSet(redisKey, archive.ArchiveName, redisCacheTime, RedisDataBase.Shared);
