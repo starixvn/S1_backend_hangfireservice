@@ -54,7 +54,7 @@ namespace HangfireService.Core.Jobs
                             if (siteId == 1) // nova88
                             {
                                 //Get Data
-                                var leaderboardList = _reportDBDataLayer.GetLeaderboardList(categoryId, siteId, currencyId, startTime, endTime, out var timezone).ToList();
+                                var leaderboardList = _reportDBDataLayer.GetLeaderboardList(categoryId, siteId, currencyId, startTime, endTime, option.TimeoutSeconds, out var timezone).ToList();
 
                                 // 計算WTurnover
                                 timezone = timezone.Replace("+", "");
@@ -90,7 +90,7 @@ namespace HangfireService.Core.Jobs
                             else
                             {
                                 //Get Data
-                                leaderboardResult = _reportDBDataLayer.GetLeaderboardListOld(categoryId, eventCode, siteId, currencyId, option.TopNum, startTime, endTime).ToList();
+                                leaderboardResult = _reportDBDataLayer.GetLeaderboardListOld(categoryId, eventCode, siteId, currencyId, option.TopNum, startTime, endTime, option.TimeoutSeconds).ToList();
                             }
                             //根據ExecuteType設定Redis Key
                             var key = option.ExecuteType switch

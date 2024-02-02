@@ -152,7 +152,7 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Query(sp, parameters: parameters, commandTimeout: timeoutSeconds);
         }
 
-        public IEnumerable<LeaderboardModel> GetLeaderboardList(int lBCategoryId, int siteId, int currencyId, DateTime startTime, DateTime endTime, out string timezone)
+        public IEnumerable<LeaderboardModel> GetLeaderboardList(int lBCategoryId, int siteId, int currencyId, DateTime startTime, DateTime endTime, int timeoutSeconds, out string timezone)
         {
             var p = new DynamicParameters();
             p.Add("LBCategoryId", lBCategoryId);
@@ -161,7 +161,7 @@ namespace HangfireService.Core.DataLayers
             p.Add("StartTime", startTime);
             p.Add("EndTime", endTime);
             p.Add("Timezone", direction: ParameterDirection.Output);
-            var result = _dbClient.Query<LeaderboardModel>("Member_Leaderboard_Get_V2", p, commandTimeout: 300);
+            var result = _dbClient.Query<LeaderboardModel>("Member_Leaderboard_Get_V2", p, commandTimeout: timeoutSeconds);
 
             timezone = p.Get<string>("Timezone");
 
@@ -169,7 +169,7 @@ namespace HangfireService.Core.DataLayers
         }
 
         public IEnumerable<Leaderboard> GetLeaderboardListOld(int lBCategoryId, string eventCode, int siteId,
-            int currencyId, int topNum, DateTime startTime, DateTime endTime)
+            int currencyId, int topNum, DateTime startTime, DateTime endTime, int timeoutSeconds)
         {
             var p = new DynamicParameters();
             p.Add("LBCategoryId", lBCategoryId);
@@ -179,7 +179,7 @@ namespace HangfireService.Core.DataLayers
             p.Add("StartTime", startTime);
             p.Add("EndTime", endTime);
             p.Add("TopNum", topNum);
-            var result = _dbClient.Query<Leaderboard>("Member_Leaderboard_Get", p);
+            var result = _dbClient.Query<Leaderboard>("Member_Leaderboard_Get", p, commandTimeout: timeoutSeconds);
 
             return result;
         }
