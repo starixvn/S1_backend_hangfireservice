@@ -161,7 +161,7 @@ namespace HangfireService.Core.DataLayers
             p.Add("StartTime", startTime);
             p.Add("EndTime", endTime);
             p.Add("Timezone", direction: ParameterDirection.Output);
-            var result = _dbClient.Query<LeaderboardModel>("Member_Leaderboard_Get_V2", p);
+            var result = _dbClient.Query<LeaderboardModel>("Member_Leaderboard_Get_V2", p, commandTimeout: 300);
 
             timezone = p.Get<string>("Timezone");
 

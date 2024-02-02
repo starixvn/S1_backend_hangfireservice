@@ -148,7 +148,7 @@ namespace HangfireService.Core.Jobs
         [AutomaticRetry(Attempts = 0, OnAttemptsExceeded = AttemptsExceededAction.Delete)]
         public object Run(PerformContext context = null, IJobCancellationToken cancellationToken = null,
         [DisplayData("JobName", ConvertType = typeof(JobList))] string jobName = null,
-        [DisplayData("Month", placeholderText: "yyyy-MM", defaultValue: "2023-04")] string redoMonth = null)
+        [DisplayData("Month", placeholderText: "yyyy-MM", defaultValue: "2024-01")] string redoMonth = null)
         {
             if (!_jobList.Any())
             {
