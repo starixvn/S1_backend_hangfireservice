@@ -1,10 +1,8 @@
 ﻿using System.ComponentModel;
-
 using Hangfire;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using Hangfire.Server;
-
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Extensions;
 using HangfireService.Core.Helpers;
@@ -13,11 +11,8 @@ using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Models.Options;
-
 using Microsoft.Extensions.Logging;
-
 using Newtonsoft.Json;
-
 using Serilog.Context;
 
 namespace HangfireService.Core.Jobs
@@ -56,7 +51,7 @@ namespace HangfireService.Core.Jobs
                             var (startTime, endTime) = GetTimeRange(option, beforeDay);
                             List<Leaderboard> leaderboardResult;
 
-                            if (siteId == (int)SiteId.Nova88)
+                            if (siteId == 1) // nova88
                             {
                                 //Get Data
                                 var leaderboardList = _reportDBDataLayer.GetLeaderboardList(categoryId, siteId, currencyId, startTime, endTime, out var timezone).ToList();
