@@ -62,13 +62,13 @@ namespace HangfireService.Core.Service
 
             return string.Empty;
         }
-        public async Task<List<Affiliate>> QueryAffDetailInfoList(int pageIndex, int pageSize, SiteShortName site, string accessToken)
+        public async Task<List<Affiliate>> QueryAffDetailInfoList(int pageIndex, int pageSize, string siteName, string accessToken)
         {
             var postData = new
             {
                 PageIndex = pageIndex,
                 PageSize = pageSize,
-                LicenseeCode = site.ToString()
+                LicenseeCode = siteName
             };
             var parameters = JsonConvert.SerializeObject(postData);
             var httpResponse = await _httpHelper.HttpPost1Async($"{_mpaExchangeRateConfig.ApiUrl}/AffDetailInfoList?access_token={accessToken}", null, parameters, "application/json");
