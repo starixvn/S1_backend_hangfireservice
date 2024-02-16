@@ -79,9 +79,13 @@ namespace HangfireService.Core.Jobs
                                     }
                                 }
 
-                                leaderboardResult = leaderboardList.GroupBy(x => new { x.CustId, x.UserName })
+                                leaderboardResult = leaderboardList.GroupBy(x => new { x.SiteId,x.SiteName,x.CurrencyId,x.IsoCode, x.CustId, x.UserName })
                                     .Select(x => new Leaderboard
                                     {
+                                        SiteId = x.Key.SiteId,
+                                        SiteName = x.Key.SiteName,
+                                        CurrencyId = x.Key.CurrencyId,
+                                        IsoCode = x.Key.IsoCode,
                                         CustId = x.Key.CustId,
                                         UserName = x.Key.UserName,
                                         WTurnover = x.Sum(y => y.WTurnover)
