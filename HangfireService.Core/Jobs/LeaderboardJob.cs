@@ -1,10 +1,8 @@
 ﻿using System.ComponentModel;
-
 using Hangfire;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using Hangfire.Server;
-
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Extensions;
 using HangfireService.Core.Helpers;
@@ -13,11 +11,8 @@ using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Models.Options;
-
 using Microsoft.Extensions.Logging;
-
 using Newtonsoft.Json;
-
 using Serilog.Context;
 
 namespace HangfireService.Core.Jobs
@@ -56,10 +51,10 @@ namespace HangfireService.Core.Jobs
                             var (startTime, endTime) = GetTimeRange(option, beforeDay);
                             List<Leaderboard> leaderboardResult;
 
-                            if (siteId == (int)SiteId.Nova88)
+                            if (siteId == 1) // nova88
                             {
                                 //Get Data
-                                var leaderboardList = _reportDBDataLayer.GetLeaderboardList(categoryId, siteId, currencyId, startTime, endTime, out var timezone).ToList();
+                                var leaderboardList = _reportDBDataLayer.GetLeaderboardList(categoryId, siteId, currencyId, startTime, endTime, option.TimeoutSeconds, out var timezone).ToList();
 
                                 // 計算WTurnover
                                 timezone = timezone.Replace("+", "");
@@ -84,9 +79,13 @@ namespace HangfireService.Core.Jobs
                                     }
                                 }
 
-                                leaderboardResult = leaderboardList.GroupBy(x => new { x.CustId, x.UserName })
+                                leaderboardResult = leaderboardList.GroupBy(x => new { x.SiteId,x.SiteName,x.CurrencyId,x.IsoCode, x.CustId, x.UserName })
                                     .Select(x => new Leaderboard
                                     {
+                                        SiteId = x.Key.SiteId,
+                                        SiteName = x.Key.SiteName,
+                                        CurrencyId = x.Key.CurrencyId,
+                                        IsoCode = x.Key.IsoCode,
                                         CustId = x.Key.CustId,
                                         UserName = x.Key.UserName,
                                         WTurnover = x.Sum(y => y.WTurnover)
@@ -95,7 +94,7 @@ namespace HangfireService.Core.Jobs
                             else
                             {
                                 //Get Data
-                                leaderboardResult = _reportDBDataLayer.GetLeaderboardListOld(categoryId, eventCode, siteId, currencyId, option.TopNum, startTime, endTime).ToList();
+                                leaderboardResult = _reportDBDataLayer.GetLeaderboardListOld(categoryId, eventCode, siteId, currencyId, option.TopNum, startTime, endTime, option.TimeoutSeconds).ToList();
                             }
                             //根據ExecuteType設定Redis Key
                             var key = option.ExecuteType switch
@@ -153,7 +152,7 @@ namespace HangfireService.Core.Jobs
         [AutomaticRetry(Attempts = 0, OnAttemptsExceeded = AttemptsExceededAction.Delete)]
         public object Run(PerformContext context = null, IJobCancellationToken cancellationToken = null,
         [DisplayData("JobName", ConvertType = typeof(JobList))] string jobName = null,
-        [DisplayData("Month", placeholderText: "yyyy-MM", defaultValue: "2023-04")] string redoMonth = null)
+        [DisplayData("Month", placeholderText: "yyyy-MM", defaultValue: "2024-01")] string redoMonth = null)
         {
             if (!_jobList.Any())
             {
@@ -176,7 +175,9 @@ namespace HangfireService.Core.Jobs
         {
             public Dictionary<string, string> GetData()
             {
-                return _jobList?.Where(i => i.JobName.Contains("LeaderBoard.Nova88.Months")).ToDictionary(f => f.JobName, f => f.JobName);
+                return _jobList?.Where(i => 
+                    i.JobName.Contains("LeaderBoard") && i.JobName.Contains("Months") 
+                    ).ToDictionary(f => f.JobName, f => f.JobName);
             }
             public string GetDefaultValue()
             {
