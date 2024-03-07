@@ -10,4 +10,14 @@
         public string UserName { get; set; }
     }
 
+    public class AffiliatePara
+    {
+        public List<SiteData> SiteList { get; set; }
+    }
+    
+    public class SiteData
+    {
+        public int SiteId { get; set; }
+        public string SiteShortName { get; set; }
+    }
 }
