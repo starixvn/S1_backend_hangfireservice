@@ -9,6 +9,8 @@ using HangfireService.Core.Service;
 
 using Microsoft.Extensions.Logging;
 
+using Serilog.Context;
+
 namespace HangfireService.Core.Jobs;
 
 internal class OnlineCountJob : BaseJob, IScheduledJob
@@ -17,6 +19,7 @@ internal class OnlineCountJob : BaseJob, IScheduledJob
 
     public OnlineCountJob(IServiceProvider provider) : base(provider)
     {
+        LogContext.PushProperty("ClassName", GetType().Name);
         _onlineCountService = provider.GetRequiredService<OnlineCountService>();
     }
 

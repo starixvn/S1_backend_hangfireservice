@@ -1,31 +1,23 @@
 using System.ComponentModel;
 using System.Net;
-
 using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
-
 using Hangfire;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using Hangfire.Server;
-
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Extensions;
 using HangfireService.Core.Helpers;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.DBs;
-using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.ThirdParty;
-
 using Microsoft.Extensions.Logging;
-
 using Newtonsoft.Json;
-
 using Serilog.Context;
-
 
 namespace HangfireService.Core.Jobs
 {
@@ -60,7 +52,7 @@ namespace HangfireService.Core.Jobs
             _awsAccessKey = awsConfig?.AccessKey;
             _awsSecretKey = awsConfig?.SecretKey;
 
-            // ±_™¨ Json object ≥B≤z
+            // Â∑¢ÁãÄ Json object ËôïÁêÜ
             var configValue = configBll.GetConfigValue<dynamic>("LicenseReport");
             string jsonString = JsonConvert.SerializeObject(configValue);
             var configResult = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, LicenseReportConfig>>>(jsonString);
@@ -79,7 +71,7 @@ namespace HangfireService.Core.Jobs
                 var jobResult = new JobResult();
                 foreach (var config in _licenseReportConfig)
                 {
-                    var data = _reportDbDataLayer.GetBalanceForLicense((int)SiteId.Nova88, date,
+                    var data = _reportDbDataLayer.GetBalanceForLicense(1, date,
                         JsonConvert.SerializeObject(config.Value.CurrencyId));
                     var stream = _excelHelper.Export(data, "1qaz#EDC2wsx$RFV");
                     var name = $"{date.Year}{date.Month.ToString("00")}_{config.Key}";

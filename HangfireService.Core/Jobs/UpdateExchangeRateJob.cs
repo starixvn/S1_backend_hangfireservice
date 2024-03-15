@@ -11,6 +11,8 @@ using HangfireService.Core.Service;
 
 using Microsoft.Extensions.Logging;
 
+using Serilog.Context;
+
 namespace HangfireService.Core.Jobs
 {
     [ManagementPage("UpdateExchangeRateJob", queue: "report")]
@@ -20,7 +22,8 @@ namespace HangfireService.Core.Jobs
 
         public UpdateExchangeRateJob(IServiceProvider provider) : base(provider)
         {
-            this._mpaUpdateExchangeRateService = provider.GetRequiredService<MpaUpdateExchangeRateService>();
+            LogContext.PushProperty("ClassName", GetType().Name);
+            _mpaUpdateExchangeRateService = provider.GetRequiredService<MpaUpdateExchangeRateService>();
         }
 
         [DisplayName("{0}")]

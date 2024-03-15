@@ -1,6 +1,4 @@
 ﻿using HangfireService.Core.Models.Affiliate;
-using HangfireService.Core.Models.Enums;
-
 using Microsoft.Extensions.Logging;
 
 namespace HangfireService.Core.Service
@@ -11,7 +9,6 @@ namespace HangfireService.Core.Service
         private readonly CustomerService _customerService;
         private readonly ILogger<UpdateAffiliateInfoService> _logger;
         private const int PageSize = 2000;
-        private readonly List<int> SiteList = new() { 1, 2, 3 };
 
         public UpdateAffiliateInfoService(AffiliateApi affiliateApi, CustomerService customerService, ILogger<UpdateAffiliateInfoService> logger)
         {
@@ -20,34 +17,31 @@ namespace HangfireService.Core.Service
             _logger = logger;
         }
 
-        public async Task<int> RunJobAsync()
+        public async Task<int> RunJobAsync(int siteId, string siteName)
         {
-            foreach (var site in SiteList)
+            try
             {
-                try
-                {
-                    var token = await _affiliateApi.AuthGetAccessToken();
-                    if (string.IsNullOrEmpty(token)) return -1;
+                var token = await _affiliateApi.AuthGetAccessToken();
+                if (string.IsNullOrEmpty(token)) return -1;
 
-                    var affFromVN = await _affiliateApi.QueryAffDetailInfoList(1, PageSize, (SiteShortName)site, token);
-                    var affInSite = await _customerService.GetNotUpdatedAffiliateInfo(site);
+                var affFromVn = await _affiliateApi.QueryAffDetailInfoList(1, PageSize, siteName, token);
+                var affInSite = await _customerService.GetNotUpdatedAffiliateInfo(siteId);
 
-                    var affList = affFromVN.Where(x => !affInSite.Any(y => y.AffiliateName == x.AffiliateName)).Select(z => new AffiliateInfo
-                    {
-                        SiteId = site,
-                        AffiliateCode = z.AffiliateCode,
-                        AffiliateName = z.AffiliateName,
-                        ParentAffiliate = string.IsNullOrEmpty(z.ParentAffiliateName) ? "" : z.ParentAffiliateName,
-                        UserName = z.PlayerName
-                    }).ToList();
-                    await _customerService.CreateOrUpdateAffiliateInfo(affList);
-                }
-                catch (Exception ex)
+                var affList = affFromVn.Where(x => affInSite.All(y => y.AffiliateName != x.AffiliateName)).Select(z => new AffiliateInfo
                 {
-                    _logger.LogError(ex, ex.Message);
-                    continue;
-                }
+                    SiteId = siteId,
+                    AffiliateCode = z.AffiliateCode,
+                    AffiliateName = z.AffiliateName,
+                    ParentAffiliate = string.IsNullOrEmpty(z.ParentAffiliateName) ? "" : z.ParentAffiliateName,
+                    UserName = z.PlayerName
+                }).ToList();
+                await _customerService.CreateOrUpdateAffiliateInfo(affList);
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
+            
             return 1;
         }
     }

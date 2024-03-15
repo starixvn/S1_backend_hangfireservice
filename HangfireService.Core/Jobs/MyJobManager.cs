@@ -26,10 +26,13 @@ namespace HangfireService.Core.Jobs
 
         public static void AddRecurringJob(IServiceProvider provider)
         {
+            var webHostEnvironment = provider.GetRequiredService<IWebHostEnvironment>();
             var jobManager = new RecurringJobManager();
 
             foreach (var jobGroup in _jobGroups)
             {
+                var queue = jobGroup.Key.ToLower();
+                var mins = 0;
                 foreach (var option in jobGroup.Value)
                 {
                     if (option.Enable)
@@ -43,7 +46,7 @@ namespace HangfireService.Core.Jobs
                               recurringJobId: option.JobName,
                               methodCall: () => job.ExecuteAsync(option.JobName, option, null, null),
                               cronExpression: option.Cron,
-                              queue: jobGroup.Key.ToLower(),
+                              queue: queue,
                               timeZone: TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time"));
 
                             //都先設定為暫停狀態
@@ -53,20 +56,13 @@ namespace HangfireService.Core.Jobs
                 }
             }
 
-            //全部job延遲時啟動
-            var webHostEnvironment = provider.GetRequiredService<IWebHostEnvironment>();
+            //全部job延遲時啟動    
             if (!webHostEnvironment.EnvironmentName.Equals("Local"))
             {
                 AllDelayStart();
             }
-
         }
 
-        public static void PauseThenRestart(string jobName, int pauseHours, string reason)
-        {
-            Pause(jobName);
-            BackgroundJob.Schedule(() => RestartByHours(jobName, pauseHours, reason), TimeSpan.FromHours(pauseHours));
-        }
         public static void Pause(string jobName)
         {
             using var connection = JobStorage.Current.GetConnection();

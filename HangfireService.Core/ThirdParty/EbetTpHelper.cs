@@ -39,7 +39,7 @@ namespace HangfireService.Core.ThirdParty
         {
             var BeginTime = checkOption.BeginTime.GetUnixTimeByDay() * 1000;
             var EndTime = checkOption.EndTime.GetUnixTimeByDay() * 1000;
-            var bettrans = await _dbClient.QueryAsync<BettransCheckData>("Finance_BettransLC_EBet_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
+            var bettrans = await _dbClient.QueryAsync<BettransCheckData>("Finance_BettransLC_EBet_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120);
             foreach (var item in bettrans)
             {
                 item.TpId = TpId;

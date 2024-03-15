@@ -11,11 +11,8 @@ using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Models.Options;
-
 using Microsoft.Extensions.Logging;
-
 using Newtonsoft.Json;
-
 using Serilog.Context;
 
 namespace HangfireService.Core.Jobs
@@ -37,14 +34,14 @@ namespace HangfireService.Core.Jobs
 
         [DisplayName("{0}")]
         public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
-         {
+        {
             try
             {
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
                 var option = JsonConvert.DeserializeObject<LeaderboardOption>(jobOption.Parameters);
                 var result = new Dictionary<string, int>();
                 var siteId = option.SiteId;
-                var eventCode = option.EventCode;
+                
                 foreach (var beforeDay in option.beforeDays)
                 {
                     foreach (var categoryId in option.CategoryList)
@@ -52,49 +49,51 @@ namespace HangfireService.Core.Jobs
                         foreach (var currencyId in option.CurrencyList)
                         {
                             var (startTime, endTime) = GetTimeRange(option, beforeDay);
-                            List<Leaderboard> leaderboardResult;
                             
-                            if (siteId == (int)SiteId.Nova88)
+                            //Get Data
+                            var leaderboardList = _reportDBDataLayer.GetLeaderboardList(categoryId, siteId, currencyId, startTime, endTime, option.TimeoutSeconds, out var timezone).ToList();
+
+                            // 要排除掉的Tag清單
+                            var excludeTagBySite = _reportDBDataLayer.GetLeaderboardTagExcludeList(siteId).TagsExclude;
+                            
+                            //排除掉Tag
+                            leaderboardList = leaderboardList.Where(x => x.Tags is null || x.Tags.All(tag => !excludeTagBySite.Contains(tag))).ToList();
+                            
+                            // 計算WTurnover
+                            timezone = timezone.Replace("+", "");
+                            var calculateDate = option.ExecuteType == ExecuteType.Months ?
+                                startTime.ToString("yyyyMM") : new DateTimeOffset(startTime, TimeSpan.Parse(timezone)).ToString("yyyyMM");
+                            
+                            var pointCalculation = _reportDBDataLayer.GetLeaderboardPointCalculation(siteId, calculateDate);
+                            foreach (var detail in leaderboardList)
                             {
-                                //Get Data
-                                var leaderboardList = _reportDBDataLayer.GetLeaderboardList(categoryId, siteId, currencyId, startTime, endTime, out var timezone).ToList();
-                                
-                                // 計算WTurnover
-                                timezone = timezone.Replace("+", "");
-                                var calculateDate = option.ExecuteType == ExecuteType.Months ?
-                                    startTime.ToString("yyyyMM") : new DateTimeOffset(startTime, TimeSpan.Parse(timezone)).ToString("yyyyMM");
-                                
-                                var pointCalculation = _reportDBDataLayer.GetLeaderboardPointCalculation(siteId, calculateDate);
-                                foreach (var detail in leaderboardList)
+                                var cal = pointCalculation.FirstOrDefault(x =>
+                                    x.SiteId == detail.SiteId && x.CurrencyId == detail.CurrencyId);
+
+                                if (cal != null)
                                 {
-                                    var cal = pointCalculation.FirstOrDefault(x =>
-                                        x.SiteId == detail.SiteId && x.CurrencyId == detail.CurrencyId );
-                    
-                                    if (cal != null)
+                                    detail.WTurnover = detail.CategoryId switch
                                     {
-                                        detail.WTurnover = detail.CategoryId switch
-                                        {
-                                            (int)TpCategoryEnum.Sports => (int)(detail.Turnover / cal.SportTurnover),
-                                            (int)TpCategoryEnum.Casino => (int)(detail.Turnover / cal.SlotTurnover),
-                                            (int)TpCategoryEnum.LiveCasino => (int)( detail.Turnover / cal.LiveCasinoTurnover),
-                                            _ => 0
-                                        };
-                                    }
+                                        (int)TpCategoryEnum.Sports => (int)(detail.Turnover / cal.SportTurnover),
+                                        (int)TpCategoryEnum.Casino => (int)(detail.Turnover / cal.SlotTurnover),
+                                        (int)TpCategoryEnum.LiveCasino => (int)(detail.Turnover / cal.LiveCasinoTurnover),
+                                        _ => 0
+                                    };
                                 }
-                                
-                                leaderboardResult = leaderboardList.GroupBy(x => new { x.CustId , x.UserName })
-                                    .Select(x => new Leaderboard
-                                    {
-                                        CustId = x.Key.CustId,
-                                        UserName = x.Key.UserName,
-                                        WTurnover = x.Sum(y => y.WTurnover)
-                                    }).ToList();
                             }
-                            else 
-                            {
-                                //Get Data
-                                leaderboardResult = _reportDBDataLayer.GetLeaderboardListOld(categoryId, eventCode, siteId, currencyId, option.TopNum, startTime, endTime).ToList();
-                            }
+
+                            var leaderboardResult = leaderboardList.GroupBy(x => new { x.SiteId,x.SiteName,x.CurrencyId,x.IsoCode, x.CustId, x.UserName })
+                                .Select(x => new Leaderboard
+                                {
+                                    SiteId = x.Key.SiteId,
+                                    SiteName = x.Key.SiteName,
+                                    CurrencyId = x.Key.CurrencyId,
+                                    IsoCode = x.Key.IsoCode,
+                                    CustId = x.Key.CustId,
+                                    UserName = x.Key.UserName,
+                                    WTurnover = x.Sum(y => y.WTurnover)
+                                }).ToList();
+
                             //根據ExecuteType設定Redis Key
                             var key = option.ExecuteType switch
                             {
@@ -102,7 +101,7 @@ namespace HangfireService.Core.Jobs
                                 ExecuteType.Days => $"LeaderboardListDays:{categoryId}:{siteId}:{currencyId}:{beforeDay}",
                                 _ => throw new NotImplementedException()
                             };
-                            
+
                             _redisHelper.StringSet(key, JsonConvert.SerializeObject(leaderboardResult), null);
                             result.Add($"beforeDay:{beforeDay}_categoryId:{categoryId}_currencyId:{currencyId}", leaderboardResult.Count);
                             Thread.Sleep(5000);
@@ -151,7 +150,7 @@ namespace HangfireService.Core.Jobs
         [AutomaticRetry(Attempts = 0, OnAttemptsExceeded = AttemptsExceededAction.Delete)]
         public object Run(PerformContext context = null, IJobCancellationToken cancellationToken = null,
         [DisplayData("JobName", ConvertType = typeof(JobList))] string jobName = null,
-        [DisplayData("Month", placeholderText: "yyyy-MM", defaultValue: "2023-04")] string redoMonth = null)
+        [DisplayData("Month", placeholderText: "yyyy-MM", defaultValue: "2024-01")] string redoMonth = null)
         {
             if (!_jobList.Any())
             {
@@ -174,7 +173,9 @@ namespace HangfireService.Core.Jobs
         {
             public Dictionary<string, string> GetData()
             {
-                return _jobList?.Where(i => i.JobName.Contains("LeaderBoard.Nova88.Months")).ToDictionary(f => f.JobName, f => f.JobName);
+                return _jobList?.Where(i => 
+                    i.JobName.Contains("LeaderBoard") && i.JobName.Contains("Months") 
+                    ).ToDictionary(f => f.JobName, f => f.JobName);
             }
             public string GetDefaultValue()
             {

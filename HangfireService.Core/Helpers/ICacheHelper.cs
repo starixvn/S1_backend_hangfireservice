@@ -21,6 +21,10 @@ namespace HangfireService.Core.Helpers
         bool KeyExists(string key, RedisDataBase redisDataBase = RedisDataBase.Member);
 
         Task<bool> KeyDeleteAsync(string key, RedisDataBase redisDataBase = RedisDataBase.Member);
+
+        bool TryCreateLock(RedisKey lockKey, RedisValue lockValue, TimeSpan? expiry, RedisDataBase redisDataBase = RedisDataBase.Member);
+
+        bool UnLock(RedisKey lockKey, RedisValue lockValue, RedisDataBase redisDataBase = RedisDataBase.Member);
     }
 
 }
