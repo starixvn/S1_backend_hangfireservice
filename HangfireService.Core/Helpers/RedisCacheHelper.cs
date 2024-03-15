@@ -173,6 +173,49 @@ namespace HangfireService.Core.Helpers
             }
         }
 
+        public async Task<TItem> StringGetAsync<TItem>(string key, RedisDataBase redisDataBase = RedisDataBase.Member)
+        {
+            key = $"{redisDataBase}:{RemoveSpecialChars(key)}";
+            try
+            {
+                var db = _multiplexer.GetDatabase((int)redisDataBase);
+                if (db.KeyExists(key))
+                {
+                    var json = await db.StringGetAsync(key);
+                    return JsonConvert.DeserializeObject<TItem>(json);
+                }
+                else
+                    return default;
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"{key} | {ex.Message}");
+                return default;
+            }
+        }
+
+        public IEnumerable<string> StringGetKeyPersist(string key, RedisDataBase redisDataBase = RedisDataBase.Member)
+        {
+            key = $"{redisDataBase}:{RemoveSpecialChars(key)}";
+            try
+            {
+                var db = _multiplexer.GetDatabase((int)redisDataBase);
+                // 取得 Redis 伺服器中存在的所有 key
+                var allKeys = db.Execute("KEYS", key);
+
+                // 將所有的 RedisResult 組合在一起，然後轉換為字串集合並返回
+                var keys = ((RedisResult[])allKeys).SelectMany(r => (string[])r);
+
+                return keys;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"{key} | {ex.Message}");
+                return default;
+            }
+        }
+
         private string RemoveSpecialChars(string key)
         {
             foreach (var c in _charsToRemove)
