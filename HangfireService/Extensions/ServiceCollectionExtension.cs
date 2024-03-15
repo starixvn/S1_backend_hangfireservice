@@ -102,7 +102,9 @@ namespace HangfireService.Extensions
                 .AddSingleton<AffiliateApi>()
                 .AddSingleton<UpdateAffiliateInfoService>()
                 .AddSingleton<ConfigService>()
-                .AddSingleton<ConfigBLL>();
+                .AddSingleton<ConfigBLL>()
+                .AddSingleton<BlockIpService>()
+                .AddSingleton<AllowIpService>();
         }
 
         public static IServiceCollection RegisterHttpClient(this IServiceCollection services)

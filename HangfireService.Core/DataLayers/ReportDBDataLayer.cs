@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System.Collections.Generic;
+using System.Data;
 
 using Dapper;
 
@@ -221,5 +222,15 @@ namespace HangfireService.Core.DataLayers
             var result = _dbClient.Query<BigWin>("Service_BigWin_Get", p);
             return result;
         }
+
+        public async Task<IEnumerable<string>> GetAllowIp()
+        {
+            var p = new DynamicParameters();
+            p.Add("_Type", 1);
+            return await _dbClient.QueryAsync<string>("Service_AllowIP_Get", p);
+        }
+
+        public async Task<IEnumerable<string>> GetBlockIp()
+            => await _dbClient.QueryAsync<string>("Service_BlockIP_Get");
     }
 }

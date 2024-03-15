@@ -25,6 +25,10 @@ namespace HangfireService.Core.Helpers
         bool TryCreateLock(RedisKey lockKey, RedisValue lockValue, TimeSpan? expiry, RedisDataBase redisDataBase = RedisDataBase.Member);
 
         bool UnLock(RedisKey lockKey, RedisValue lockValue, RedisDataBase redisDataBase = RedisDataBase.Member);
+
+        Task<TItem> StringGetAsync<TItem>(string key, RedisDataBase redisDataBase = RedisDataBase.Member);
+
+        IEnumerable<string> StringGetKeyPersist(string key, RedisDataBase redisDataBase = RedisDataBase.Member);
     }
 
 }
