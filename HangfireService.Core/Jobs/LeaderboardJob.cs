@@ -56,11 +56,17 @@ namespace HangfireService.Core.Jobs
                                 //Get Data
                                 var leaderboardList = _reportDBDataLayer.GetLeaderboardList(categoryId, siteId, currencyId, startTime, endTime, option.TimeoutSeconds, out var timezone).ToList();
 
+                                // 要排除掉的Tag清單
+                                var excludeTagBySite = _reportDBDataLayer.GetLeaderboardTagExcludeList(siteId).TagsExclude;
+                                
+                                //排除掉Tag
+                                leaderboardList = leaderboardList.Where(x => x.Tags is null || x.Tags.All(tag => !excludeTagBySite.Contains(tag))).ToList();
+                                
                                 // 計算WTurnover
                                 timezone = timezone.Replace("+", "");
                                 var calculateDate = option.ExecuteType == ExecuteType.Months ?
                                     startTime.ToString("yyyyMM") : new DateTimeOffset(startTime, TimeSpan.Parse(timezone)).ToString("yyyyMM");
-
+                                
                                 var pointCalculation = _reportDBDataLayer.GetLeaderboardPointCalculation(siteId, calculateDate);
                                 foreach (var detail in leaderboardList)
                                 {
