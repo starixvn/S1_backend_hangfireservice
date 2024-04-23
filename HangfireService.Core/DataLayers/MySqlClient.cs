@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 using Dapper;
 
-using HangfireService.Core.DataLayers.Interfaces;
+using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 
 using Microsoft.Extensions.Logging;
@@ -14,27 +14,70 @@ using Serilog.Context;
 
 namespace HangfireService.Core.DataLayers
 {
-    public sealed class MySqlClient : IDataBaseInterface
+    public sealed class MySqlClient
     {
+        public readonly DataBase DataBase;
+
         private readonly string _connectionString;
+
+        private readonly IEnumerable<string> _backupConnectionStringList;
 
         private readonly ILogger<MySqlClient> _logger;
 
-        public DataBase DataBase { get; set; }
+        public MySqlClient(IServiceProvider provider, DataBase dataBase, string connectionString)
+        {
+            DataBase = dataBase;
+            _logger = provider.GetRequiredService<ILogger<MySqlClient>>();
+            _connectionString = connectionString;
+            _backupConnectionStringList = null;
+        }
+
+        public MySqlClient(IServiceProvider provider, DataBase dataBase, string connectionString, IEnumerable<string> backupConnectionStringList)
+        {
+            DataBase = dataBase;
+            _logger = provider.GetRequiredService<ILogger<MySqlClient>>();
+            _connectionString = connectionString;
+            _backupConnectionStringList = backupConnectionStringList;
+        }
+
+        private string HealthCheck()
+        {
+            if (_backupConnectionStringList == null)
+            {
+                return _connectionString;
+            }
+
+            foreach (var backupConn in _backupConnectionStringList)
+            {
+                try
+                {
+                    using var connection = new MySqlConnection(backupConn);
+                    var dbSlaveStatus = connection.QueryFirstOrDefault<DBSlaveStatus>("Service_HealthCheck_V2", commandType: CommandType.StoredProcedure);
+
+                    // 拿不到Status或延遲太久都換下一個連線
+                    if (dbSlaveStatus == null || dbSlaveStatus.Seconds_Behind_Master > 180)
+                    {
+                        _logger.LogWarning($"{ReplaceDBString(backupConn)} | DelayTime = {dbSlaveStatus?.Seconds_Behind_Master}");
+                        continue;
+                    }
+
+                    return backupConn;
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, $"{ReplaceDBString(backupConn)} | HealthCheck Exception");
+                }
+            }
+
+            // 前面連線檢查都有問題，用最後一個連線
+            return _backupConnectionStringList.Last();
+        }
 
         public MySqlConnection GetMySqlConnection()
         {
-            return new MySqlConnection(_connectionString);
+            var conn = HealthCheck();
+            return new MySqlConnection(conn);
         }
-
-        public MySqlClient(string connectionString, ILogger<MySqlClient> logger, DataBase dataBase)
-        {
-            _connectionString = connectionString;
-            _logger = logger;
-            DataBase = dataBase;
-        }
-
-        #region Query
 
         public IEnumerable<T> Query<T>(string name, object parameters = null, int? commandTimeout = null)
         {
@@ -42,7 +85,8 @@ namespace HangfireService.Core.DataLayers
             var sw = Stopwatch.StartNew();
             try
             {
-                using var connection = new MySqlConnection(_connectionString);
+                var conn = HealthCheck();
+                using var connection = new MySqlConnection(conn);
                 var command = new CommandDefinition(name, parameters,
                     commandTimeout: commandTimeout,
                     commandType: CommandType.StoredProcedure,
@@ -62,13 +106,14 @@ namespace HangfireService.Core.DataLayers
             return result.ToList();
         }
 
-        public async Task<IEnumerable<T>> QueryAsync<T>(string name, object? parameters = null, int? commandTimeout = null)
+        public async Task<IEnumerable<T>> QueryAsync<T>(string name, object parameters = null, int? commandTimeout = null)
         {
             IEnumerable<T> result;
             var sw = Stopwatch.StartNew();
             try
             {
-                await using var connection = new MySqlConnection(_connectionString);
+                var conn = HealthCheck();
+                await using var connection = new MySqlConnection(conn);
                 result = await connection.QueryAsync<T>(name, parameters, commandType: CommandType.StoredProcedure, commandTimeout: commandTimeout);
                 await connection.CloseAsync();
                 await connection.DisposeAsync();
@@ -82,30 +127,7 @@ namespace HangfireService.Core.DataLayers
             LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
             _logger.LogDebug($"{name} {sw.Elapsed:c}");
             return result.ToList();
-        }
-
-        public async Task<T> QueryFirstAsync<T>(string name, object? parameters = null, int? commandTimeout = null)
-        {
-            T result;
-            var resultCode = string.Empty;
-            var sw = Stopwatch.StartNew();
-            try
-            {
-                await using var connection = new MySqlConnection(_connectionString);
-                result = await connection.QueryFirstOrDefaultAsync<T>(name, parameters, commandType: CommandType.StoredProcedure, commandTimeout: commandTimeout);
-                await connection.CloseAsync();
-                await connection.DisposeAsync();
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, name);
-                throw;
-            }
-
-            LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
-            _logger.LogDebug($"{name} {resultCode} {sw.Elapsed:c}");
-            return result;
-        }
+        }        
 
         public IEnumerable<dynamic> Query(string name, object parameters = null, int? commandTimeout = null)
         {
@@ -113,7 +135,8 @@ namespace HangfireService.Core.DataLayers
             IEnumerable<dynamic> result;
             try
             {
-                using var connection = new MySqlConnection(_connectionString);
+                var conn = HealthCheck();
+                using var connection = new MySqlConnection(conn);
                 result = connection.Query(name, param: parameters, commandType: CommandType.StoredProcedure, commandTimeout: commandTimeout);
                 connection.Close();
                 connection.Dispose();
@@ -157,7 +180,8 @@ namespace HangfireService.Core.DataLayers
             T result;
             try
             {
-                using var connection = new MySqlConnection(_connectionString);
+                var conn = HealthCheck();
+                using var connection = new MySqlConnection(conn);
                 var command = new CommandDefinition(name, parameters,
                     commandTimeout: commandTimeout,
                     commandType: CommandType.StoredProcedure,
@@ -177,10 +201,6 @@ namespace HangfireService.Core.DataLayers
             return result;
         }
 
-        #endregion
-
-        #region Execute
-
         public async Task<int> ExecuteAsync(string name, object parameters = null)
         {
             var sw = Stopwatch.StartNew();
@@ -191,25 +211,6 @@ namespace HangfireService.Core.DataLayers
                 result = await connection.ExecuteAsync(name, param: parameters, commandType: CommandType.StoredProcedure);
                 await connection.CloseAsync();
                 await connection.DisposeAsync();
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, name);
-                throw;
-            }
-
-            LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
-            _logger.LogDebug($"{name} {sw.Elapsed:c}");
-            return result;
-        }
-
-        public async Task<int> ExecuteAsync(string name, IDbTransaction trans, object parameters = null)
-        {
-            var sw = Stopwatch.StartNew();
-            int result;
-            try
-            {
-                result = await trans.Connection.ExecuteAsync(name, param: parameters, commandType: CommandType.StoredProcedure);
             }
             catch (Exception e)
             {
@@ -263,7 +264,9 @@ namespace HangfireService.Core.DataLayers
             return result;
         }
 
-        #endregion
-
+        private string ReplaceDBString(string conn)
+        {
+            return conn.Substring(0, 28);
+        }
     }
 }
