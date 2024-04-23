@@ -23,7 +23,7 @@ namespace HangfireService.Core.Service
         /// </summary>
         private List<string> _includeCurrencyName = new()
         {
-            "MYR", "USD", "THB", "CNY", "IDR", "VND","INR","BDT"
+            "MYR", "USD", "THB", "CNY", "IDR", "VND","INR","BDT", "KRW", "BRL", "JPY"
         };
 
         public MpaUpdateExchangeRateService(IServiceProvider provider)
@@ -242,10 +242,13 @@ namespace HangfireService.Core.Service
                         "THB" => 4,
                         "CNY" => 13,
                         "IDR" => 15,
+                        "JPY" => 32,
+                        "KRW" => 45,
                         "VND" => 51,
                         "INR" => 61,
                         "KHUSD" => 72,
                         "BDT" => 74,
+                        "BRL" => 82,
                         _ => 0
                     };
                 }
@@ -318,7 +321,7 @@ namespace HangfireService.Core.Service
             ///134 ZMW 赞比亚克瓦查	1:1
             ///135 TZS 坦桑尼亚先令	1:1
             /// </summary>
-            public string ExchangeIds => "2,3,4,13,15,51,61,97"; // 未來擴充增加 Id 即可
+            public string ExchangeIds => "2,3,4,13,15,32,45,51,61,82,97"; // 未來擴充增加 Id 即可
             public string ExchangeDate { get; set; }
         }
 
