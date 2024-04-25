@@ -74,7 +74,7 @@ namespace HangfireService.Core.Jobs
                     LogContext.PushProperty("Tp", tpGameType.TpId);
                     LogContext.PushProperty("GameType", tpGameType.TypeName);
                     var bettrans = Enumerable.Empty<TpSettlePendingModel>();
-                    var gameIds = new List<long> { 7, 9, 10, 11, 12, 15, 16, 18, 28, 29, 32, 35, 36, 37, 39, 44, 45, 50, 53, 57, 63, 64, 65 };
+                    var gameIds = new List<long> { 7, 9, 10, 11, 12, 15, 16, 18, 28, 29, 32, 39, 44, 45, 50, 53, 57, 63 };
 
                     switch (categoryId)
                     {
