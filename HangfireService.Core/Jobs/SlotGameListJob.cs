@@ -32,7 +32,6 @@ namespace HangfireService.Core.Jobs
     {
         private readonly MySqlClient _reportDbClient;
         private static List<JobOption> _jobList;
-        private readonly int _isStage;
         private readonly ICacheHelper _redisHelper;
         private readonly IEnumerable<ServerInfo> _serverInfoList;
 
@@ -43,7 +42,6 @@ namespace HangfireService.Core.Jobs
            
             _reportDbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Report);
             _redisHelper = provider.GetRequiredService<ICacheHelper>();
-            _isStage = provider.GetRequiredService<ConfigBLL>().GetConfigValueByEnvironment<int>("IsStage");
             _serverInfoList = provider.GetRequiredService<IEnumerable<ServerInfo>>();
         }
 
@@ -71,11 +69,7 @@ namespace HangfireService.Core.Jobs
         private async Task<int> SetSlotGameList(int siteId, int currencyId, int deviceType)
         {
             var statusList = new List<int> { 1 };
-            if (_isStage == 1)
-            {
-                statusList.Add(3);
-            }
-           
+            var isStage = 0; // RLS環境由MemberSite處理
             var result = await _reportDbClient.QueryAsync<SlotGameInfo>("Service_SlotGame_Get", new
             {
                 CurrencyId = currencyId,
@@ -83,7 +77,7 @@ namespace HangfireService.Core.Jobs
                 DeviceType = deviceType,
                 StatusJson = JsonConvert.SerializeObject(statusList)
             });
-            var key = $"GetSlotGameListV2:{_isStage}:{currencyId}:{siteId}:{deviceType}";
+            var key = $"GetSlotGameListV2:{isStage}:{currencyId}:{siteId}:{deviceType}";
             _redisHelper.StringSet(key, JsonConvert.SerializeObject(result), null);
 
             return result.Count();
