@@ -194,6 +194,15 @@ namespace HangfireService.Core.DataLayers
             return result;
         }
 
+        public LeaderboardTagExcludeList GetLeaderboardTagExcludeList(int siteId)
+        {
+            var p = new DynamicParameters();
+            p.Add("_SiteId", siteId);
+            var result = _dbClient.Query<LeaderboardTagExcludeList>("Service_LeaderboardTagExclude_Get", p)
+                .FirstOrDefault();
+
+            return result;
+        }
 
         public IEnumerable<BigWinSetting> GetBigWinSetting(int siteId)
         {
