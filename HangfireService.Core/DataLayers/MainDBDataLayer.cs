@@ -128,6 +128,20 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Execute(sp, trans, parameters);
         }
 
+        #region WinLossSummary
+
+        public int InsertWinLossData(string sp, object parameters, IDbTransaction trans)
+        {
+            return _dbClient.Execute(sp, trans, parameters);
+        }
+
+        public int DeleteWinLossData(string sp, object parameters, IDbTransaction trans)
+        {
+            return _dbClient.Execute(sp, trans, parameters);
+        }
+
+        #endregion
+
         public int SetOTPStatus(OTPCheckResult result)
         {
             return _dbClient.Execute("Service_OTPLog_Set", result);
