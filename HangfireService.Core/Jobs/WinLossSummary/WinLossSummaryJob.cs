@@ -26,7 +26,7 @@ namespace HangfireService.Core.Jobs
     [ManagementPage("WinLossSummaryJob", queue: "relay")]
     public class WinLossSummaryJob : BaseJob, IScheduledJob
     {
-        private readonly MainDBDataLayer _mainDBDataLayer;
+        private readonly ReportCenterDataLayer _reportCenterDBDataLayer;
         private readonly ReportBackupDBDataLayer _reportBackupDBDataLayer;
         private static List<JobOption> _jobList;
         private readonly TelegramBotHelper _telegramBotHelper;
@@ -36,7 +36,7 @@ namespace HangfireService.Core.Jobs
         {
             LogContext.PushProperty("ClassName", GetType().Name);
             MyJobManager.GetJobGroups()?.TryGetValue("Relay", out _jobList);
-            _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
+            _reportCenterDBDataLayer = provider.GetRequiredService<ReportCenterDataLayer>();
             _reportBackupDBDataLayer = provider.GetRequiredService<ReportBackupDBDataLayer>();
             _telegramBotHelper = provider.GetRequiredService<TelegramBotHelper>();
             _winLossSummaryService = provider.GetRequiredService<WinLossSummaryService>();
@@ -127,16 +127,16 @@ namespace HangfireService.Core.Jobs
             {
                 var dataResult = await _winLossSummaryService.ProcessDataAsync(relayData, StartTime, EndTime);
 
-                await using var conn = _mainDBDataLayer.GetMySqlConnection();
+                await using var conn = _reportCenterDBDataLayer.GetMySqlConnection();
                 conn.Open();
                 var trans = await conn.BeginTransactionAsync();
 
                 //清除舊資料
-                _mainDBDataLayer.DeleteWinLossData(option.DeleteSP, parameters, trans);
+                _reportCenterDBDataLayer.DeleteWinLossData(option.DeleteSP, parameters, trans);
                 try
                 {
                     //寫入資料
-                    result += _mainDBDataLayer.InsertWinLossData(option.InsertSP, dataResult, trans);
+                    result += _reportCenterDBDataLayer.InsertWinLossData(option.InsertSP, dataResult, trans);
                 }
                 catch (MySqlException mySqlEx)
                 {

@@ -5,6 +5,7 @@
         Main,
         Report,
         Wager,
-        ReportBackupDB
+        ReportBackupDB,
+        ReportCenter
     }
 }
