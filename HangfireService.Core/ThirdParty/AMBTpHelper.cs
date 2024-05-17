@@ -99,11 +99,11 @@ namespace HangfireService.Core.ThirdParty
             tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckByGameType(TpId, 50, checkOption.BeginTime.AddHours(utcTime), checkOption.EndTime.AddHours(utcTime)).ToList();
             tpBetRecord = ProcessTpBetRecordSubCurrencyToMainCurrency(tpBetRecord);
 
-            // 第三方資料 Stake 設為 結算資料 Stake
-            foreach (var tpDailyData in tpDailyList)
-            {
-                tpDailyData.Stake = tpBetRecord.First(x => x.CurrencyId == tpDailyData.CurrencyId).Stake;
-            }
+            //// 第三方資料 Stake 設為 結算資料 Stake
+            //tpDailyList.ForEach(item =>
+            //{
+            //    item.Stake = tpBetRecord.Find(x => x.CurrencyId == item.CurrencyId).Stake;
+            //});
 
             var checkResult = new List<FinanceCheckResult>();
             if (bettransList.Any())
