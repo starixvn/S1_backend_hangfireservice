@@ -132,9 +132,13 @@ namespace HangfireService.Core.Jobs
                             }
                             break;
                         case 8:
-                            if (tpGameType.Type == 41 || tpGameType.Type == 42 || tpGameType.Type == 60)
+                            if (tpGameType.Type == 41 || tpGameType.Type == 42)
                             {
                                 bettrans = await _wagerDBDataLayer.GetTpSettlePendingPokerByTpGameType(tpGameType.Type, begin, end);
+                            }
+                            else
+                            {
+                                bettrans = await _reportDBDataLayer.GetTpSettlePendingTpUnsettleByTpGameType(tpGameType.TpId, tpGameType.Type, begin, end);
                             }
                             break;
                         case 10:
@@ -142,7 +146,7 @@ namespace HangfireService.Core.Jobs
                             {
                                 bettrans = await _reportDBDataLayer.GetTpSettlePendingPokerByTpGameType(tpGameType.Type, begin, end);
                             }
-                            else if (tpGameType.Type == 52)
+                            else if (tpGameType.Type == 52 || tpGameType.Type == 61)
                             {
                                 bettrans = await _reportDBDataLayer.GetTpSettlePendingTpUnsettleByTpGameType(tpGameType.TpId, tpGameType.Type, begin, end);
                             }
