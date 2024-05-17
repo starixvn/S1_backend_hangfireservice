@@ -77,10 +77,10 @@ namespace HangfireService.Core.ThirdParty
             tpBetRecord = ProcessTpBetRecordSubCurrencyToMainCurrency(tpBetRecord);
 
             // 因第三方資料無法計算出ValidBet，結算邏輯會將winlose=0的注單設定validbet=0，故無法正確比對
-            foreach (var tpBetRecordData in tpBetRecord)
+            tpBetRecord.ForEach(item =>
             {
-                tpBetRecordData.ValidBet = 0;
-            }
+                item.ValidBet = 0;
+            });
 
             var checkResult = new List<FinanceCheckResult>();
             if (bettransList.Any())
