@@ -2,7 +2,7 @@
 
 public class WinLossSummaryModel
 {
-    public WinLossSummaryModel(WinLossSourceModel source)
+    public WinLossSummaryModel(WinLossSourceModel source, decimal baCommission)
     {
         SettledTime = source.SettledTime;
         TransTime = source.TransTime;
@@ -32,6 +32,7 @@ public class WinLossSummaryModel
         BaValidBet = source.BaValidBet;
         BaWinLoss = source.BaWinLoss;
         BaRevenue = source.BaRevenue;
+        BaCommission = baCommission;
         BaProgressiveWin = source.BaProgressiveWin;
         BaProgressiveBet = source.BaProgressiveBet;
     }
@@ -57,6 +58,7 @@ public class WinLossSummaryModel
     public decimal ValidBet { get; set; }
     public decimal WinLoss { get; set; }
     public decimal Revenue { get; set; }
+    public decimal Commission { get; set; }
     public decimal ProgressiveWin { get; set; }
     public decimal ProgressiveBet { get; set; }
     public int TotalCount { get; set; }
@@ -66,6 +68,7 @@ public class WinLossSummaryModel
     public decimal BaValidBet { get; set; }
     public decimal BaWinLoss { get; set; }
     public decimal BaRevenue { get; set; }
+    public decimal BaCommission { get; set; }
     public decimal BaProgressiveWin { get; set; }
     public decimal BaProgressiveBet { get; set; }
 
