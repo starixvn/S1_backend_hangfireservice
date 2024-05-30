@@ -180,7 +180,7 @@ namespace HangfireService.Core.Jobs
 
                         // 金額檢查(只回傳不符合的資料)
                         var tpResult = bettransList.Select(bettrans
-                            => bettrans.CheckTransIdData(FinanceCheckTransIdType.結算與交易金額檢查, tpBetRecord.FirstOrDefault(tpBetRecord => tpBetRecord.TransId == bettrans.TransId)));
+                            => bettrans.CheckTransIdData(tpId, FinanceCheckTransIdType.結算與交易金額檢查, tpBetRecord.FirstOrDefault(tpBetRecord => tpBetRecord.TransId == bettrans.TransId)));
                         var tpData = tpResult.Where(item => item != null).ToList();
                         foreach (var d in AmountOfTransIds)
                         {
