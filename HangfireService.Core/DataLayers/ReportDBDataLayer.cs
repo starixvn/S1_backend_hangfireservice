@@ -102,7 +102,7 @@ namespace HangfireService.Core.DataLayers
 
         public IEnumerable<FinanceCheckTransIdData> GetFinanceCheckTransIdHandlingCheck()
         {
-            return _dbClient.Query<FinanceCheckTransIdData>("Service_FinanceCheckTransId_Check_Get");
+            return _dbClient.Query<FinanceCheckTransIdData>("Service_FinanceCheckTransId_Check_Get", parameters: new { _Count = 2, _Limit = 500 });
         }
 
         public IEnumerable<FinanceCheckTransIdData> GetFinanceCheckTransIdHandlingNotify()
