@@ -56,7 +56,12 @@ public class WinLossSummaryService
                 item.BaProgressiveBet = 0;
                 item.BaProgressiveWin = 0;
             }
-            result.Add(new WinLossSummaryModel(item));
+            decimal baCommission = 0;
+            if (item.GameType == (int)MpaCommissionCustomizeGameTypeEnum.SBSW_Sports && item.BaValidBet != 0)
+            {
+                baCommission = item.BaValidBet * 0.0025m;  // BACommission = ValidTurnOver * 0.25%
+            }
+            result.Add(new WinLossSummaryModel(item, baCommission));
         }
 
         return result;
@@ -88,7 +93,7 @@ public class WinLossSummaryService
     {
         foreach (var item in source)
         {
-            item.Ggr = CalculateGgr(item.GameType, item.WinLoss, item.ProgressiveWin, item.ProgressiveBet, item.Revenue);
+            item.Ggr = CalculateGgr(item.GameType, item.WinLoss, item.ProgressiveWin, item.ProgressiveBet, item.Revenue) + item.BaCommission;
         }
     }
 
