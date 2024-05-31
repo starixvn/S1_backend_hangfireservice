@@ -72,7 +72,7 @@ namespace HangfireService.Core.ThirdParty
         public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, List<TpBetRecordCheck> tpBetRecord, List<BettransCheckData> bettransList, List<TpDailySummaryCheckData> tpDailyList)
         {
 
-            // 排除promo
+            // 排除promo & cancel
             tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckDataByTpId(TpId, checkOption.BeginTime, checkOption.EndTime, TicketStatusExcludeOption.Promo, TimeOption.SettledTime).ToList();
             tpBetRecord = ProcessTpBetRecordSubCurrencyToMainCurrency(tpBetRecord);
 
