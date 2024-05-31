@@ -63,7 +63,7 @@ namespace HangfireService.Core.Jobs
                     var tpBetRecordList = _reportDBDataLayer.GetTpBetRecordCheckTransIdData(checkOption.BeginTime, checkOption.EndTime, tpId, timeOptionId);
                     if (tpId == 36 || tpId == 37 || tpId == 38 || tpId == 59)
                     {
-                        tpBetRecordList = tpBetRecordList.Where(x => x.TicketStatus != 6);
+                        tpBetRecordList = tpBetRecordList.Where(x => x.TicketStatus != 6 || x.TicketStatus != 3);
                     }
                     else if (tpId == 6)
                     {
