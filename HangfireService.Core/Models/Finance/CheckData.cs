@@ -134,7 +134,7 @@ namespace HangfireService.Core.Models.Finance
 
         public int TicketStatus { get; set; }
 
-        public ErrorDetail CheckTransIdData(FinanceCheckTransIdType checkType, TpBetRecordCheckTransId check)
+        public ErrorDetail CheckTransIdData(int tpId, FinanceCheckTransIdType checkType, TpBetRecordCheckTransId check)
         {
             decimal checkStake = 0;
             decimal checkValidBet = 0;
@@ -170,6 +170,11 @@ namespace HangfireService.Core.Models.Finance
             if (validBetDiff != 0 && Math.Abs(validBetDiff) > 0.01m)
             {
                 match = false;
+                if (tpId == 36)
+                {
+                    // 因第三方資料無法計算出ValidBet，故不檢查
+                    match = true;
+                }
             }
             if (winlostAmountDiff != 0 && Math.Abs(winlostAmountDiff) > 0.01m)
             {

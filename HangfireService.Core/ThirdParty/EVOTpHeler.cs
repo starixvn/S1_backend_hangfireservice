@@ -48,7 +48,7 @@ namespace HangfireService.Core.ThirdParty
                 item.CurrencyId = _tpCurrency.First(c => c.TpCurrencyId == item.TpCurrencyId).CurrencyId;
                 item.TpId = TpId;
                 item.Stake *= rate;
-                item.ValidBet *= rate;
+                item.ValidBet = 0;
                 item.Payout *= rate;
                 item.WinlostAmount *= rate;
             }
@@ -62,7 +62,7 @@ namespace HangfireService.Core.ThirdParty
             {
                 var rate = _tpCurrency.First(c => c.CurrencyId == tpDaily.CurrencyId).ExchangeRate;
                 tpDaily.Stake *= rate;
-                tpDaily.ValidBet *= rate;
+                tpDaily.ValidBet = 0;
                 tpDaily.Payout *= rate;
                 tpDaily.WinlostAmount *= rate;
             }
@@ -72,9 +72,15 @@ namespace HangfireService.Core.ThirdParty
         public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, List<TpBetRecordCheck> tpBetRecord, List<BettransCheckData> bettransList, List<TpDailySummaryCheckData> tpDailyList)
         {
 
-            // 排除promo
+            // 排除promo & cancel
             tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckDataByTpId(TpId, checkOption.BeginTime, checkOption.EndTime, TicketStatusExcludeOption.Promo, TimeOption.SettledTime).ToList();
             tpBetRecord = ProcessTpBetRecordSubCurrencyToMainCurrency(tpBetRecord);
+
+            // 因第三方資料無法計算出ValidBet，結算邏輯會將winlose=0的注單設定validbet=0，故無法正確比對
+            tpBetRecord.ForEach(item =>
+            {
+                item.ValidBet = 0;
+            });
 
             var checkResult = new List<FinanceCheckResult>();
             if (bettransList.Any())
@@ -134,7 +140,7 @@ namespace HangfireService.Core.ThirdParty
                         TransId = item.TransId,
                         CurrencyId = item.CurrencyId,
                         Stake = item.Stake * exchangeRate,
-                        ValidBet = item.ValidBet * exchangeRate,
+                        ValidBet = 0,
                         Payout = 0,
                         WinlostAmount = item.WinlostAmount * exchangeRate,
                         Revenue = 0,

@@ -205,6 +205,14 @@ namespace HangfireService.Core.DataLayers
             });
         }
 
+        public int UpdateFinanceCheckTransIdCount(long SQ)
+        {
+            return _dbClient.Execute("Service_FinanceCheckTransId_Count_Set", new
+            {
+                _SQ = SQ
+            });
+        }
+
         public int InsertBigWinInfo(BigWinInfo bigWinInfo)
         {
             return _dbClient.Execute("Service_BigWinInfo_Set", new

@@ -100,7 +100,12 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Query<TpBetRecordCheck>("Finance_TpBetRecord_Check_CurrencyId_ByTpId_Get", parameters: new { _TpId = TpId, _CurrencyId = CurrencyId, _BeginTime = BeginTime, _EndTime = EndTime }, commandTimeout: 120);
         }
 
-        public IEnumerable<FinanceCheckTransIdData> GetFinanceCheckTransIdHandling()
+        public IEnumerable<FinanceCheckTransIdData> GetFinanceCheckTransIdHandlingCheck()
+        {
+            return _dbClient.Query<FinanceCheckTransIdData>("Service_FinanceCheckTransId_Check_Get", parameters: new { _Count = 2, _Limit = 500 });
+        }
+
+        public IEnumerable<FinanceCheckTransIdData> GetFinanceCheckTransIdHandlingNotify()
         {
             return _dbClient.Query<FinanceCheckTransIdData>("Service_FinanceCheckTransId_Get");
         }

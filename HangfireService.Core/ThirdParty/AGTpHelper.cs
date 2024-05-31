@@ -11,7 +11,7 @@ namespace HangfireService.Core.ThirdParty
 {
     internal class AGTpHelper : BaseTpHelper, IFinanceTpHelper
     {
-        public bool CheckTransId => false;
+        public bool CheckTransId => true;
         public bool BindCommonCurrency => true;
 
         public TimeOption TimeOptionId => TimeOption.SettledTime;
@@ -65,5 +65,38 @@ namespace HangfireService.Core.ThirdParty
             }
             return tpDailyList;
         }
+
+        public async Task<IEnumerable<BettransCheckTransIdData>> GetBettransCheckTransIdData(FinanceCheckTransIdOption checkOption)
+        {
+            var BeginTime = checkOption.BeginTime.GetUnixTime();
+            var EndTime = checkOption.EndTime.GetUnixTime() - 1;
+            int Mode = (int)checkOption.Mode;
+            var TransId = checkOption.TransIds;
+            if (Mode == (int)ConditionOption.TransId && TransId == "[]")
+            {
+                return Enumerable.Empty<BettransCheckTransIdData>();
+            }
+
+            var Parameter = new { _Mode = Mode, _BeginTime = BeginTime, _EndTime = EndTime, _TransIds = TransId };
+            var bettrans = await _wagerClient.QueryAsync<BettransCheckTransIdData>("Finance_TpWagerAG_Check_TransId_Get", Parameter);
+
+            return (from item in bettrans
+                    let exchangeRate = _tpCurrency.First(c => c.TpCurrencyId == item.TpCurrencyId).ExchangeRate
+                    let currencyId = _tpCurrency.First(c => c.TpCurrencyId == item.TpCurrencyId).CurrencyId
+                    select new BettransCheckTransIdData
+                    {
+                        TpId = TpId,
+                        TransId = item.TransId,
+                        CurrencyId = currencyId,
+                        Stake = item.Stake * exchangeRate,
+                        ValidBet = item.ValidBet * exchangeRate,
+                        Payout = item.Payout * exchangeRate,
+                        WinlostAmount = item.WinlostAmount * exchangeRate,
+                        Revenue = 0,
+                        ProgressiveBet = 0,
+                        ProgressiveWin = 0,
+                    }).ToList();
+        }
+
     }
 }

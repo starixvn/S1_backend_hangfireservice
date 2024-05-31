@@ -1,11 +1,9 @@
 ﻿using System.ComponentModel;
 using System.Text;
-
 using Hangfire;
 using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using Hangfire.Server;
-
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Extensions;
 using HangfireService.Core.Jobs.Interfaces;
@@ -14,11 +12,8 @@ using HangfireService.Core.Models.Finance;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.ThirdParty.Interfaces;
-
 using Microsoft.Extensions.Logging;
-
 using Newtonsoft.Json;
-
 using Serilog.Context;
 
 namespace HangfireService.Core.Jobs
@@ -68,7 +63,7 @@ namespace HangfireService.Core.Jobs
                     var tpBetRecordList = _reportDBDataLayer.GetTpBetRecordCheckTransIdData(checkOption.BeginTime, checkOption.EndTime, tpId, timeOptionId);
                     if (tpId == 36 || tpId == 37 || tpId == 38 || tpId == 59)
                     {
-                        tpBetRecordList = tpBetRecordList.Where(x => x.TicketStatus != 6);
+                        tpBetRecordList = tpBetRecordList.Where(x => x.TicketStatus != 6 || x.TicketStatus != 3);
                     }
                     else if (tpId == 6)
                     {
@@ -79,7 +74,7 @@ namespace HangfireService.Core.Jobs
                         tpBetRecordList = tpBetRecordList.Where(x => x.TicketStatus != 3);
                     }
                     var bettransList = await tpHelper.GetBettransCheckTransIdData(checkOption);
-                    var checkResult = tpHelper.CheckTransIdData(checkOption, tpBetRecordList.ToList(), bettransList.ToList());
+                    var checkResult = tpHelper.CheckTransIdData(tpId, checkOption, tpBetRecordList.ToList(), bettransList.ToList());
                     if (checkResult.Any())
                     {
                         // 寫入需重新確認的資料

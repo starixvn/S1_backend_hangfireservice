@@ -122,7 +122,7 @@ namespace HangfireService.Core.ThirdParty.Interfaces
             return null;
         }
 
-        public List<FinanceCheckTransIdResult> CheckTransIdData(FinanceCheckTransIdOption checkOption, List<TpBetRecordCheckTransId> tpBetRecord, List<BettransCheckTransIdData> bettransList)
+        public List<FinanceCheckTransIdResult> CheckTransIdData(int tpId, FinanceCheckTransIdOption checkOption, List<TpBetRecordCheckTransId> tpBetRecord, List<BettransCheckTransIdData> bettransList)
         {
             var checkResult = new List<FinanceCheckTransIdResult>();
             var bettransOfTransIds = new List<string>();
@@ -182,7 +182,7 @@ namespace HangfireService.Core.ThirdParty.Interfaces
 
             // 金額檢查
             var tpResult = bettransList.Select(bettrans
-                => bettrans.CheckTransIdData(FinanceCheckTransIdType.結算與交易金額檢查, tpBetRecord.FirstOrDefault(tpBetRecord => tpBetRecord.TransId == bettrans.TransId)));
+                => bettrans.CheckTransIdData(tpId, FinanceCheckTransIdType.結算與交易金額檢查, tpBetRecord.FirstOrDefault(tpBetRecord => tpBetRecord.TransId == bettrans.TransId)));
             var tpData = tpResult.Where(item => item != null).ToList();
 
             if (tpData.Any())

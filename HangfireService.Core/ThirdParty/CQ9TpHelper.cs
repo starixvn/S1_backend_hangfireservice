@@ -42,6 +42,7 @@ namespace HangfireService.Core.ThirdParty
             var tasks = new List<Task<IEnumerable<BettransCheckData>>>();
             tasks.Add(_dbClient.QueryAsync<BettransCheckData>("Finance_BettransFish_CQ9_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120));
             tasks.Add(_dbClient.QueryAsync<BettransCheckData>("Finance_BettransRNG_CQ9_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120));
+            tasks.Add(_dbClient.QueryAsync<BettransCheckData>("Finance_BettransCF_CQ9_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120));
             await Task.WhenAll(tasks);
 
             var CheckData = new List<BettransCheckData>();
@@ -52,7 +53,7 @@ namespace HangfireService.Core.ThirdParty
                 CheckData.AddRange(data);
             }
 
-            //使用TpCurrencyId組合Slot跟Fish資料
+            //使用TpCurrencyId組合Slot跟Fish以及CF(cockfighting)資料
             return CheckData
                 .GroupBy(i => i.CurrencyId)
                 .Select(i => new BettransCheckData
