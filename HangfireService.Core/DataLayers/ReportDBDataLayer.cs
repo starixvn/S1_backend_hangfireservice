@@ -75,6 +75,11 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Query<TpBetRecordCheck>("Finance_TpBetRecord_Check_Get", parameters: new { BeginTime, EndTime }, commandTimeout: 120);
         }
 
+        public IEnumerable<TpRewardRecordCheck> GetTpRewardRecordCheckData(DateTime BeginTime, DateTime EndTime)
+        {
+            return _dbClient.Query<TpRewardRecordCheck>("Finance_TpRewardRecord_Check_Get", parameters: new { BeginTime, EndTime }, commandTimeout: 120);
+        }
+
         public IEnumerable<TpBetRecordCheckTransId> GetTpBetRecordCheckTransIdData(DateTime BeginTime, DateTime EndTime, int TpId, TimeOption TimeOption = 0, string TransId = "[]")
         {
             return _dbClient.Query<TpBetRecordCheckTransId>("Finance_TpBetRecord_Check_TransId_Get", parameters: new { _BeginTime = BeginTime, _EndTime = EndTime, _TpId = TpId, _TimeOption = TimeOption, _TransIds = TransId }, commandTimeout: 120);
@@ -88,6 +93,11 @@ namespace HangfireService.Core.DataLayers
         public IEnumerable<TpBetRecordCheck> GetTpBetRecordCheckDataByTpId(int TpId, DateTime BeginTime, DateTime EndTime, TicketStatusExcludeOption TicketStatusExcludeOption = 0, TimeOption TimeOption = 0)
         {
             return _dbClient.Query<TpBetRecordCheck>("Finance_TpBetRecord_Check_ByTpId_Get", parameters: new { _TpId = TpId, _BeginTime = BeginTime, _EndTime = EndTime, _TicketStatusExcludeOption = TicketStatusExcludeOption, _TimeOption = TimeOption }, commandTimeout: 120);
+        }
+
+        public IEnumerable<TpBetRecordCheck> GetTpRewardRecordCheckDataByTpId(int TpId, DateTime BeginTime, DateTime EndTime)
+        {
+            return _dbClient.Query<TpBetRecordCheck>("Finance_TpRewardRecord_Check_ByTpId_Get", parameters: new { _TpId = TpId, _BeginTime = BeginTime, _EndTime = EndTime }, commandTimeout: 120);
         }
 
         public IEnumerable<TpBetRecordCheck> GetTpBetRecordCheckByGameType(int TpId, int GameType, DateTime BeginTime, DateTime EndTime)
