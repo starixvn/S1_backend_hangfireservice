@@ -6,6 +6,7 @@ using HangfireService.Core.Models.Finance;
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.Service;
 using HangfireService.Core.ThirdParty.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace HangfireService.Core.ThirdParty
 {
@@ -42,6 +43,7 @@ namespace HangfireService.Core.ThirdParty
             tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransRng_AP_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120));
             tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransRng_AP_Mini_cardracing_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120));
             tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransRng_AP_Mini_crash_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }, 120));
+            tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_RewardRNG_AP_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }));
             await Task.WhenAll(tasks);
 
             var CheckData = new List<BettransCheckData>();
@@ -80,6 +82,61 @@ namespace HangfireService.Core.ThirdParty
                 tpDaily.WinlostAmount *= rate;
             }
             return tpDailyList;
+        }
+
+        public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, List<TpBetRecordCheck> tpBetRecord, List<BettransCheckData> bettransList, List<TpDailySummaryCheckData> tpDailyList)
+        {
+            // 取得活動金額
+            var tpRewardRecord = _reportDbDataLayer.GetTpRewardRecordCheckDataByTpId(TpId, checkOption.BeginTime, checkOption.EndTime).ToList();
+
+            // 第三方資料含活動金額，將另外存放的活動金額加總
+            if (tpRewardRecord.Count > 0)
+            {
+                foreach (var tpBetData in tpBetRecord)
+                {
+                    var tpRewardItem = tpRewardRecord.Where(x => x.CurrencyId == tpBetData.CurrencyId).FirstOrDefault();
+                    if (tpRewardItem == null)
+                    {
+                        continue;
+                    }
+                    tpBetData.WinlostAmount += tpRewardItem.WinlostAmount;
+                }
+            }
+
+            var checkResult = new List<FinanceCheckResult>();
+            if (bettransList.Any())
+            {
+                var bettransResult = bettransList.Select(bettrans
+                    => bettrans.CheckData(FinanceCheckType.結算資料與交易資料檢查, tpBetRecord.FirstOrDefault(tpBetRecordTransTimeData => tpBetRecordTransTimeData.CurrencyId == bettrans.CurrencyId)));
+                checkResult.AddRange(bettransResult);
+            }
+
+            if (tpDailyList.Any())
+            {
+                var tpResult = tpDailyList.Select(tpDaily
+                    => tpDaily.CheckData(FinanceCheckType.結算資料與第三方匯總檢查, tpBetRecord.FirstOrDefault(tpBetRecordTransTimeData => tpBetRecordTransTimeData.CurrencyId == tpDaily.CurrencyId)));
+                checkResult.AddRange(tpResult);
+            }
+
+            if (bettransList.Any() && tpDailyList.Any())
+            {
+                var financeResult = bettransList.Select(bettrans
+                    => bettrans.CheckData(FinanceCheckType.交易資料與第三方匯總檢查, tpDailyList.FirstOrDefault(tp => tp.CurrencyId == bettrans.CurrencyId)));
+                checkResult.AddRange(financeResult);
+            }
+
+            if (checkResult.Any())
+            {
+                var data = new
+                {
+                    TpId,
+                    tpBetRecord,
+                    tpDailyList,
+                    bettransList,
+                };
+                _logger.LogError($"[{checkOption.BeginTime:yyyy-MM-dd}]:{ToJson(data)}");
+            }
+            return checkResult;
         }
 
         public async Task<IEnumerable<BettransCheckTransIdData>> GetBettransCheckTransIdData(FinanceCheckTransIdOption checkOption)

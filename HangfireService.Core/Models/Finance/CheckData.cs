@@ -1,5 +1,4 @@
 ﻿using HangfireService.Core.Models.Enums;
-
 using Newtonsoft.Json;
 
 namespace HangfireService.Core.Models.Finance
@@ -69,10 +68,17 @@ namespace HangfireService.Core.Models.Finance
         }
     }
 
+    public class TpRewardRecordCheck
+    {
+        public int TpId { get; set; }
+
+        public int CurrencyId { get; set; }
+
+        public decimal WinlostAmount { get; set; }
+    }
+
     public class BettransCheckData : TpBetRecordCheck
     {
-        public string TpCurrencyId { get; set; }
-
         public decimal Payout { get; set; }
 
         public FinanceCheckResult CheckData(FinanceCheckType checkType, TpDailySummaryCheckData? check)
