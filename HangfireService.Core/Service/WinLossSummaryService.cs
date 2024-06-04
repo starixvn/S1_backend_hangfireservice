@@ -132,6 +132,10 @@ public class WinLossSummaryService
             {
                 s.Revenue *= -1;
             }
+            else
+            {
+                s.Revenue = 0;
+            }
         }
 
         await Task.CompletedTask;
