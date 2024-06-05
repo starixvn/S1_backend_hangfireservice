@@ -100,6 +100,8 @@ namespace HangfireService.Core.ThirdParty
                         continue;
                     }
                     tpBetData.WinlostAmount += tpRewardItem.WinlostAmount;
+                    // 派彩加上活動金額
+                    bettransList.Find(x => x.CurrencyId == tpBetData.CurrencyId).Payout += tpRewardItem.WinlostAmount;
                 }
             }
 
