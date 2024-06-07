@@ -91,8 +91,10 @@ namespace HangfireService.Core.ThirdParty
                 // bettransList是使用Wager，和局的金額不會含抽成；結算時的Stake是使用bettrans的下注金額(不含抽成)，故須另外撈bettrans資料加回計算
                 bettransList.Find(i => i.CurrencyId == item.CurrencyId).Stake += item.ProgressiveBet;
                 // bettransList、tpDailyList是使用Wager，對方沒有提供jackpot金額，故須另外撈bettrans資料加回計算
-                bettransList.Find(i => i.CurrencyId == item.CurrencyId).ProgressiveWin = item.ProgressiveWin;
-                tpDailyList.Find(i => i.CurrencyId == item.CurrencyId).ProgressiveWin = item.ProgressiveWin;
+                bettransList.Find(i => i.CurrencyId == item.CurrencyId).ProgressiveWin += item.ProgressiveWin;
+                tpDailyList.Find(i => i.CurrencyId == item.CurrencyId).ProgressiveWin += item.ProgressiveWin;
+                // 扣除不含和局的抽成
+                tpBetRecord.Find(i => i.CurrencyId == item.CurrencyId).Stake -= item.ProgressiveBet;
             }
 
             var checkResult = new List<FinanceCheckResult>();
