@@ -22,6 +22,7 @@ namespace HangfireService.Core.ThirdParty
         private readonly IEnumerable<TpCurrency> _tpCurrency;
         private readonly MySqlClient _dbClient;
         private readonly FincanceService _fincanceService;
+        private readonly PartitionService _partitionService;
         // 對方報表時間為2022-07-26+8 ~ 2022-07-26+8 ，UTC+0轉換為2022-07-25 16:00:00
         private readonly int utcTime = -8;
 
@@ -33,13 +34,15 @@ namespace HangfireService.Core.ThirdParty
 
             _dbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Report);
 
+            _partitionService = provider.GetRequiredService<PartitionService>();
+
             _fincanceService = provider.GetRequiredService<FincanceService>();
         }
 
         public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
         {
-            var BeginTime = (long)(checkOption.BeginTime.AddHours(utcTime).Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
-            var EndTime = (long)(checkOption.EndTime.AddHours(utcTime).Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+            var BeginTime = (long)checkOption.BeginTime.AddHours(utcTime).Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
+            var EndTime = (long)checkOption.EndTime.AddHours(utcTime).Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
             var tasks = new List<Task<IEnumerable<BettransCheckData>>>
             {
                 // Poker
@@ -47,9 +50,7 @@ namespace HangfireService.Core.ThirdParty
             };
 
             //Slot
-            //tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransRng_AMB_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime, _ReportAt = ReportAt }));
-
-
+            tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime.AddHours(utcTime), checkOption.EndTime.AddHours(utcTime), "Finance_BettransRng_AMB_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }));
             await Task.WhenAll(tasks);
 
             var CheckData = new List<BettransCheckData>();
@@ -95,15 +96,8 @@ namespace HangfireService.Core.ThirdParty
 
         public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, List<TpBetRecordCheck> tpBetRecord, List<BettransCheckData> bettransList, List<TpDailySummaryCheckData> tpDailyList)
         {
-            // 暫時僅檢查Poker
-            tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckByGameType(TpId, 50, checkOption.BeginTime.AddHours(utcTime), checkOption.EndTime.AddHours(utcTime)).ToList();
+            tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckDataByTpId(TpId, checkOption.BeginTime.AddHours(utcTime), checkOption.EndTime.AddHours(utcTime), TicketStatusExcludeOption.Cancel, TimeOption.SettledTime).ToList();
             tpBetRecord = ProcessTpBetRecordSubCurrencyToMainCurrency(tpBetRecord);
-
-            //// 第三方資料 Stake 設為 結算資料 Stake
-            //tpDailyList.ForEach(item =>
-            //{
-            //    item.Stake = tpBetRecord.Find(x => x.CurrencyId == item.CurrencyId).Stake;
-            //});
 
             var checkResult = new List<FinanceCheckResult>();
             if (bettransList.Any())
