@@ -54,14 +54,14 @@ namespace HangfireService.Core.Jobs
                 // data merge
                 var allData = tpWagerTimerData.Concat(tpWagerTimerReference);
 
-                var now = DateTime.UtcNow;
+                var now = DateTime.Parse(DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:00"));
                 var subMsg = "";
                 List<TpWagerTimerModel> checkList = new();
 
                 foreach (var data in allData)
                 {
                     var tpName = tpListData.First(i => i.TpId == data.TpId).TpName;
-                    var delay = now.Subtract(data.StartTime);
+                    var delay = now.Subtract(data.StartTime.AddSeconds(1));
                     int delayHour = (int)delay.TotalHours;
                     int delayDay = (int)delay.TotalDays;
 
