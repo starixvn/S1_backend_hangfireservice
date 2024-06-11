@@ -79,22 +79,23 @@ namespace HangfireService.Core.ThirdParty
             tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckDataByTpId(TpId, checkOption.BeginTime, checkOption.EndTime, TicketStatusExcludeOption.Cancel, TimeOption.TransTime).ToList();
 
             // Wager無法取得jackpot金額、和局注單金額，使用bettrans資料取得
-            var bettrans = _partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_Bettrans_GA_Summary_Get", new { _BeginTime = checkOption.BeginTime, _EndTime = checkOption.EndTime });
+            var BeginTime = checkOption.BeginTime.GetUnixTimeByDay();
+            var EndTime = checkOption.EndTime.GetUnixTimeByDay() - 1;
+            var bettrans = _partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_Bettrans_GA_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
             var CheckData = new List<BettransCheckData>();
             foreach (var item in bettrans)
             {
                 var data = item.Result;
                 CheckData.AddRange(data);
             }
+
             foreach (var item in CheckData)
             {
-                // bettransList是使用Wager，和局的金額不會含抽成；結算時的Stake是使用bettrans的下注金額(不含抽成)，故須另外撈bettrans資料加回計算
-                bettransList.Find(i => i.CurrencyId == item.CurrencyId).Stake += item.ProgressiveBet;
                 // bettransList、tpDailyList是使用Wager，對方沒有提供jackpot金額，故須另外撈bettrans資料加回計算
-                bettransList.Find(i => i.CurrencyId == item.CurrencyId).ProgressiveWin += item.ProgressiveWin;
-                tpDailyList.Find(i => i.CurrencyId == item.CurrencyId).ProgressiveWin += item.ProgressiveWin;
+                bettransList.First(i => i.CurrencyId == item.CurrencyId).ProgressiveWin += item.ProgressiveWin;
+                tpDailyList.First(i => i.CurrencyId == item.CurrencyId).ProgressiveWin += item.ProgressiveWin;
                 // 扣除不含和局的抽成
-                tpBetRecord.Find(i => i.CurrencyId == item.CurrencyId).Stake -= item.ProgressiveBet;
+                tpBetRecord.First(i => i.CurrencyId == item.CurrencyId).Stake -= item.ProgressiveBet;
             }
 
             var checkResult = new List<FinanceCheckResult>();
