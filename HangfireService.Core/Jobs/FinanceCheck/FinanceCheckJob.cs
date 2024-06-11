@@ -109,11 +109,7 @@ namespace HangfireService.Core.Jobs
             var result = new StringBuilder();
             var checkFilter = checkResults.Where(i => i.ErrorList.Any());
             string specialMsg = "";
-            if (TpId == 30)
-            {
-                specialMsg = "(GameType: 50)";
-            }
-            else if (TpId == 6)
+            if (TpId == 6)
             {
                 specialMsg = "(GameType: 88~91)";
             }
