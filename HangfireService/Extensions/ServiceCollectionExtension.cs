@@ -58,6 +58,8 @@ namespace HangfireService.Extensions
 
             services.AddSingleton(provider => new MySqlClient(provider, DataBase.Main, config.GetConnectionString($"{serviceType}_MainDB")));
             services.AddSingleton(provider => new MySqlClient(provider, DataBase.Wager, config.GetConnectionString($"{serviceType}_WagerDB")));
+            services.AddSingleton(provider => new MySqlClient(provider, DataBase.ReportCenter, config.GetConnectionString($"{serviceType}_ReportCenter")));
+
             return services;
         }
 
@@ -116,6 +118,8 @@ namespace HangfireService.Extensions
                 .AddTransient<MainDBDataLayer>()
                 .AddTransient<WagerDBDataLayer>()
                 .AddTransient<ReportDBDataLayer>()
+                .AddTransient<ReportBackupDBDataLayer>()
+                .AddTransient<ReportCenterDataLayer>()
                 .AddSingleton<ThirdPartyManager>()
                 .AddSingleton<PartitionService>()
                 .AddSingleton<FincanceService>()
@@ -129,7 +133,8 @@ namespace HangfireService.Extensions
                 .AddSingleton<ConfigService>()
                 .AddSingleton<ConfigBLL>()
                 .AddSingleton<BlockIpService>()
-                .AddSingleton<AllowIpService>();
+                .AddSingleton<AllowIpService>()
+                .AddSingleton<WinLossSummaryService>();
         }
 
         public static IServiceCollection RegisterHttpClient(this IServiceCollection services)
