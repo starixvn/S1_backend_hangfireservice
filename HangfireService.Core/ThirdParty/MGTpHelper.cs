@@ -42,6 +42,7 @@ namespace HangfireService.Core.ThirdParty
         {
             var BeginTime = checkOption.BeginTime.Ticks;
             var EndTime = checkOption.EndTime.Ticks;
+
             var tasks = new List<Task<IEnumerable<BettransCheckData>>>
             {
                 //Slot

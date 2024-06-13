@@ -39,8 +39,9 @@ namespace HangfireService.Core.ThirdParty
         public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
         {
             // Nextspin ticketTime未處理+0時間寫入，故轉換時間
-            var BeginTime = checkOption.BeginTime.AddHours(utcTime).GetUnixTimeByDay();
-            var EndTime = checkOption.EndTime.AddHours(utcTime).GetUnixTimeByDay() - 1;
+            var BeginTime = checkOption.BeginTime.AddHours(utcTime).Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
+            var EndTime = checkOption.EndTime.AddHours(utcTime).Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
+
             var bettrans = await _wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerRng_Nextspin_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
             foreach (var item in bettrans)
             {
