@@ -6,6 +6,7 @@ namespace HangfireService.Core.Models.DBs
 {
     public class OTPCheck
     {
+        public int SiteId { get; set; }
         public int CurrencyId { get; set; }
         public int OTPType { get; set; }
         public int CustId { get; set; }
