@@ -224,8 +224,7 @@ namespace HangfireService.Core.Jobs.SMS
         {
             try
             {
-                var customer = _reportDbDataLayer.GetCustInfo(otpCheck.CustId);
-                var awsSmsConfig = _awsSmsConfig[customer.SiteId];
+                var awsSmsConfig = _awsSmsConfig[otpCheck.SiteId];
                 var startQueryRequest = new StartQueryRequest
                 {
                     LogGroupNames = new List<string>
@@ -348,17 +347,14 @@ namespace HangfireService.Core.Jobs.SMS
 
         private SmsWithOtpBaseConfig GetSkyLineOption(OTPCheck otpCheck)
         {
-            var customer = _reportDbDataLayer.GetCustInfo(otpCheck.CustId);
-
             return string.IsNullOrWhiteSpace(otpCheck.OTPNum)
-                ? _skyLineSmsConfig[customer.SiteId]
-                : _skyLineOtpConfig[customer.SiteId];
+                ? _skyLineSmsConfig[otpCheck.SiteId]
+                : _skyLineOtpConfig[otpCheck.SiteId];
         }
 
         private SmsWithOtpBaseConfig GetNxCloudOption(OTPCheck otpCheck)
         {
-            var customer = _reportDbDataLayer.GetCustInfo(otpCheck.CustId);
-            return _nxCloudSmsConfig[customer.SiteId];
+            return _nxCloudSmsConfig[otpCheck.SiteId];
         }
     }
 }
