@@ -12,7 +12,7 @@ namespace HangfireService.Core.ThirdParty
     internal class V8TpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => false;
-        public bool BindCommonCurrency => true;
+        public bool BindCommonCurrency => false;
         public TimeOption TimeOptionId => TimeOption.SettledTime;
 
         public int TpId => 25;
