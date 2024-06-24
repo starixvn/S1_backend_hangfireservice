@@ -11,7 +11,7 @@ namespace HangfireService.Core.ThirdParty
     internal class SPRIBETpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => false;
-        public bool BindCommonCurrency => true;
+        public bool BindCommonCurrency => false;
 
         public TimeOption TimeOptionId => TimeOption.SettledTime;
 
@@ -42,7 +42,6 @@ namespace HangfireService.Core.ThirdParty
             foreach (var item in tasks)
             {
                 var data = item.Result;
-                data = ProcessBettransSubCurrencyToMainCurrency(data);
                 checkData.AddRange(data);
             }
 
