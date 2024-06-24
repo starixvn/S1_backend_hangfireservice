@@ -12,7 +12,7 @@ namespace HangfireService.Core.ThirdParty
     public class BNGTpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => false;
-        public bool BindCommonCurrency => true;
+        public bool BindCommonCurrency => false;
         public TimeOption TimeOptionId => TimeOption.TransTime;
 
         public int TpId => 57;
