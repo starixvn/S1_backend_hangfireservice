@@ -93,7 +93,7 @@ public class WinLossSummaryService
     {
         foreach (var item in source)
         {
-            item.Ggr = CalculateGgr(item.GameType, item.WinLoss, item.ProgressiveWin, item.ProgressiveBet, item.Revenue) + item.BaCommission;
+            item.Ggr = CalculateGgr(item.GameType, (item.WinLoss - item.BaWinLoss), item.ProgressiveWin, item.ProgressiveBet, item.Revenue) + item.BaCommission;
         }
     }
 
