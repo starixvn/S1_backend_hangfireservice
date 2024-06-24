@@ -18,12 +18,12 @@ public class WinLossSummaryService
 
     #region Main Task
 
-    public async Task<IEnumerable<WinLossSummaryModel>> ProcessDataAsync(IEnumerable<WinLossSourceModel> source, DateTime startTime, DateTime endTime)
+    public IEnumerable<WinLossSummaryModel> ProcessData(IEnumerable<WinLossSourceModel> source, DateTime startTime, DateTime endTime)
     {
         var result = SetBAData(source);
-        await SetCommissionByNineWAsync(result, startTime, endTime);
+        SetCommissionByNineW(result, startTime, endTime);
         SetGgr(result);
-        await CalculateCommissionAsync(result);
+        CalculateCommission(result);
 
         return result;
     }
@@ -68,9 +68,9 @@ public class WinLossSummaryService
     }
 
     // 用戶的輸贏直接歸9W，9W會給平台傭金
-    public async Task SetCommissionByNineWAsync(IEnumerable<WinLossSummaryModel> source, DateTime startTime, DateTime endTime)
+    public void SetCommissionByNineW(IEnumerable<WinLossSummaryModel> source, DateTime startTime, DateTime endTime)
     {
-        var nineWCommissionData = await _reportBackupDBDataLayer.GetWinLoss9WCommissionSourceDataAsync(startTime, endTime);
+        var nineWCommissionData = _reportBackupDBDataLayer.GetWinLoss9WCommissionSourceData(startTime, endTime);
 
         foreach (var item in nineWCommissionData)
         {
@@ -85,8 +85,6 @@ public class WinLossSummaryService
                 matchRecord.Revenue = item.Commission;
             }
         }
-
-        await Task.CompletedTask;
     }
 
     public void SetGgr(IEnumerable<WinLossSummaryModel> source)
@@ -123,7 +121,7 @@ public class WinLossSummaryService
         return winLossSummary * -1 + (progressiveWinSummary - progressiveBetSummary);
     }
 
-    private async Task CalculateCommissionAsync(IEnumerable<WinLossSummaryModel> source)
+    private void CalculateCommission(IEnumerable<WinLossSummaryModel> source)
     {
         //目前除9W外，其他commission皆為0
         foreach (var s in source)
@@ -137,8 +135,6 @@ public class WinLossSummaryService
                 s.Revenue = 0;
             }
         }
-
-        await Task.CompletedTask;
     }
 
     #endregion
