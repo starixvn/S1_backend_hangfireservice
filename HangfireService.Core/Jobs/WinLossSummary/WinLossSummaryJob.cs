@@ -121,11 +121,11 @@ namespace HangfireService.Core.Jobs
                 EndTime
             };
 
-            var relayData = await _reportBackupDBDataLayer.GetWinLossSourceDataAsync(option.GetSP, parameters, option.TimeoutSeconds);
+            var relayData = _reportBackupDBDataLayer.GetWinLossSourceData(option.GetSP, parameters, option.TimeoutSeconds);
 
             if (relayData.Any())
             {
-                var dataResult = await _winLossSummaryService.ProcessDataAsync(relayData, StartTime, EndTime);
+                var dataResult = _winLossSummaryService.ProcessData(relayData, StartTime, EndTime);
 
                 await using var conn = _reportCenterDBDataLayer.GetMySqlConnection();
                 conn.Open();
