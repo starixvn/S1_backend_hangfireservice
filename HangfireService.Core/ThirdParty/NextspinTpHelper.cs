@@ -40,7 +40,7 @@ namespace HangfireService.Core.ThirdParty
         {
             // Nextspin ticketTime未處理+0時間寫入，故轉換時間
             var BeginTime = checkOption.BeginTime.AddHours(utcTime).Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
-            var EndTime = checkOption.EndTime.AddHours(utcTime).Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
+            var EndTime = checkOption.EndTime.AddHours(utcTime).AddSeconds(-1).Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
 
             var bettrans = await _wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerRng_Nextspin_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
             foreach (var item in bettrans)
