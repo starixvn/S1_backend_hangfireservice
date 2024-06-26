@@ -151,7 +151,7 @@ namespace HangfireService.Core.Jobs
                 //二次結算有可能會造成Get跟Insert數量不一樣，所以result > 0 就可以commit
                 if (result > 0)
                 {
-                    trans.Commit();
+                    await trans.CommitAsync();
                     await conn.CloseAsync();
                     await conn.DisposeAsync();
                 }
