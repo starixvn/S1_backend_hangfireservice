@@ -77,8 +77,7 @@ public class WinLossSummaryService
             // 用commission抓第一筆符合9w/date/custId的資料，塞入傭金金額
             var matchRecord = source.FirstOrDefault(r =>
                 r.TpId == (int)MpaCommissionCustomizeTpIdEnum.NineW
-                && r.TransTime == item.TransTime
-                && r.SettledTime == item.SettledTime
+                && (r.TransTime == item.TransTime || r.SettledTime == item.SettledTime)
                 && r.CustId == item.CustId);
             if (matchRecord != null)
             {
