@@ -98,6 +98,12 @@ namespace HangfireService.Core.ThirdParty
             tpBetRecord = _reportDbDataLayer.GetTpBetRecordCheckDataByTpId(TpId, checkOption.BeginTime.AddHours(utcTime), checkOption.EndTime.AddHours(utcTime), TicketStatusExcludeOption.Cancel, TimeOption.SettledTime).ToList();
             tpBetRecord = ProcessTpBetRecordSubCurrencyToMainCurrency(tpBetRecord);
 
+            // bettrans ValidBet 設為 結算資料 ValidBet，因bettrans對方沒有提供ValidBet
+            foreach (var bettransData in bettransList)
+            {
+                bettransData.ValidBet = tpBetRecord.First(x => x.CurrencyId == bettransData.CurrencyId).ValidBet;
+            }
+
             var checkResult = new List<FinanceCheckResult>();
             if (bettransList.Any())
             {
