@@ -77,7 +77,7 @@ public class WinLossSummaryService
             // 用commission抓第一筆符合9w/date/custId的資料，塞入傭金金額
             var matchRecord = source.FirstOrDefault(r =>
                 r.TpId == (int)MpaCommissionCustomizeTpIdEnum.NineW
-                && (r.TransTime == item.TransTime || r.SettledTime == item.SettledTime)
+                && r.SettledTime == item.SettledTime
                 && r.CustId == item.CustId);
             if (matchRecord != null)
             {
@@ -100,9 +100,14 @@ public class WinLossSummaryService
         switch (gameType)
         {
             case (int)MpaGgrCustomizeGameTypeEnum.NineW:
-                //GGR for 9W = -PlayerWinLoss + Commission
-                var nineWCommission = revenue;
-                return GetGgr(winLossSummary, progressiveWin, progressiveBet) + nineWCommission;
+                // 因9w在報表條件為使用TransTime時，不會考慮傭金
+                //=> comm = 0
+                //=> ggr計算不會用到comm
+                //=> 排程計算出comm即可，ggr暫不計算，報表取資料再根據條件決定是否處理
+
+                //var nineWCommission = revenue; //GGR for 9W = -PlayerWinLoss + Commission
+                //return GetGgr(winLossSummary, progressiveWin, progressiveBet) + nineWCommission;
+                return GetGgr(winLossSummary, progressiveWin, progressiveBet);
 
             case (int)MpaGgrCustomizeGameTypeEnum.OneGamingPoker:
             case (int)MpaGgrCustomizeGameTypeEnum.V8Poker:
