@@ -1,12 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Data;
-
 using Dapper;
 
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
-
+using HangfireService.Core.Models.MpaExchangeRate;
 using Newtonsoft.Json;
 
 namespace HangfireService.Core.DataLayers
@@ -256,5 +255,13 @@ namespace HangfireService.Core.DataLayers
 
         public async Task<IEnumerable<string>> GetBlockIp()
             => await _dbClient.QueryAsync<string>("Service_BlockIP_Get");
+
+        public async Task<IEnumerable<ExchangeRate>> GetExchangeRate(bool isUpdateBefore, IEnumerable<string> monthList)
+        {
+            var p = new DynamicParameters();
+            p.Add("_IsUpdateBefore", isUpdateBefore);
+            p.Add("_MonthList", JsonConvert.SerializeObject(monthList));
+            return await _dbClient.QueryAsync<ExchangeRate>("Service_ExchangeRate_Get", p);
+        }
     }
 }

@@ -134,7 +134,8 @@ namespace HangfireService.Extensions
                 .AddSingleton<ConfigBLL>()
                 .AddSingleton<BlockIpService>()
                 .AddSingleton<AllowIpService>()
-                .AddSingleton<WinLossSummaryService>();
+                .AddSingleton<WinLossSummaryService>()
+                .AddSingleton<MpaUpdateMonthRateService>();
         }
 
         public static IServiceCollection RegisterHttpClient(this IServiceCollection services)
