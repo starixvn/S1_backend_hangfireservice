@@ -46,7 +46,7 @@ namespace HangfireService.Core.ThirdParty
         public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
         {
             var BeginTime = checkOption.BeginTime;
-            var EndTime = checkOption.EndTime;
+            var EndTime = checkOption.EndTime.AddSeconds(-1);
             var tasks = new List<Task<IEnumerable<BettransCheckData>>>();
 
             foreach (var item in _tpCurrency)
