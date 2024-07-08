@@ -65,7 +65,7 @@ namespace HangfireService.Core.Jobs
                         {
                             var nextHours = hours.AddHours(1);
                             _logger.LogInformation($"{jobName} || Excute Summary Hour:{hours:yyyy-MM-dd HH:mm} ~ {nextHours:HH:mm}");
-                            result += await ExcuteRelay(option, hours, nextHours);
+                            result += await ExcuteRelay(option, hours, nextHours, option.GameTypesJson);
                             hours = nextHours;
                         }
 
@@ -74,7 +74,7 @@ namespace HangfireService.Core.Jobs
                 }
                 else
                 {
-                    result += await ExcuteRelay(option, option.StartTime, option.EndTime);
+                    result += await ExcuteRelay(option, option.StartTime, option.EndTime, option.GameTypesJson);
                 }
 
                 //洗舊資料用
@@ -112,13 +112,14 @@ namespace HangfireService.Core.Jobs
             }
         }
 
-        private async Task<int> ExcuteRelay(RelayOption option, DateTime StartTime, DateTime EndTime)
+        private async Task<int> ExcuteRelay(RelayOption option, DateTime StartTime, DateTime EndTime, string gameTypeJson)
         {
             var result = 0;
             var parameters = new
             {
                 StartTime,
-                EndTime
+                EndTime,
+                GameTypeList = gameTypeJson
             };
 
             var relayData = _reportBackupDBDataLayer.GetWinLossSourceData(option.GetSP, parameters, option.TimeoutSeconds);
@@ -173,7 +174,8 @@ namespace HangfireService.Core.Jobs
             IJobCancellationToken cancellationToken = null,
             [DisplayData("JobName", ConvertType = typeof(JobList))] string jobName = null,
             [DisplayData("BeginDate", placeholderText: "yyyy-MM-dd")] string beginDate = null,
-            [DisplayData("EndDate", placeholderText: "yyyy-MM-dd")] string endDate = null)
+            [DisplayData("EndDate", placeholderText: "yyyy-MM-dd")] string endDate = null,
+            [DisplayData("AssignGameTypes", placeholderText: "ex. 69,112")] string assignGameTypeList = "")
         {
             if (!_jobList.Any())
             {
@@ -196,8 +198,10 @@ namespace HangfireService.Core.Jobs
 
             var StartTime = start.ToString("yyyy-MM-dd");
             var EndTime = end.ToString("yyyy-MM-dd");
+            var GameTypesJson = string.IsNullOrWhiteSpace(assignGameTypeList) ? "[]" : JsonConvert.SerializeObject(assignGameTypeList.Split(","));
             jobOption.Parameters = jobOption.Parameters.Update("StartTime", StartTime);
             jobOption.Parameters = jobOption.Parameters.Update("EndTime", EndTime);
+            jobOption.Parameters = jobOption.Parameters.Update("GameTypesJson", GameTypesJson);
             var result = ExecuteAsync($"Execute.{jobName}.({StartTime} ~ {EndTime})", jobOption, context, cancellationToken).Result;
 
 
