@@ -30,7 +30,7 @@ namespace HangfireService.Core.Jobs.BlockAndAllowIp
         {
             _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
 
-            await _mpaUpdateMonthRateService.RunJobAsync();
+            await _mpaUpdateMonthRateService.RunJobAsync(false);
 
             _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} End......");
 
@@ -45,7 +45,7 @@ namespace HangfireService.Core.Jobs.BlockAndAllowIp
         {
             _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || reUpdateMpaMonthRateJob running......");
 
-            _ = _mpaUpdateMonthRateService.RunJobAsync(reRunMonth).Result;
+            _ = _mpaUpdateMonthRateService.RunJobAsync(true, reRunMonth).Result;
 
             _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || reUpdateMpaMonthRateJob End......");
 

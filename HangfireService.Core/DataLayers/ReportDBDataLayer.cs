@@ -261,11 +261,12 @@ namespace HangfireService.Core.DataLayers
         public async Task<IEnumerable<string>> GetBlockIp()
             => await _dbClient.QueryAsync<string>("Service_BlockIP_Get");
 
-        public async Task<IEnumerable<ExchangeRate>> GetExchangeRate(bool isUpdateBefore, IEnumerable<string> monthList)
+        public async Task<IEnumerable<ExchangeRate>> GetExchangeRate(bool isUpdateBefore, string startDate, string endDate)
         {
             var p = new DynamicParameters();
             p.Add("_IsUpdateBefore", isUpdateBefore);
-            p.Add("_MonthList", JsonConvert.SerializeObject(monthList));
+            p.Add("_StartDate", startDate);
+            p.Add("_EndDate", endDate);
             return await _dbClient.QueryAsync<ExchangeRate>("Service_ExchangeRate_Get", p);
         }
     }
