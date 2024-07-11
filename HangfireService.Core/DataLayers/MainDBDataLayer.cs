@@ -247,6 +247,11 @@ namespace HangfireService.Core.DataLayers
                 _SettleTime = settleTime
             });
         }
+        
+        public int InsertCustLotteryTicket(IEnumerable<CustLotteryTicket> ticket ,IDbTransaction trans)
+        {
+            return _dbClient.Execute("Service_CustLotteryTicket_Ins", trans ,ticket);
+        }
     }
 }
 
