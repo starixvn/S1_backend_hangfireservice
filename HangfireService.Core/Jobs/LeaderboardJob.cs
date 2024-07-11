@@ -119,6 +119,7 @@ namespace HangfireService.Core.Jobs
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
+                _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} Error || ex: {ex.Message}");
                 return JsonConvert.SerializeObject(ex);
             }
 
