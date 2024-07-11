@@ -50,14 +50,17 @@ namespace HangfireService.Core.Jobs
                         {
                             var (startTime, endTime) = GetTimeRange(option, beforeDay);
                             
+                            //TEST
+                            _logger.LogInformation($"{jobName} Test || {categoryId} || {siteId} || {currencyId}|| {startTime} || {endTime} || {option.TimeoutSeconds}");
+                            
                             //Get Data
-                            var leaderboardList = _reportDBDataLayer.GetLeaderboardList(categoryId, siteId, currencyId, startTime, endTime, option.TimeoutSeconds, out var timezone).ToList();
+                            var leaderboardList = _reportDBDataLayer.GetLeaderboardList(categoryId, siteId, currencyId, startTime, endTime, option.TimeoutSeconds, out var timezone);
 
                             // 要排除掉的Tag清單
                             var excludeTagBySite = _reportDBDataLayer.GetLeaderboardTagExcludeList(siteId).TagsExclude;
                             
                             //排除掉Tag
-                            leaderboardList = leaderboardList.Where(x => x.Tags is null || x.Tags.All(tag => !excludeTagBySite.Contains(tag))).ToList();
+                            leaderboardList = leaderboardList.Where(x => x.Tags is null || x.Tags.All(tag => !excludeTagBySite.Contains(tag)));
                             
                             // 計算WTurnover
                             timezone = timezone.Replace("+", "");
@@ -119,7 +122,6 @@ namespace HangfireService.Core.Jobs
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
-                _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} Error || ex: {ex.Message}");
                 return JsonConvert.SerializeObject(ex);
             }
 
