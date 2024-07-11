@@ -41,7 +41,7 @@ namespace HangfireService.Core.Jobs
                 var option = JsonConvert.DeserializeObject<LeaderboardOption>(jobOption.Parameters);
                 var result = new Dictionary<string, int>();
                 var siteId = option.SiteId;
-                var eventCode = option.EventCode;
+                
                 foreach (var beforeDay in option.beforeDays)
                 {
                     foreach (var categoryId in option.CategoryList)
@@ -49,61 +49,51 @@ namespace HangfireService.Core.Jobs
                         foreach (var currencyId in option.CurrencyList)
                         {
                             var (startTime, endTime) = GetTimeRange(option, beforeDay);
-                            List<Leaderboard> leaderboardResult;
+                            
+                            //Get Data
+                            var leaderboardList = _reportDBDataLayer.GetLeaderboardList(categoryId, siteId, currencyId, startTime, endTime, option.TimeoutSeconds, out var timezone).ToList();
 
-                            if (siteId == 1) // nova88
+                            // 要排除掉的Tag清單
+                            var excludeTagBySite = _reportDBDataLayer.GetLeaderboardTagExcludeList(siteId).TagsExclude;
+                            
+                            //排除掉Tag
+                            leaderboardList = leaderboardList.Where(x => x.Tags is null || x.Tags.All(tag => !excludeTagBySite.Contains(tag))).ToList();
+                            
+                            // 計算WTurnover
+                            timezone = timezone.Replace("+", "");
+                            var calculateDate = option.ExecuteType == ExecuteType.Months ?
+                                startTime.ToString("yyyyMM") : new DateTimeOffset(startTime, TimeSpan.Parse(timezone)).ToString("yyyyMM");
+                            
+                            var pointCalculation = _reportDBDataLayer.GetLeaderboardPointCalculation(siteId, calculateDate);
+                            foreach (var detail in leaderboardList)
                             {
-                                //Get Data
-                                var leaderboardList = _reportDBDataLayer.GetLeaderboardList(categoryId, siteId, currencyId, startTime, endTime, option.TimeoutSeconds, out var timezone).ToList();
+                                var cal = pointCalculation.FirstOrDefault(x =>
+                                    x.SiteId == detail.SiteId && x.CurrencyId == detail.CurrencyId);
 
-                                // 要排除掉的Tag清單
-                                var excludeTagBySite = _reportDBDataLayer.GetLeaderboardTagExcludeList(siteId);
-                                if (excludeTagBySite is not null)
+                                if (cal != null)
                                 {
-                                    //排除掉Tag
-                                    leaderboardList = leaderboardList.Where(x => x.Tags is null || x.Tags.All(tag => !excludeTagBySite.TagsExclude.Contains(tag))).ToList();
+                                    detail.WTurnover = detail.CategoryId switch
+                                    {
+                                        (int)TpCategoryEnum.Sports => (int)(detail.Turnover / cal.SportTurnover),
+                                        (int)TpCategoryEnum.Casino => (int)(detail.Turnover / cal.SlotTurnover),
+                                        (int)TpCategoryEnum.LiveCasino => (int)(detail.Turnover / cal.LiveCasinoTurnover),
+                                        _ => 0
+                                    };
                                 }
-                                
-                                // 計算WTurnover
-                                timezone = timezone.Replace("+", "");
-                                var calculateDate = option.ExecuteType == ExecuteType.Months ?
-                                    startTime.ToString("yyyyMM") : new DateTimeOffset(startTime, TimeSpan.Parse(timezone)).ToString("yyyyMM");
-                                
-                                var pointCalculation = _reportDBDataLayer.GetLeaderboardPointCalculation(siteId, calculateDate);
-                                foreach (var detail in leaderboardList)
+                            }
+
+                            var leaderboardResult = leaderboardList.GroupBy(x => new { x.SiteId,x.SiteName,x.CurrencyId,x.IsoCode, x.CustId, x.UserName })
+                                .Select(x => new Leaderboard
                                 {
-                                    var cal = pointCalculation.FirstOrDefault(x =>
-                                        x.SiteId == detail.SiteId && x.CurrencyId == detail.CurrencyId);
+                                    SiteId = x.Key.SiteId,
+                                    SiteName = x.Key.SiteName,
+                                    CurrencyId = x.Key.CurrencyId,
+                                    IsoCode = x.Key.IsoCode,
+                                    CustId = x.Key.CustId,
+                                    UserName = x.Key.UserName,
+                                    WTurnover = x.Sum(y => y.WTurnover)
+                                }).ToList();
 
-                                    if (cal != null)
-                                    {
-                                        detail.WTurnover = detail.CategoryId switch
-                                        {
-                                            (int)TpCategoryEnum.Sports => (int)(detail.Turnover / cal.SportTurnover),
-                                            (int)TpCategoryEnum.Casino => (int)(detail.Turnover / cal.SlotTurnover),
-                                            (int)TpCategoryEnum.LiveCasino => (int)(detail.Turnover / cal.LiveCasinoTurnover),
-                                            _ => 0
-                                        };
-                                    }
-                                }
-
-                                leaderboardResult = leaderboardList.GroupBy(x => new { x.SiteId,x.SiteName,x.CurrencyId,x.IsoCode, x.CustId, x.UserName })
-                                    .Select(x => new Leaderboard
-                                    {
-                                        SiteId = x.Key.SiteId,
-                                        SiteName = x.Key.SiteName,
-                                        CurrencyId = x.Key.CurrencyId,
-                                        IsoCode = x.Key.IsoCode,
-                                        CustId = x.Key.CustId,
-                                        UserName = x.Key.UserName,
-                                        WTurnover = x.Sum(y => y.WTurnover)
-                                    }).ToList();
-                            }
-                            else
-                            {
-                                //Get Data
-                                leaderboardResult = _reportDBDataLayer.GetLeaderboardListOld(categoryId, eventCode, siteId, currencyId, option.TopNum, startTime, endTime, option.TimeoutSeconds).ToList();
-                            }
                             //根據ExecuteType設定Redis Key
                             var key = option.ExecuteType switch
                             {
