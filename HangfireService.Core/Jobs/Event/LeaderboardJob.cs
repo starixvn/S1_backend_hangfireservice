@@ -51,14 +51,15 @@ namespace HangfireService.Core.Jobs
                             var (startTime, endTime) = GetTimeRange(option, beforeDay);
                             
                             //Get Data
-                            var leaderboardList = _reportDBDataLayer.GetLeaderboardList(categoryId, siteId, currencyId, startTime, endTime, option.TimeoutSeconds, out var timezone).ToList();
+                            var leaderboardList = _reportDBDataLayer.GetLeaderboardList(categoryId, siteId, currencyId, startTime, endTime, option.TimeoutSeconds, out var timezone);
 
                             // 要排除掉的Tag清單
                             var excludeTagBySite = _reportDBDataLayer.GetLeaderboardTagExcludeList(siteId);
                             if (excludeTagBySite is not null)
                             {
+                                var tagsExclude = excludeTagBySite.TagsExclude;
                                 //排除掉Tag
-                                leaderboardList = leaderboardList.Where(x => x.Tags is null || x.Tags.All(tag => !excludeTagBySite.TagsExclude.Contains(tag))).ToList();
+                                leaderboardList = leaderboardList.Where(x => x.Tags is null || x.Tags.All(tag => !tagsExclude.Contains(tag)));
                             }
                             
                             // 計算WTurnover
