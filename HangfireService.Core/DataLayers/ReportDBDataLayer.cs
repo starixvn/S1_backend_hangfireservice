@@ -259,7 +259,44 @@ namespace HangfireService.Core.DataLayers
             return await _dbClient.QueryAsync<string>("Service_AllowIP_Get", p);
         }
 
-        public async Task<IEnumerable<string>> GetBlockIp()
-            => await _dbClient.QueryAsync<string>("Service_BlockIP_Get");
+        public async Task<IEnumerable<string>> GetBlockIp() => await _dbClient.QueryAsync<string>("Service_BlockIP_Get");
+        
+        public LotteryEvent GetLotteryEventDrawSetting(int siteId ,DateTime date)
+        {
+            var p = new DynamicParameters();
+            p.Add("_SiteId", siteId);
+            p.Add("_Date", date);
+            var result = _dbClient.QueryFirst<LotteryEvent>("Service_LotteryEventDrawSetting_Get", p);
+            return result;
+        }
+        
+        public IEnumerable<RaffleTicketSticker> GetRaffleTicketStickerSetting(int siteId)
+        {
+            var p = new DynamicParameters();
+            p.Add("_SiteId", siteId, dbType: DbType.Int32);
+            return _dbClient.Query<RaffleTicketSticker>("Admin_RaffleTicketSticker_Get" , p);
+        }
+        
+        public IEnumerable<LotteryTurnOverSummary> GetLotteryTurnOverSummary(int siteId ,string currencyIds ,DateTime startTime ,DateTime endTime)
+        {
+            var p = new DynamicParameters();
+            p.Add("_SiteId", siteId);
+            p.Add("_CurrencyIds", currencyIds);
+            p.Add("_StartTime", startTime);
+            p.Add("_EndTime", endTime);
+            var result = _dbClient.Query<LotteryTurnOverSummary>("Service_LotteryTurnOverSummary_Get", p);
+            return result;
+        }
+        
+        public IEnumerable<CustLotteryTicket> GetCustLotteryTicket(int custId ,int roundId )
+        {
+            var p = new DynamicParameters();
+            p.Add("_CustId", custId);
+            p.Add("_RoundId", roundId);
+            var result = _dbClient.Query<CustLotteryTicket>("Service_CustLotteryTicket_Get", p);
+            
+            return result;
+        }
+        
     }
 }
