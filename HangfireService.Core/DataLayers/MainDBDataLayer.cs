@@ -5,6 +5,7 @@ using Dapper;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
+using HangfireService.Core.Models.MpaExchangeRate;
 using HangfireService.Core.Service;
 
 using MySql.Data.MySqlClient;
@@ -174,14 +175,23 @@ namespace HangfireService.Core.DataLayers
         /// <returns></returns>
         public Task<int> InsertDailyExchangeRate(MpaUpdateExchangeRateService.DailyExchangeRateResponse data)
         {
-            return _dbClient.ExecuteAsync("Service_ExchangeRate_Set", new
+            return _dbClient.ExecuteAsync("Service_ExchangeRate_Set_V2", new
             {
                 _RateDate = data.RateDate,
+                _RateType = (int)ExchangeRateTypeEnum.Daily,
                 _CurrencyId = data.CurrencyId,
                 _CurrencyName = data.CurrencyName,
                 _TargetCurrencyId = data.TargetCurrencyId,
                 _TargetCurrencyName = data.TargetCurrencyName,
                 _TargetCurrencyRate = data.TargetCurrencyRate
+            });
+        }
+
+        public Task<int> InsertMonthlyExchangeRate(string data)
+        {
+            return _dbClient.ExecuteAsync("Service_ExchangeRate_Set_Batch", new
+            {
+                _Infos = data
             });
         }
 
