@@ -247,11 +247,42 @@ namespace HangfireService.Core.DataLayers
                 _SettleTime = settleTime
             });
         }
+
+        #region Lottory
         
         public int InsertCustLotteryTicket(IEnumerable<CustLotteryTicket> ticket ,IDbTransaction trans)
         {
             return _dbClient.Execute("Service_CustLotteryTicket_Ins", trans ,ticket);
         }
+        
+        public int InsertLotteryTicketHistory(LotteryTicketHistory history ,IDbTransaction trans)
+        {
+            return _dbClient.Execute("Service_LotteryTicketHistory_Ins", trans, parameters: new DynamicParameters(new
+            {
+                _RoundId = history.RoundId, 
+                _FirstPrize = history.FirstPrize, 
+                _SecondPrize = history.SecondPrize, 
+                _ThirdPrize = history.ThirdPrize, 
+                _ConsolationPrize = history.ConsolationPrize, 
+                _SmallPrize = history.SmallPrize, 
+                _StickerId = history.StickerId, 
+            }));
+            
+        }
+        
+        public int LotteryEventDrawSettingSet(int siteId ,int roundId, int status ,IDbTransaction trans)
+        {
+            return _dbClient.Execute("Service_LotteryEventDrawSetting_Set", trans, parameters: new DynamicParameters(new
+            {
+                _SiteId = siteId,
+                _RoundId = roundId, 
+                _Status = status, 
+                _Updator = "System"
+            }));
+            
+        }
+        
+        #endregion
     }
 }
 
