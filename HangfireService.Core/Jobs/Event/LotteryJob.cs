@@ -40,7 +40,8 @@ namespace HangfireService.Core.Jobs
                 {
                     _logger.LogInformation($"{jobName} running ||  Site :{option.SiteId} || RoundId :{lotteryEventDrawSetting.RoundId} || Range :{lotteryEventDrawSetting.StartDate} ~ {lotteryEventDrawSetting.EndDate}" );
                     
-                    var ticketStickerSetting = _reportDbDataLayer.GetRaffleTicketStickerSetting(option.SiteId);
+                    var ticketStickerSetting = _reportDbDataLayer.GetRaffleTicketStickerSetting(option.SiteId).ToList();
+                 
                     var currencyList = ticketStickerSetting.Select(x => x.CurrencyId);
                 
                     var summaryList = _reportDbDataLayer.GetLotteryTurnOverSummary(
@@ -51,9 +52,11 @@ namespace HangfireService.Core.Jobs
 
                     foreach (var cust in summaryList)
                     {
-                        var turnOver = ticketStickerSetting.FirstOrDefault(x => x.CurrencyId == cust.CurrencyId).TurnOver;
+                        var setting = ticketStickerSetting.FirstOrDefault(x => x.CurrencyId == cust.CurrencyId);
+                        var turnOver = setting.TurnOver;
+                        
                         var ticketCount = (int) ( cust.ValidBet / turnOver );
-                        var beforeCustTicket = _reportDbDataLayer.GetCustLotteryTicket(cust.CustId, lotteryEventDrawSetting.RoundId)
+                        var beforeCustTicket = _reportDbDataLayer.GetCustLotteryTicket(cust.CustId, lotteryEventDrawSetting.RoundId , (int)LotteryTicketEnum.Ticket)
                             .Where(x=>x.Type == 1).ToList();
 
                         var dealCount = ticketCount - beforeCustTicket.Count;

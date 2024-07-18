@@ -200,6 +200,33 @@ namespace HangfireService.Core.DataLayers
             _logger.LogDebug($"{name} {sw.Elapsed:c}");
             return result;
         }
+        
+        public T QueryFirstOrDefault<T>(string name, object parameters = null, int? commandTimeout = null)
+        {
+            var sw = Stopwatch.StartNew();
+            T result;
+            try
+            {
+                var conn = HealthCheck();
+                using var connection = new MySqlConnection(conn);
+                var command = new CommandDefinition(name, parameters,
+                    commandTimeout: commandTimeout,
+                    commandType: CommandType.StoredProcedure,
+                    flags: CommandFlags.NoCache);
+                result = connection.QueryFirstOrDefault<T>(command);
+                connection.Close();
+                connection.Dispose();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, name);
+                throw;
+            }
+
+            LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
+            _logger.LogDebug($"{name} {sw.Elapsed:c}");
+            return result;
+        }
 
         public async Task<int> ExecuteAsync(string name, object parameters = null)
         {

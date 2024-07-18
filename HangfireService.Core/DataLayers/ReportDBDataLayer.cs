@@ -266,7 +266,7 @@ namespace HangfireService.Core.DataLayers
             var p = new DynamicParameters();
             p.Add("_SiteId", siteId);
             p.Add("_Date", date);
-            var result = _dbClient.QueryFirst<LotteryEvent>("Service_LotteryEventDrawSetting_Get", p);
+            var result = _dbClient.QueryFirstOrDefault<LotteryEvent>("Service_LotteryEventDrawSetting_Get", p);
             return result;
         }
         
@@ -274,7 +274,7 @@ namespace HangfireService.Core.DataLayers
         {
             var p = new DynamicParameters();
             p.Add("_SiteId", siteId, dbType: DbType.Int32);
-            return _dbClient.Query<RaffleTicketSticker>("Admin_RaffleTicketSticker_Get" , p);
+            return _dbClient.QueryFirstOrDefault<IEnumerable<RaffleTicketSticker>>("Admin_RaffleTicketSticker_Get" , p);
         }
         
         public IEnumerable<LotteryTurnOverSummary> GetLotteryTurnOverSummary(int siteId ,string currencyIds ,DateTime startTime ,DateTime endTime)
@@ -288,14 +288,42 @@ namespace HangfireService.Core.DataLayers
             return result;
         }
         
-        public IEnumerable<CustLotteryTicket> GetCustLotteryTicket(int custId ,int roundId )
+        public decimal GetCustLotteryTurnOverSummary(int custId ,DateTime startTime ,DateTime endTime)
+        {
+            var p = new DynamicParameters();
+            p.Add("_CustId", custId);
+            p.Add("_StartTime", startTime);
+            p.Add("_EndTime", endTime);
+            var result = _dbClient.QueryFirstOrDefault<decimal>("Service_CustLotteryTurnOverSummary_Get", p);
+            return result;
+        }
+            
+        public IEnumerable<CustLotteryTicket> GetCustLotteryTicket(int custId ,int roundId ,int type)
         {
             var p = new DynamicParameters();
             p.Add("_CustId", custId);
             p.Add("_RoundId", roundId);
+            p.Add("_Type", type);
             var result = _dbClient.Query<CustLotteryTicket>("Service_CustLotteryTicket_Get", p);
             
             return result;
+        }
+        
+        public IEnumerable<LotteryEventDrawTurnOverSetting> GetLotteryEventDrawTurnOverSetting(int siteId)
+        {
+            var p = new DynamicParameters();
+            p.Add("_SiteId", siteId, dbType: DbType.Int32);
+            return _dbClient.Query<LotteryEventDrawTurnOverSetting>("Service_LotteryEventDrawTurnOverSetting_Get" , p);
+        }
+        
+        public IEnumerable<PrizeList> GetDrawPrizeList(int eventId, int currencyId)
+        {
+            return _dbClient.Query<PrizeList>("Member_DrawPrizeList_Get", new { EventId = eventId, CurrencyId = currencyId });
+        }
+        
+        public IEnumerable<EventRestriction> GetEventRestriction(int siteId)
+        {
+            return _dbClient.Query<EventRestriction>("Service_EventRestriction_Get", new { _SiteId = siteId });
         }
         
     }

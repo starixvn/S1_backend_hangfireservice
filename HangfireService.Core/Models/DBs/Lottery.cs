@@ -33,8 +33,48 @@ namespace HangfireService.Core.Models.DBs
         public int CustId { get; set; }
         public int RoundId { get; set; }
         public string TicketNo { get; set; }
-        public int StickerId { get; set; }
         public int Type { get; set; }
     }
     
+    public class LotteryEventDrawTurnOverSetting
+    {
+        public int SiteId { get; set; }
+        public int CurrencyId { get; set; }
+        public int Level { get; set; }
+        public decimal TurnOverStart { get; set; }
+        public decimal TurnOverEnd { get; set; }
+    }
+    
+    public class LotteryDrawCount
+    {
+        public int DrawCount { get; set; }
+        public int ExcludeCount { get; set; }
+        public string Name { get; set; }
+    }
+    
+    public class PrizeList
+    {
+        public int PrizeIndex { get; set; }
+        public int PrizeId { get; set; }
+        public int Tier { get; set; }
+        public string PrizeName { get; set; }
+        public int PrizeType { get; set; }
+    }
+    
+    public class LotteryTicketHistory
+    {
+        public int RoundId { get; set; }
+        public string FirstPrize { get; set; }
+        public string SecondPrize { get; set; }
+        public string ThirdPrize { get; set; }
+        public string ConsolationPrize { get; set; }
+        public string SmallPrize { get; set; }
+        public int StickerId { get; set; }
+    }
+    
+    public class EventRestriction
+    {
+        public int CurrencyId { get; set; }
+        public int CustId { get; set; }
+    }
 }
