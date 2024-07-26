@@ -259,6 +259,7 @@ namespace HangfireService.Core.DataLayers
         {
             return _dbClient.Execute("Service_LotteryTicketHistory_Ins", trans, parameters: new DynamicParameters(new
             {
+                _SiteId = history.SiteId,
                 _RoundId = history.RoundId, 
                 _FirstPrize = history.FirstPrize, 
                 _SecondPrize = history.SecondPrize, 
@@ -270,7 +271,7 @@ namespace HangfireService.Core.DataLayers
             
         }
         
-        public int LotteryEventDrawSettingSet(int siteId ,int roundId, int status ,IDbTransaction trans)
+        public int LotteryEventDrawSettingSet(int siteId ,int roundId, int status ,IDbTransaction trans = null)
         {
             return _dbClient.Execute("Service_LotteryEventDrawSetting_Set", trans, parameters: new DynamicParameters(new
             {
@@ -280,6 +281,11 @@ namespace HangfireService.Core.DataLayers
                 _Updator = "System"
             }));
             
+        }
+        
+        public int DrawPrizeSet(int eventId ,int prizeId, int custId ,DateTime checkDate, IDbTransaction trans)
+        {
+            return _dbClient.Execute("Member_DrawPrize_Set", trans, new { EventId = eventId, PrizeId = prizeId, CustId = custId, DrawDate = checkDate });
         }
         
         #endregion

@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Data;
 using Dapper;
-
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
@@ -270,7 +269,7 @@ namespace HangfireService.Core.DataLayers
             return await _dbClient.QueryAsync<ExchangeRate>("Service_ExchangeRate_Get", p);
         }
         
-        public LotteryEvent GetLotteryEventDrawSetting(int siteId ,DateTime date)
+        public LotteryEvent GetLotteryEventDrawSetting(int siteId , DateTime? date )
         {
             var p = new DynamicParameters();
             p.Add("_SiteId", siteId);
@@ -303,7 +302,7 @@ namespace HangfireService.Core.DataLayers
             p.Add("_CustId", custId);
             p.Add("_StartTime", startTime);
             p.Add("_EndTime", endTime);
-            var result = _dbClient.QueryFirstOrDefault<decimal>("Service_CustLotteryTurnOverSummary_Get", p);
+            var result = _dbClient.QueryFirst<decimal>("Service_CustLotteryTurnOverSummary_Get", p);
             return result;
         }
             
@@ -325,9 +324,9 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Query<LotteryEventDrawTurnOverSetting>("Service_LotteryEventDrawTurnOverSetting_Get" , p);
         }
         
-        public IEnumerable<PrizeList> GetDrawPrizeList(int eventId, int currencyId)
+        public async Task<IEnumerable<Prize>> GetPrizes(int eventId, int currencyId)
         {
-            return _dbClient.Query<PrizeList>("Member_DrawPrizeList_Get", new { EventId = eventId, CurrencyId = currencyId });
+            return await _dbClient.QueryAsync<Prize>("Member_DrawPrize_Get", new { _EventId = eventId, _CurrencyId = currencyId });
         }
         
         public IEnumerable<EventRestriction> GetEventRestriction(int siteId)
@@ -335,5 +334,14 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Query<EventRestriction>("Service_EventRestriction_Get", new { _SiteId = siteId });
         }
         
+        public LotteryTicketHistory GetLotteryTicketHistory(int siteId ,int roundId)
+        {
+            return _dbClient.QueryFirstOrDefault<LotteryTicketHistory>("Service_LotteryTicketHistory_Get", new { _SiteId = siteId , _RoundId = roundId });
+        }
+        
+        public IEnumerable<MpaRateDto> GetMPARate(DateTimeOffset starTime, DateTimeOffset endTime , int rateType)
+        {
+            return _dbClient.Query<MpaRateDto>("Admin_ExchangeRate_Get_V2", new { _RateDateStart = starTime.DateTime , _RateDateEnd = endTime.DateTime ,  _RateType = rateType  });
+        }
     }
 }

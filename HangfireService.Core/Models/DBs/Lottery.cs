@@ -6,11 +6,27 @@ namespace HangfireService.Core.Models.DBs
     {
         public int SiteId { get; set; }
         public int RoundId { get; set; }
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
-        public DateTime DrawDate { get; set; }
+        private DateTimeOffset _startDate { get; set; }
+        public DateTimeOffset StartDate
+        {
+            get => _startDate;
+            set => _startDate = new DateTimeOffset(value.DateTime, new TimeSpan(8, 0, 0));
+        }
+        private DateTimeOffset _endDate { get; set; }
+        public DateTimeOffset EndDate
+        {
+            get => _endDate;
+            set => _endDate = new DateTimeOffset(value.DateTime, new TimeSpan(8, 0, 0));
+        }
+        private DateTimeOffset _drawDate { get; set; }
+        public DateTimeOffset DrawDate
+        {
+            get => _drawDate;
+            set => _drawDate = new DateTimeOffset(value.DateTime, new TimeSpan(8, 0, 0));
+        }
         public int Status { get; set; }
         public string ExcludeSetting { get; set; }
+        
     }
     
     public class RaffleTicketSticker
@@ -31,6 +47,8 @@ namespace HangfireService.Core.Models.DBs
     public class CustLotteryTicket
     {
         public int CustId { get; set; }
+        public string UserName { get; set; }
+        public int CurrencyId { get; set; }
         public int RoundId { get; set; }
         public int StickerId { get; set; }
         public string TicketNo { get; set; }
@@ -50,20 +68,28 @@ namespace HangfireService.Core.Models.DBs
     {
         public int DrawCount { get; set; }
         public int ExcludeCount { get; set; }
-        public string Name { get; set; }
     }
     
-    public class PrizeList
+    public class Prize
     {
-        public int PrizeIndex { get; set; }
         public int PrizeId { get; set; }
-        public int Tier { get; set; }
-        public string PrizeName { get; set; }
+        public int EventId { get; set; }
+        public int CurrencyId { get; set; }
         public int PrizeType { get; set; }
+        public int Jackpot { get; set; }
+        public string PrizeName { get; set; }
+        public decimal Amount { get; set; }
+        public DateTime StartTime { get; set; }
+        public DateTime EndTime { get; set; }
+        public int Quota { get; set; }
+        public int Rate { get; set; }
+        public int Tier { get; set; }
+        public DrawPrizeTypeEnum DrawPrizeType { get; set; }
     }
     
     public class LotteryTicketHistory
     {
+        public int SiteId { get; set; }
         public int RoundId { get; set; }
         public string FirstPrize { get; set; }
         public string SecondPrize { get; set; }
@@ -77,5 +103,12 @@ namespace HangfireService.Core.Models.DBs
     {
         public int CurrencyId { get; set; }
         public int CustId { get; set; }
+    }
+    
+    public class WinnerPayoutData
+    {
+        public string TicketNo { get; set; }
+        public LotteryPrizeCategory LotteryPrizeCategory { get; set; }
+        public string Name { get; set; }
     }
 }

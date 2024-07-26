@@ -47,8 +47,8 @@ namespace HangfireService.Core.Jobs
                     var summaryList = _reportDbDataLayer.GetLotteryTurnOverSummary(
                         option.SiteId, 
                         JsonConvert.SerializeObject(currencyList),
-                        lotteryEventDrawSetting.StartDate,
-                        lotteryEventDrawSetting.EndDate);
+                        lotteryEventDrawSetting.StartDate.UtcDateTime,
+                        lotteryEventDrawSetting.EndDate.UtcDateTime);
 
                     foreach (var cust in summaryList)
                     {
