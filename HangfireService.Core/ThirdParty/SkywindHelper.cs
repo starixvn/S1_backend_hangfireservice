@@ -46,6 +46,8 @@ namespace HangfireService.Core.ThirdParty
                 item.ValidBet *= rate;
                 item.Payout *= rate;
                 item.WinlostAmount *= rate;
+                item.ProgressiveBet *= rate;
+                item.ProgressiveWin *= rate;
             }
             return bettrans;
         }
@@ -59,6 +61,8 @@ namespace HangfireService.Core.ThirdParty
                 tpDaily.ValidBet *= rate;
                 tpDaily.Payout *= rate;
                 tpDaily.WinlostAmount *= rate;
+                tpDaily.ProgressiveBet *= rate;
+                tpDaily.ProgressiveWin *= rate;
             }
             return tpDailyList;
         }
