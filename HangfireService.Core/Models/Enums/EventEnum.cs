@@ -5,6 +5,13 @@ namespace HangfireService.Core.Models.Enums
         Ticket = 1,
         Sticker = 2
     }
+    
+    public enum DrawPrizeTypeEnum
+    {
+        NormalPrize = 0,
+        NoPrize = 1,
+        BlessingsSticker = 2
+    }
 
     public enum LotteryEventDrawEnum
     {

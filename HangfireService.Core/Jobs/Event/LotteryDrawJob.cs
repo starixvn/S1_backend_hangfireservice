@@ -28,11 +28,11 @@ namespace HangfireService.Core.Jobs
             _mainDbDataLayer = provider.GetRequiredService<MainDBDataLayer>();
             _prizeList = new Dictionary<LotteryPrizeCategory, LotteryDrawCount>
             {
-                {LotteryPrizeCategory.FirstPrize, new LotteryDrawCount {DrawCount = 1 , Name = "First" }},
-                {LotteryPrizeCategory.SecondPrize, new LotteryDrawCount {DrawCount = 1 ,Name = "Second"}},
-                {LotteryPrizeCategory.ThirdPrize,new LotteryDrawCount {DrawCount = 1 ,Name = "Third"}},
-                {LotteryPrizeCategory.ConsolationPrize, new LotteryDrawCount {DrawCount = 20 ,Name = "Consolation"}},
-                {LotteryPrizeCategory.SmallPrize, new LotteryDrawCount {DrawCount = 10 , Name = "Small"}},
+                {LotteryPrizeCategory.FirstPrize, new LotteryDrawCount {DrawCount = 1  }},
+                {LotteryPrizeCategory.SecondPrize, new LotteryDrawCount {DrawCount = 1 }},
+                {LotteryPrizeCategory.ThirdPrize,new LotteryDrawCount {DrawCount = 1}},
+                {LotteryPrizeCategory.ConsolationPrize, new LotteryDrawCount {DrawCount = 20 }},
+                {LotteryPrizeCategory.SmallPrize, new LotteryDrawCount {DrawCount = 10 }},
             };
         }
 
@@ -77,7 +77,6 @@ namespace HangfireService.Core.Jobs
                     
                     var originTicketList = _reportDbDataLayer.GetCustLotteryTicket(0, lotteryEventDrawSetting.RoundId , (int)LotteryTicketEnum.Ticket).ToList();
                     
-                   
                     var ticketList = originTicketList.ToList();
 
                     #region 排除用戶
@@ -90,6 +89,7 @@ namespace HangfireService.Core.Jobs
                     var random = new Random();
                     var insertData = new LotteryTicketHistory
                     {
+                        SiteId = option.SiteId,
                         RoundId = lotteryEventDrawSetting.RoundId,
                         StickerId = random.Next(1, 13)
                     };
@@ -184,19 +184,6 @@ namespace HangfireService.Core.Jobs
                         await conn.CloseAsync();
                         await conn.DisposeAsync();
                     }
-                    
-                    // var levelTurnOverSetting = _reportDbDataLayer.GetLotteryEventDrawTurnOverSetting(option.SiteId).ToList();
-                    // foreach (var setting in levelTurnOverSetting.Where(setting => setting.TurnOverEnd == 0))
-                    // {
-                    //     setting.TurnOverEnd = decimal.MaxValue;
-                    // }
-                    // var drawPrizeList = _reportDbDataLayer.GetDrawPrizeList(21, 3);
-                    // var custTurnOver = _reportDbDataLayer.GetCustLotteryTurnOverSummary(
-                    //     selectedElement.CustId, lotteryEventDrawSetting.StartDate,
-                    //     lotteryEventDrawSetting.EndDate);
-                    // var levelData = levelTurnOverSetting.FirstOrDefault(x => x.CurrencyId == selectedElement.CurrencyId && x.TurnOverStart <= custTurnOver && x.TurnOverEnd <= custTurnOver);
-                    // var prizeData = drawPrizeList.FirstOrDefault(x => x.Tier == levelData.Level && x.PrizeName.Contains(prize.Value.Name));
-                    
                 }
                 
                 return JsonConvert.SerializeObject(new
