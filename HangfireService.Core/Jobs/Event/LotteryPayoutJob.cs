@@ -105,10 +105,12 @@ namespace HangfireService.Core.Jobs
                                         continue;
                                     }
                                     
-                                    var setResult = _mainDbDataLayer.DrawPrizeSet( prizeData.EventId, prizeData.PrizeId, ticketInfo.CustId, DateTime.UtcNow, trans);
+                                    var prizeAmount = prizeData.Amount * rateDto.Rate;
+                                    var setResult = _mainDbDataLayer.LotteryDrawPrizeSet(data.TicketNo, prizeAmount, lotteryEventDrawSetting.RoundId, 
+                                        (int)data.LotteryPrizeCategory, prizeData.EventId, prizeData.PrizeId, ticketInfo.CustId, DateTime.UtcNow, trans);
+                                    
                                     if (setResult > 0)
                                     {
-                                        var prizeAmount = prizeData.Amount * rateDto.Rate;
                                         var memo = $"PrizeName : {prizeData.PrizeName} ,Prize: {prizeAmount:#,##0.##}";
                                         var setBalanceResult = _financeService.SetBalance(ticketInfo.CustId, siteId, ticketInfo.UserName, prizeAmount, 8, memo, prizeData.EventId.ToString(), out _, out _, trans) ;
                                         if (setBalanceResult <= 0)
