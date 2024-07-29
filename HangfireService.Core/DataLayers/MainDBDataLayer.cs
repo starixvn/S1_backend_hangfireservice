@@ -273,9 +273,19 @@ namespace HangfireService.Core.DataLayers
             
         }
         
-        public int DrawPrizeSet(int eventId ,int prizeId, int custId ,DateTime checkDate, IDbTransaction trans)
+        public int LotteryDrawPrizeSet(string ticketNo, decimal amount , int roundId , int lotteryPrizeCategory ,int eventId ,int prizeId, int custId ,DateTime checkDate, IDbTransaction trans)
         {
-            return _dbClient.Execute("Member_DrawPrize_Set", trans, new { EventId = eventId, PrizeId = prizeId, CustId = custId, DrawDate = checkDate });
+            return _dbClient.Execute("Service_LotteryDrawPrize_Set", trans, new
+            {
+                _TicketNo = ticketNo,
+                _Amount= amount,
+                _RoundId=  roundId,
+                _LotteryPrizeCategory = lotteryPrizeCategory,
+                _EventId = eventId, 
+                _PrizeId = prizeId, 
+                _CustId = custId, 
+                _DrawDate = checkDate
+            });
         }
         
         #endregion
