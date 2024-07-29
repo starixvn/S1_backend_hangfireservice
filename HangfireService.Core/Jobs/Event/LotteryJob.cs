@@ -36,7 +36,12 @@ namespace HangfireService.Core.Jobs
                 var option = JsonConvert.DeserializeObject<LotteryOption>(jobOption.Parameters);
                 
                 var lotteryEventDrawSetting = _reportDbDataLayer.GetLotteryEventDrawSetting(option.SiteId, DateTime.UtcNow.Date);
-                if (lotteryEventDrawSetting is not null)
+                
+                var now = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(8));
+                if (lotteryEventDrawSetting is not null 
+                    && lotteryEventDrawSetting.Status == (int)LotteryEventDrawEnum.Running
+                    && now >= lotteryEventDrawSetting.StartDate
+                    && now <= lotteryEventDrawSetting.EndDate)
                 {
                     _logger.LogInformation($"{jobName} running ||  Site :{option.SiteId} || RoundId :{lotteryEventDrawSetting.RoundId} || Range :{lotteryEventDrawSetting.StartDate} ~ {lotteryEventDrawSetting.EndDate}" );
                     
