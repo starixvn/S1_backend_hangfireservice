@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using System.Diagnostics;
 
 using Dapper;
@@ -289,6 +289,28 @@ namespace HangfireService.Core.DataLayers
             LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
             _logger.LogDebug($"{name} {sw.Elapsed:c}");
             return result;
+        }
+        
+        public async Task<IEnumerable<T>> QueryWithConnectionAsync<T>(string name, object parameters = null, int? commandTimeout = null,string connectionString = null)
+        {
+            IEnumerable<T> result;
+            var sw = Stopwatch.StartNew();
+            try
+            {
+                await using var connection = new MySqlConnection(connectionString);
+                result = await connection.QueryAsync<T>(name, parameters, commandType: CommandType.StoredProcedure, commandTimeout: commandTimeout);
+                await connection.CloseAsync();
+                await connection.DisposeAsync();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, name);
+                throw;
+            }
+
+            LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
+            _logger.LogDebug($"{name} {sw.Elapsed:c}");
+            return result.ToList();
         }
 
         private string ReplaceDBString(string conn)
