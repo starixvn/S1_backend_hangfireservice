@@ -283,7 +283,7 @@ namespace HangfireService.Core.DataLayers
             
         }
         
-        public int LotteryDrawPrizeSet(string ticketNo, decimal amount , int roundId , int lotteryPrizeCategory ,int eventId ,int prizeId, int custId ,DateTime checkDate, IDbTransaction trans)
+        public int LotteryDrawPrizeSet(string ticketNo, decimal amount , int roundId , int lotteryPrizeCategory ,int eventId ,int prizeId, int custId ,DateTime checkDate, int isJackpot, int stickerId,  IDbTransaction trans)
         {
             return _dbClient.Execute("Service_LotteryDrawPrize_Set", trans, new
             {
@@ -294,8 +294,20 @@ namespace HangfireService.Core.DataLayers
                 _EventId = eventId, 
                 _PrizeId = prizeId, 
                 _CustId = custId, 
-                _DrawDate = checkDate
+                _DrawDate = checkDate,
+                _IsJackpot = isJackpot,
+                _StickerId = stickerId
             });
+        }
+        
+        public int DrawPrizeJackpotAccumulationSet(int prizeId ,decimal amount ,IDbTransaction trans = null)
+        {
+            return _dbClient.Execute("Service_DrawPrizeJackpotAccumulation_Set", trans, parameters: new DynamicParameters(new
+            {
+                _PrizeId = prizeId, 
+                _Amount= amount
+            }));
+            
         }
         
         #endregion

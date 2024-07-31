@@ -111,4 +111,14 @@ namespace HangfireService.Core.Models.DBs
         public LotteryPrizeCategory LotteryPrizeCategory { get; set; }
         public string Name { get; set; }
     }
+    
+    public class DrawPrizeJackpotAccumulation
+    {
+        public int EventId { get; set; }
+        public int PrizeId { get; set; }
+        public int JackpotAmount { get; set; }
+        public string PrizeName { get; set; }
+    }
+    
+    
 }
