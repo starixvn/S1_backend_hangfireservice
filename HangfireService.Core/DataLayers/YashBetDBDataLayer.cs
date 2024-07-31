@@ -43,7 +43,7 @@ namespace HangfireService.Core.DataLayers
         }
 
         
-        public async Task<int> SaveUpdatedHotEventInfoToYashBetDB(IEnumerable<HotEventInfo> request)
+        public async Task<int> InsertHotEventInfoToYashBetDB(HotEventInfo request)
         {
             var result = 0;
             const string yashBetCurrency = "[74]";
@@ -51,34 +51,81 @@ namespace HangfireService.Core.DataLayers
             using var conn = _mainDBClient.GetMySqlConnection();
             conn.Open();
             using var trans = conn.BeginTransaction();
-
-            foreach (var insert in request)
+            
+            if (request.Currency != null)
             {
-                if (insert.Currency != null)
-                {
-                    insert.Currency = yashBetCurrency;
-                }
-    
-                result = await _mainDBClient.ExecuteAsync("Admin_HotEventInfo_Ins_V3", new
-                {
-                    _SiteId = 6,
-                    _TpId = insert.TpId,
-                    _GameId = insert.GameId,
-                    _SportLeaguesTitleId = insert.SportLeaguesTitleId ,
-                    _MatchId = insert.MatchId ,
-                    _StartTime = insert.StartTime,
-                    _EndTime = insert.EndTime,
-                    _BattleDateTime = insert.BattleDateTime,
-                    _HomeSportLeaguesId = insert.HomeSportLeaguesId,
-                    _AwaySportLeaguesId = insert.AwaySportLeaguesId,
-                    _HomeSportTeamId = insert.HomeSportTeamId,
-                    _AwaySportTeamId = insert.AwaySportTeamId,
-                    _CreateUser = "JobSystem",
-                    _LastUpdateUser = "JobSystem",
-                    _IsLiveStreaming= insert.IsLiveStreaming,
-                    _Currency = yashBetCurrency
-                });
+                request.Currency = yashBetCurrency;
             }
+
+            result = await _mainDBClient.ExecuteAsync("Admin_HotEventInfo_Ins_V3", new
+            {
+                _SiteId = 6,
+                _TpId = request.TpId,
+                _GameId = request.GameId,
+                _SportLeaguesTitleId = request.SportLeaguesTitleId ,
+                _MatchId = request.MatchId ,
+                _StartTime = request.StartTime,
+                _EndTime = request.EndTime,
+                _BattleDateTime = request.BattleDateTime,
+                _HomeSportLeaguesId = request.HomeSportLeaguesId,
+                _AwaySportLeaguesId = request.AwaySportLeaguesId,
+                _HomeSportTeamId = request.HomeSportTeamId,
+                _AwaySportTeamId = request.AwaySportTeamId,
+                _HomeOdds = request.HomeOdds,
+                _AwayOdds = request.AwayOdds,
+                _Handicap = request.Handicap ,
+                _Sort = request.Sort,
+                _Status = request.Status,
+                _CreateUser = "JobSystem",
+                _LastUpdateUser = "JobSystem",
+                _IsLiveStreaming= request.IsLiveStreaming,
+                _Currency = yashBetCurrency
+            });
+            
+            trans.Commit();
+            await conn.CloseAsync();
+            conn.Dispose();
+            
+            return result;
+        }
+        
+        public async Task<int> UpdateHotEventInfoToYashBetDB(HotEventInfo request)
+        {
+            var result = 0;
+            const string yashBetCurrency = "[74]";
+            
+            using var conn = _mainDBClient.GetMySqlConnection();
+            conn.Open();
+            using var trans = conn.BeginTransaction();
+            
+            if (request.Currency != null)
+            {
+                request.Currency = yashBetCurrency;
+            }
+
+            result = await _mainDBClient.ExecuteAsync("Service_HotEventData_Set", new
+            {
+                _SQ = request.SQ,
+                _SportLeaguesTitleId = request.SportLeaguesTitleId ,
+                _MatchId = request.MatchId ,
+                _StartTime = request.StartTime,
+                _EndTime = request.EndTime,
+                _BattleDateTime = request.BattleDateTime,
+                _HomeSportLeaguesId = request.HomeSportLeaguesId,
+                _AwaySportLeaguesId = request.AwaySportLeaguesId,
+                _HomeSportTeamId = request.HomeSportTeamId,
+                _AwaySportTeamId = request.AwaySportTeamId,
+                _HomeOdds = request.HomeOdds,
+                _AwayOdds = request.AwayOdds,
+                _Handicap = request.Handicap ,
+                _Sort = request.Sort,
+                _Status = request.Status,
+                _CreateUser = "JobSystem",
+                _LastUpdateUser = "JobSystem",
+                _IsLiveStreaming= request.IsLiveStreaming,
+                _Currency = yashBetCurrency
+            });
+            
             trans.Commit();
             await conn.CloseAsync();
             conn.Dispose();

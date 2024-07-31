@@ -2,6 +2,7 @@
 {
     public class HotEventInfo
     {
+        public int SQ { get; set; }
         public int SiteId { get; set; }
         public int TpId { get; set; }
         public int GameId { get; set; }
@@ -25,5 +26,6 @@
         public string LastUpdateUser { get; set; }
         public int IsLiveStreaming { get; set; }
         public string Currency { get; set; }
+        public int DataType;
     }
 }
