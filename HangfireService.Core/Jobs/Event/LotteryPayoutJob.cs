@@ -10,6 +10,7 @@ using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.Service;
 using Microsoft.Extensions.Logging;
+using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
 using Serilog.Context;
 
@@ -52,6 +53,8 @@ namespace HangfireService.Core.Jobs
                     var custLotteryTicket = _reportDbDataLayer.GetCustLotteryTicket(0, lotteryEventDrawSetting.RoundId , (int)LotteryTicketEnum.Ticket).ToList();
                     var levelTurnOverSetting = _reportDbDataLayer.GetLotteryEventDrawTurnOverSetting(siteId).ToList();
                     var drawPrizeList = await _reportDbDataLayer.GetPrizes(21, 3);
+                    var jackpotData = drawPrizeList.FirstOrDefault(x => x.Jackpot == 1);
+                    var jackpotAccumulation = _reportDbDataLayer.GetDrawPrizeJackpotAccumulation(jackpotData.EventId);
                     var rateDate = new DateTimeOffset(new DateTime(lotteryEventDrawSetting.StartDate.Year, lotteryEventDrawSetting.StartDate.Month, 1), TimeSpan.Zero);
                     var rateList = _reportDbDataLayer.GetMPARate(rateDate, rateDate, 2).ToList();
                     
@@ -83,9 +86,12 @@ namespace HangfireService.Core.Jobs
                     
                     try
                     {
+                        var isPayoutJackpot = false;
+                        
                         foreach (var data in winnerPayoutList)
                         {
                             var ticketInfo = custLotteryTicket.FirstOrDefault(x => x.TicketNo == data.TicketNo);
+                            //真實有中獎CustId , 非造假票
                             if (ticketInfo is not null)
                             {
                                 var custTurnOver = _reportDbDataLayer.GetCustLotteryTurnOverSummary(ticketInfo.CustId, lotteryEventDrawSetting.StartDate.UtcDateTime, lotteryEventDrawSetting.EndDate.UtcDateTime);
@@ -98,40 +104,29 @@ namespace HangfireService.Core.Jobs
                                 var prizeData = drawPrizeList.FirstOrDefault(x => x.Tier == levelData.Level && x.PrizeName.Contains(data.Name));
                                 if (prizeData is not null)
                                 {
-                                    var rateDto = rateList.FirstOrDefault(x => x.CurrencyId == 3 && x.TargetCurrencyId == ticketInfo.CurrencyId);
-                                    if (rateDto is null)
-                                    {
-                                        _logger.LogInformation($"{jobName} running || {data.TicketNo} Ticket || Can't find rate" );
-                                        continue;
-                                    }
                                     
-                                    var prizeAmount = prizeData.Amount * rateDto.Rate;
-                                    var setResult = _mainDbDataLayer.LotteryDrawPrizeSet(data.TicketNo, prizeAmount, lotteryEventDrawSetting.RoundId, 
-                                        (int)data.LotteryPrizeCategory, prizeData.EventId, prizeData.PrizeId, ticketInfo.CustId, DateTime.UtcNow, trans);
-                                    
-                                    if (setResult > 0)
+                                    if (data.LotteryPrizeCategory == LotteryPrizeCategory.FirstPrize)
                                     {
-                                        var memo = $"PrizeName : {prizeData.PrizeName} ,Prize: {prizeAmount:#,##0.##}";
-                                        var setBalanceResult = _financeService.SetBalance(ticketInfo.CustId, siteId, ticketInfo.UserName, prizeAmount, 8, memo, prizeData.EventId.ToString(), out _, out _, trans) ;
-                                        if (setBalanceResult <= 0)
+                                        var custSticker = _reportDbDataLayer.GetCustLotteryTicket(ticketInfo.CustId,  lotteryEventDrawSetting.RoundId, (int)LotteryTicketEnum.Sticker).FirstOrDefault();
+                                        if (custSticker is not null && custSticker.StickerId == winnerList.StickerId)
                                         {
-                                            await trans.DisposeAsync();
-                                            throw new InvalidOperationException($"{jobName} running || {data.TicketNo} Ticket || SetBalance Failed" );
+                                            isPayoutJackpot = true;
                                         }
                                     }
-                                    else
-                                    {
-                                        await trans.DisposeAsync();
-                                        throw new InvalidOperationException($"{jobName} running || {data.TicketNo} Ticket || DrawPrizeSet Failed" );
-                                    }
                                     
+                                    var result = PayOutPrize(jobName, lotteryEventDrawSetting.RoundId, siteId,winnerList.StickerId, rateList, ticketInfo, data, prizeData, isPayoutJackpot ,jackpotAccumulation, trans).Result;
                                 }
                             }
                         }
+
+                        //未發出去就累積, 發出去就重置 
+                        var accumulationAmount = isPayoutJackpot ? jackpotData.Amount : jackpotAccumulation.JackpotAmount + jackpotData.Amount;
+                        var jackpotAccumulationSetResult = _mainDbDataLayer.DrawPrizeJackpotAccumulationSet(jackpotData.PrizeId, accumulationAmount ,trans) > 0;
                         
-                        var setSettingResult = _mainDbDataLayer.LotteryEventDrawSettingSet(option.SiteId, lotteryEventDrawSetting.RoundId, (int) LotteryEventDrawEnum.PayOut ,trans ) ;
+                        // SET Finish
+                        var setSettingResult = _mainDbDataLayer.LotteryEventDrawSettingSet(option.SiteId, lotteryEventDrawSetting.RoundId, (int) LotteryEventDrawEnum.PayOut ,trans )  > 0;
                         
-                        if (setSettingResult > 0)
+                        if (setSettingResult && jackpotAccumulationSetResult)
                         {
                             trans.Commit();
                         }
@@ -162,5 +157,65 @@ namespace HangfireService.Core.Jobs
                 return JsonConvert.SerializeObject(ex);
             }
         }
+
+        private async Task<bool> PayOutPrize( string jobName ,int roundId ,int siteId , int winStickerId , List<MpaRateDto> rateList ,CustLotteryTicket ticketInfo ,
+            WinnerPayoutData data , Prize prizeData , bool isJackpotPayout, DrawPrizeJackpotAccumulation jackpotAccumulation , MySqlTransaction trans)
+        {
+            var rateDto = rateList.FirstOrDefault(x => x.CurrencyId == 3 && x.TargetCurrencyId == ticketInfo.CurrencyId);
+            if (rateDto is null)
+            {
+                throw new InvalidOperationException($"{jobName} running || {data.TicketNo} Ticket || Can't find rate" );
+            }
+            
+            var prizeAmount = prizeData.Amount * rateDto.Rate;
+            var result = _mainDbDataLayer.LotteryDrawPrizeSet(data.TicketNo, prizeAmount, roundId, 
+                (int)data.LotteryPrizeCategory, prizeData.EventId, prizeData.PrizeId, ticketInfo.CustId, DateTime.UtcNow, 0, 0, trans) > 0;
+
+            #region Jackpot
+
+            if (isJackpotPayout && result)
+            {
+                var jackpotAmount = jackpotAccumulation.JackpotAmount * rateDto.Rate;
+                result = _mainDbDataLayer.LotteryDrawPrizeSet(null , jackpotAmount, roundId, 
+                    (int)LotteryPrizeCategory.Jackpot, jackpotAccumulation.EventId, jackpotAccumulation.PrizeId, ticketInfo.CustId, DateTime.UtcNow, 1 , winStickerId , trans) > 0;
+                
+                if (result)
+                {
+                    var memo = $"PrizeName : {jackpotAccumulation.PrizeName} ,Prize: {jackpotAmount:#,##0.##}";
+                    result = _financeService.SetBalance(ticketInfo.CustId, siteId, ticketInfo.UserName, jackpotAmount, 8, memo, jackpotAccumulation.EventId.ToString(), out _, out _, trans) > 0;
+                    if (result == false)
+                    {
+                        await trans.DisposeAsync();
+                        throw new InvalidOperationException($"{jobName} running || {data.TicketNo} Ticket || SetBalance Failed" );
+                    }
+                }
+                else
+                {
+                    await trans.DisposeAsync();
+                    throw new InvalidOperationException($"{jobName} running || {data.TicketNo} Ticket || DrawPrizeSet Failed" );
+                }
+            }
+
+            #endregion
+            
+            if (result)
+            {
+                var memo = $"PrizeName : {prizeData.PrizeName} ,Prize: {prizeAmount:#,##0.##}";
+                result = _financeService.SetBalance(ticketInfo.CustId, siteId, ticketInfo.UserName, prizeAmount, 8, memo, prizeData.EventId.ToString(), out _, out _, trans) > 0;
+                if (result == false)
+                {
+                    await trans.DisposeAsync();
+                    throw new InvalidOperationException($"{jobName} running || {data.TicketNo} Ticket || SetBalance Failed" );
+                }
+            }
+            else
+            {
+                await trans.DisposeAsync();
+                throw new InvalidOperationException($"{jobName} running || {data.TicketNo} Ticket || DrawPrizeSet Failed" );
+            }
+
+            return true ; 
+        }
+        
     }
 }

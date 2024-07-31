@@ -27,6 +27,7 @@ namespace HangfireService.Core.Models.Enums
         SecondPrize = 2,
         ThirdPrize = 3,
         ConsolationPrize = 4,
-        SmallPrize = 5
+        SmallPrize = 5,
+        Jackpot = 6
     }
 }

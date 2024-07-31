@@ -331,5 +331,12 @@ namespace HangfireService.Core.DataLayers
         {
             return _dbClient.Query<MpaRateDto>("Admin_ExchangeRate_Get_V2", new { _RateDateStart = starTime.DateTime , _RateDateEnd = endTime.DateTime ,  _RateType = rateType  });
         }
+        
+        public DrawPrizeJackpotAccumulation GetDrawPrizeJackpotAccumulation(int eventId )
+        {
+            return _dbClient.QueryFirstOrDefault<DrawPrizeJackpotAccumulation>("Service_DrawPrizeJackpotAccumulation_Get", new { _EventId = eventId });
+        }
+        
+        
     }
 }
