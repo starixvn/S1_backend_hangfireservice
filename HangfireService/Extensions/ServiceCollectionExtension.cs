@@ -120,6 +120,7 @@ namespace HangfireService.Extensions
                 .AddTransient<ReportDBDataLayer>()
                 .AddTransient<ReportBackupDBDataLayer>()
                 .AddTransient<ReportCenterDataLayer>()
+                .AddTransient<YashBetDBDataLayer>()
                 .AddSingleton<ThirdPartyManager>()
                 .AddSingleton<PartitionService>()
                 .AddSingleton<FincanceService>()
@@ -135,7 +136,8 @@ namespace HangfireService.Extensions
                 .AddSingleton<BlockIpService>()
                 .AddSingleton<AllowIpService>()
                 .AddSingleton<WinLossSummaryService>()
-                .AddSingleton<MpaUpdateMonthRateService>();
+                .AddSingleton<MpaUpdateMonthRateService>()
+                .AddSingleton<HotEventService>();
         }
 
         public static IServiceCollection RegisterHttpClient(this IServiceCollection services)
