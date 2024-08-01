@@ -1,22 +1,33 @@
 ﻿using HangfireService.Core.DataLayers;
+using HangfireService.Core.Helpers;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace HangfireService.Core.Service
 {
     public class HotEventService
     {
+        private readonly HttpHelper _httpHelper;
         private readonly MySqlClient _mainDbClient;
         private readonly ILogger<HotEventService> _logger;
         private readonly YashBetDBDataLayer _yashBetDBDataLayer;
+        private readonly HotEventInfoConfig _hotEventInfoConfig;
+        private readonly string _internalKey;
+        
         
         public HotEventService(IServiceProvider provider)
         {
+            _httpHelper = provider.GetRequiredService<HttpHelper>();
             _logger = provider.GetRequiredService<ILogger<HotEventService>>();
             _mainDbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Main);
+            var configBll = provider.GetRequiredService<ConfigBLL>();
+            _hotEventInfoConfig = configBll.GetConfigValue<HotEventInfoConfig>("HangfireHotEventInfo");
+            _internalKey = configBll.GetConfigValue("InternalKey");
             _yashBetDBDataLayer = provider.GetRequiredService<YashBetDBDataLayer>();
         }
+        
         public async Task<int> HotEventInfoJobAsync()
         {
             
@@ -47,8 +58,6 @@ namespace HangfireService.Core.Service
                 })
                 .ToDictionary(g => g.Key, g => g.First());
             
-            //var yashBetHotEventDataList = yashBetHotEventData.ToList();
-
             foreach (var nova88Event in nova88HotEventData)
             {
                 var key = new
@@ -125,7 +134,21 @@ namespace HangfireService.Core.Service
         
         private async Task<IEnumerable<HotEventInfo>> GetHotEventInfoFromNova88(int siteId)
         {
-            var result = await _yashBetDBDataLayer.GetHotEventInfoFromNova88(siteId);
+            var requestJson = new
+            {
+                SiteId = siteId
+            };
+            
+            var postData = new
+            {
+                VerifyKey = _internalKey,
+                RequestData = JsonConvert.SerializeObject(requestJson)
+            };
+            var parameters = JsonConvert.SerializeObject(postData);
+            var httpResponse = await _httpHelper.HttpPost1Async($"{_hotEventInfoConfig.ApiUrl}/api/Internal/GetHotEventInfoList", null, parameters, "application/json");
+            var content = await httpResponse.Content.ReadAsStringAsync();
+            var resultJson = JsonConvert.DeserializeObject<MemberSiteHotEventInfoResponse>(content);
+            var result = resultJson.data;
             return result;
         }
         

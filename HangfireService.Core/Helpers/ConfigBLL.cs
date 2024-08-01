@@ -60,6 +60,17 @@ namespace HangfireService.Core.Helpers
 
             return defaultItem;
         }
+        
+        public string GetConfigValue(string configKey, int siteId = 0)
+        {
+            var defaultValue = _defaultSiteConfig.GetValueOrDefault(configKey, string.Empty);
+            if (_siteIdConfigs.TryGetValue(siteId, out var siteConfig))
+            {
+                return siteConfig.Config.TryGetValue(configKey, out var configValue) ? configValue : defaultValue;
+            }
+
+            return defaultValue;
+        }
 
         public T GetConfigValueByEnvironment<T>(string configKey, int siteId = 0)
         {
