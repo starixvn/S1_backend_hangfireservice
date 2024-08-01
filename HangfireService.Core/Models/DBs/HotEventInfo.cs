@@ -1,5 +1,19 @@
 ﻿namespace HangfireService.Core.Models.DBs
 {
+    public class HotEventInfoConfig
+    {
+        public string ApiUrl { get; set; }
+    }
+
+    public class MemberSiteHotEventInfoResponse
+    {
+        public int errorCode { get; set; }
+        public string message { get; set; }
+        public string rawErrorCode { get; set; }
+        public string rawMessage { get; set; }
+        public IEnumerable<HotEventInfo> data { get; set; }
+    }
+    
     public class HotEventInfo
     {
         public int SQ { get; set; }
