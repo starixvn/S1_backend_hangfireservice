@@ -51,6 +51,7 @@ namespace HangfireService.Core.Models.DBs
         public int CurrencyId { get; set; }
         public int RoundId { get; set; }
         public int StickerId { get; set; }
+        public decimal StickerAmount { get; set; }
         public string TicketNo { get; set; }
         public int Type { get; set; }
     }
