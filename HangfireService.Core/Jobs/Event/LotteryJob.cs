@@ -141,6 +141,7 @@ namespace HangfireService.Core.Jobs
                     CustId = custId,
                     RoundId = roundId,
                     StickerId = 0,
+                    StickerAmount = 0,
                     TicketNo = RandomTicketNo(),
                     Type = (int)LotteryTicketEnum.Ticket
                 };
