@@ -8,40 +8,13 @@ namespace HangfireService.Core.DataLayers
     public class YashBetDBDataLayer
     {
         private readonly MySqlClient _mainDBClient;
-        private readonly MySqlClient _novaDBClient;
-        private readonly string _reportDBConnectionString;
+        
 
         public YashBetDBDataLayer(IServiceProvider provider)
         {
-            _novaDBClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.ReportBackupDB);
             _mainDBClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Main);
             var configBll = provider.GetRequiredService<ConfigBLL>();
-            _reportDBConnectionString = configBll.GetConfigValue<NovaDBClient>("HangfireHotEventInfo").Nova88ReportDB;
         }
-
-        public class NovaDBClient
-        {
-            public string Nova88ReportDB { get; set; }
-        }
-        
-        public async Task<IEnumerable<HotEventInfo>> GetHotEventInfoFromNova88(int siteId)
-        {
-            
-            await using var conn = _novaDBClient.GetMySqlConnection();
-            conn.Open();
-            
-            var result = await _novaDBClient.QueryWithConnectionAsync<HotEventInfo>("Service_HotEventInfo_Get", new
-            {
-                _SiteId = siteId
-            },null,_reportDBConnectionString);
-            
-            await conn.CloseAsync();
-            await conn.DisposeAsync();
-
-            return result;
-
-        }
-
         
         public async Task<int> InsertHotEventInfoToYashBetDB(HotEventInfo request)
         {
@@ -57,7 +30,7 @@ namespace HangfireService.Core.DataLayers
                 request.Currency = yashBetCurrency;
             }
 
-            result = await _mainDBClient.ExecuteAsync("Admin_HotEventInfo_Ins_V3", new
+            result = await _mainDBClient.ExecuteAsync("Service_HotEventInfo_Ins", new
             {
                 _SiteId = 6,
                 _TpId = request.TpId,
@@ -103,7 +76,7 @@ namespace HangfireService.Core.DataLayers
                 request.Currency = yashBetCurrency;
             }
 
-            result = await _mainDBClient.ExecuteAsync("Service_HotEventData_Set", new
+            result = await _mainDBClient.ExecuteAsync("Service_HotEventInfo_Set", new
             {
                 _SQ = request.SQ,
                 _SportLeaguesTitleId = request.SportLeaguesTitleId ,
