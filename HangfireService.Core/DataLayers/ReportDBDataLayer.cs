@@ -282,7 +282,8 @@ namespace HangfireService.Core.DataLayers
         {
             var p = new DynamicParameters();
             p.Add("_SiteId", siteId, dbType: DbType.Int32);
-            return _dbClient.Query<RaffleTicketSticker>("Admin_RaffleTicketSticker_Get" , p);
+            p.Add("_Time", DateTime.UtcNow.AddHours(8) , dbType: DbType.DateTime);
+            return _dbClient.Query<RaffleTicketSticker>("Service_RaffleTicketStickerSetting_Get" , p);
         }
         
         public IEnumerable<LotteryTurnOverSummary> GetLotteryTurnOverSummary(int siteId ,string currencyIds ,DateTime startTime ,DateTime endTime)
