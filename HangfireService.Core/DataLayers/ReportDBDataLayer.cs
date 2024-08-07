@@ -257,12 +257,12 @@ namespace HangfireService.Core.DataLayers
 
         public async Task<IEnumerable<string>> GetBlockIp() => await _dbClient.QueryAsync<string>("Service_BlockIP_Get");
         
-        public LotteryEvent GetLotteryEventDrawSetting(int siteId , DateTime? date )
+        public IEnumerable<LotteryEvent> GetLotteryEventDrawSetting(int siteId , DateTime? date )
         {
             var p = new DynamicParameters();
             p.Add("_SiteId", siteId);
             p.Add("_Date", date);
-            var result = _dbClient.QueryFirstOrDefault<LotteryEvent>("Service_LotteryEventDrawSetting_Get", p);
+            var result = _dbClient.Query<LotteryEvent>("Service_LotteryEventDrawSetting_Get", p);
             return result;
         }
         

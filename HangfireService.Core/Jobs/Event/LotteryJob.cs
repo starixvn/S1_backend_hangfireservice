@@ -36,14 +36,14 @@ namespace HangfireService.Core.Jobs
                 var option = JsonConvert.DeserializeObject<LotteryOption>(jobOption.Parameters);
                 
                 var lotteryEventDrawSetting = _reportDbDataLayer.GetLotteryEventDrawSetting(option.SiteId, null);
-                
                 var now = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(8));
-                if (lotteryEventDrawSetting is not null 
-                    && lotteryEventDrawSetting.Status == (int)LotteryEventDrawEnum.Running
-                    && now >= lotteryEventDrawSetting.StartDate
-                    && now <= lotteryEventDrawSetting.EndDate)
+                var currentEventDraw = lotteryEventDrawSetting.FirstOrDefault(x => x.Status == (int) LotteryEventDrawEnum.Running
+                    && now >= x.StartDate
+                    && now <= x.EndDate);
+                
+                if (currentEventDraw is not null)
                 {
-                    _logger.LogInformation($"{jobName} running ||  Site :{option.SiteId} || RoundId :{lotteryEventDrawSetting.RoundId} || Range :{lotteryEventDrawSetting.StartDate} ~ {lotteryEventDrawSetting.EndDate}" );
+                    _logger.LogInformation($"{jobName} running ||  Site :{option.SiteId} || RoundId :{currentEventDraw.RoundId} || Range :{currentEventDraw.StartDate} ~ {currentEventDraw.EndDate}" );
                     
                     var ticketStickerSetting = _reportDbDataLayer.GetRaffleTicketStickerSetting(option.SiteId).ToList();
                  
@@ -52,8 +52,8 @@ namespace HangfireService.Core.Jobs
                     var summaryList = _reportDbDataLayer.GetLotteryTurnOverSummary(
                         option.SiteId, 
                         JsonConvert.SerializeObject(currencyList),
-                        lotteryEventDrawSetting.StartDate.UtcDateTime,
-                        lotteryEventDrawSetting.EndDate.UtcDateTime);
+                        currentEventDraw.StartDate.UtcDateTime,
+                        currentEventDraw.EndDate.UtcDateTime);
 
                     foreach (var cust in summaryList)
                     {
@@ -61,7 +61,7 @@ namespace HangfireService.Core.Jobs
                         var turnOver = setting.TurnOver;
                         
                         var ticketCount = (int) ( cust.ValidBet / turnOver );
-                        var beforeCustTicket = _reportDbDataLayer.GetCustLotteryTicket(cust.CustId, lotteryEventDrawSetting.RoundId , (int)LotteryTicketEnum.Ticket)
+                        var beforeCustTicket = _reportDbDataLayer.GetCustLotteryTicket(cust.CustId, currentEventDraw.RoundId , (int)LotteryTicketEnum.Ticket)
                             .Where(x=>x.Type == 1).ToList();
 
                         var dealCount = ticketCount - beforeCustTicket.Count;
@@ -78,7 +78,7 @@ namespace HangfireService.Core.Jobs
                         
                         try
                         {
-                            var insertTicketList = CreateCustLotteryTicket(dealCount, cust.CustId, lotteryEventDrawSetting.RoundId);
+                            var insertTicketList = CreateCustLotteryTicket(dealCount, cust.CustId, currentEventDraw.RoundId);
                             var insertResult = _mainDbDataLayer.InsertCustLotteryTicket(insertTicketList ,trans);
 
                             if (insertResult > 0)
@@ -94,7 +94,7 @@ namespace HangfireService.Core.Jobs
                         {
                             if (ex.Number == (int)MySqlErrorCode.DuplicateKeyEntry) //匯入資料重複
                             {
-                                var insertTicketListReTry = CreateCustLotteryTicket(dealCount, cust.CustId, lotteryEventDrawSetting.RoundId);
+                                var insertTicketListReTry = CreateCustLotteryTicket(dealCount, cust.CustId, currentEventDraw.RoundId);
                                 var insertResult = _mainDbDataLayer.InsertCustLotteryTicket(insertTicketListReTry ,trans);
 
                                 if (insertResult > 0)

@@ -45,18 +45,18 @@ namespace HangfireService.Core.Jobs
                 var option = JsonConvert.DeserializeObject<LotteryOption>(jobOption.Parameters);
                 
                 var lotteryEventDrawSetting = _reportDbDataLayer.GetLotteryEventDrawSetting(option.SiteId, null);
-
                 var now = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(8));
-                if (lotteryEventDrawSetting is not null 
-                    && lotteryEventDrawSetting.Status == (int)LotteryEventDrawEnum.Running
-                    && now >= lotteryEventDrawSetting.EndDate
-                    && now <= lotteryEventDrawSetting.DrawDate)
+                var currentEventDraw = lotteryEventDrawSetting.FirstOrDefault(x => x.Status == (int) LotteryEventDrawEnum.Running
+                    && now >= x.EndDate
+                    && now <= x.DrawDate);
+            
+                if (currentEventDraw is not null)
                 {
-                    _logger.LogInformation($"{jobName} running ||  Site :{option.SiteId} || RoundId :{lotteryEventDrawSetting.RoundId} || Range :{lotteryEventDrawSetting.StartDate} ~ {lotteryEventDrawSetting.EndDate}" );
+                    _logger.LogInformation($"{jobName} running ||  Site :{option.SiteId} || RoundId :{currentEventDraw.RoundId} || Range :{currentEventDraw.StartDate} ~ {currentEventDraw.EndDate}" );
                     
                     #region DealSettingData
 
-                    var excludeList = JsonConvert.DeserializeObject<List<int>>(lotteryEventDrawSetting.ExcludeSetting);
+                    var excludeList = JsonConvert.DeserializeObject<List<int>>(currentEventDraw.ExcludeSetting);
                     
                     // 設定每個獎項的 ExcludeCount
                     LotteryPrizeCategory[] categories = 
@@ -79,7 +79,7 @@ namespace HangfireService.Core.Jobs
                     
                     #endregion
                     
-                    var originTicketList = _reportDbDataLayer.GetCustLotteryTicket(0, lotteryEventDrawSetting.RoundId , (int)LotteryTicketEnum.Ticket).ToList();
+                    var originTicketList = _reportDbDataLayer.GetCustLotteryTicket(0, currentEventDraw.RoundId , (int)LotteryTicketEnum.Ticket).ToList();
                     
                     var ticketList = originTicketList.ToList();
 
@@ -94,7 +94,7 @@ namespace HangfireService.Core.Jobs
                     var insertData = new LotteryTicketHistory
                     {
                         SiteId = option.SiteId,
-                        RoundId = lotteryEventDrawSetting.RoundId,
+                        RoundId = currentEventDraw.RoundId,
                         StickerId = random.Next(1, 13)
                     };
                     
@@ -164,7 +164,7 @@ namespace HangfireService.Core.Jobs
                     
                         if (insertResult)
                         {
-                            var setResult = _mainDbDataLayer.LotteryEventDrawSettingSet(option.SiteId, lotteryEventDrawSetting.RoundId, (int) LotteryEventDrawEnum.Done ,trans) > 0 ;
+                            var setResult = _mainDbDataLayer.LotteryEventDrawSettingSet(option.SiteId, currentEventDraw.RoundId, (int) LotteryEventDrawEnum.Done ,trans) > 0 ;
                             if (setResult) 
                             {
                                 trans.Commit();
