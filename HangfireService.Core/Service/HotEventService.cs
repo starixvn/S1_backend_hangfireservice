@@ -144,7 +144,9 @@ namespace HangfireService.Core.Service
                 VerifyKey = _internalKey,
                 RequestData = JsonConvert.SerializeObject(requestJson)
             };
+            
             var parameters = JsonConvert.SerializeObject(postData);
+            _logger.LogInformation($"Nova88 Url : {_hotEventInfoConfig.ApiUrl} , _internalKey : {_internalKey} , request Data : {parameters}");
             var httpResponse = await _httpHelper.HttpPost1Async($"{_hotEventInfoConfig.ApiUrl}/api/Internal/GetHotEventInfoList", null, parameters, "application/json");
             var content = await httpResponse.Content.ReadAsStringAsync();
             var resultJson = JsonConvert.DeserializeObject<MemberSiteHotEventInfoResponse>(content);
