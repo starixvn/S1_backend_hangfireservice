@@ -96,9 +96,9 @@ namespace HangfireService.Core.Service
                         yashBetEventData.Sort = nova88Event.Sort;
                         yashBetEventData.Status = nova88Event.Status;
                         yashBetEventData.CreateTime = nova88Event.CreateTime;
-                        yashBetEventData.CreateUser = nova88Event.CreateUser;
+                        yashBetEventData.CreateUser = "JobSystem";
                         yashBetEventData.LastUpdateTime = nova88Event.LastUpdateTime;
-                        yashBetEventData.LastUpdateUser = nova88Event.LastUpdateUser;
+                        yashBetEventData.LastUpdateUser = "JobUpdateSystem";
                         yashBetEventData.IsLiveStreaming = nova88Event.IsLiveStreaming;
                         yashBetEventData.Currency = nova88Event.Currency;
                         yashBetEventData.DataType = 1;
@@ -111,7 +111,7 @@ namespace HangfireService.Core.Service
                     yashBetEventData.DataType = 0;
                 }
                 
-                _logger.LogInformation($"SQ : {yashBetEventData.SQ} , DataType : {yashBetEventData.DataType}");
+                //_logger.LogInformation($"SQ : {yashBetEventData.SQ} , DataType : {yashBetEventData.DataType}");
                 //DataType, 0 = 新增 , 1 = 更新 , 2 = DB有了且沒變更 不做事
                 switch (yashBetEventData.DataType)
                 {
@@ -146,7 +146,7 @@ namespace HangfireService.Core.Service
             };
             
             var parameters = JsonConvert.SerializeObject(postData);
-            _logger.LogInformation($"Nova88 Url : {_hotEventInfoConfig.ApiUrl} , _internalKey : {_internalKey} , request Data : {parameters}");
+            //_logger.LogInformation($"Nova88 Url : {_hotEventInfoConfig.ApiUrl} , _internalKey : {_internalKey} , request Data : {parameters}");
             var httpResponse = await _httpHelper.HttpPost1Async($"{_hotEventInfoConfig.ApiUrl}/api/Internal/GetHotEventInfoList", null, parameters, "application/json");
             var content = await httpResponse.Content.ReadAsStringAsync();
             var resultJson = JsonConvert.DeserializeObject<MemberSiteHotEventInfoResponse>(content);
