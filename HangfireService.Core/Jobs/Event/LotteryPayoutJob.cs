@@ -41,26 +41,27 @@ namespace HangfireService.Core.Jobs
                 var siteId = option.SiteId;
                 
                 var lotteryEventDrawSetting = _reportDbDataLayer.GetLotteryEventDrawSetting(siteId, null);
-                
-                if (lotteryEventDrawSetting is not null 
-                    && lotteryEventDrawSetting.Status == (int)LotteryEventDrawEnum.Done
+                var now = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(8));
+                var currentEventDraw = lotteryEventDrawSetting.FirstOrDefault(x => 
+                    x.Status == (int) LotteryEventDrawEnum.Done
                     //抽獎日隔天0點 才發錢
-                    && lotteryEventDrawSetting.DrawDate.Date.AddDays(1) <= DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(8))
-                   )
+                    && x.DrawDate.Date.AddDays(1) <= now);
+                
+                if (currentEventDraw is not null)
                 {
-                    _logger.LogInformation($"{jobName} running ||  Site :{siteId} || RoundId :{lotteryEventDrawSetting.RoundId}" );
+                    _logger.LogInformation($"{jobName} running ||  Site :{siteId} || RoundId :{currentEventDraw.RoundId}" );
                     
-                    var custLotteryTicket = _reportDbDataLayer.GetCustLotteryTicket(0, lotteryEventDrawSetting.RoundId , (int)LotteryTicketEnum.Ticket).ToList();
+                    var custLotteryTicket = _reportDbDataLayer.GetCustLotteryTicket(0, currentEventDraw.RoundId , (int)LotteryTicketEnum.Ticket).ToList();
                     var levelTurnOverSetting = _reportDbDataLayer.GetLotteryEventDrawTurnOverSetting(siteId).ToList();
                     var drawPrizeList = await _reportDbDataLayer.GetPrizes(21, 3);
                     var jackpotData = drawPrizeList.FirstOrDefault(x => x.Jackpot == 1);
                     var jackpotAccumulation = _reportDbDataLayer.GetDrawPrizeJackpotAccumulation(jackpotData.EventId);
-                    var rateDate = new DateTimeOffset(new DateTime(lotteryEventDrawSetting.StartDate.Year, lotteryEventDrawSetting.StartDate.Month, 1), TimeSpan.Zero);
+                    var rateDate = new DateTimeOffset(new DateTime(currentEventDraw.StartDate.Year, currentEventDraw.StartDate.Month, 1), TimeSpan.Zero);
                     var rateList = _reportDbDataLayer.GetMPARate(rateDate, rateDate, 2).ToList();
                     
                     #region DealData
                     
-                    var winnerList = _reportDbDataLayer.GetLotteryTicketHistory(siteId, lotteryEventDrawSetting.RoundId);
+                    var winnerList = _reportDbDataLayer.GetLotteryTicketHistory(siteId, currentEventDraw.RoundId);
                     var winnerPayoutList = new List<WinnerPayoutData>();
                     var firstPrizeList = JsonConvert.DeserializeObject<List<string>>(winnerList.FirstPrize);
                     var secondPrizeList = JsonConvert.DeserializeObject<List<string>>(winnerList.SecondPrize);
@@ -94,7 +95,7 @@ namespace HangfireService.Core.Jobs
                             //真實有中獎CustId , 非造假票
                             if (ticketInfo is not null)
                             {
-                                var custTurnOver = _reportDbDataLayer.GetCustLotteryTurnOverSummary(ticketInfo.CustId, lotteryEventDrawSetting.StartDate.UtcDateTime, lotteryEventDrawSetting.EndDate.UtcDateTime);
+                                var custTurnOver = _reportDbDataLayer.GetCustLotteryTurnOverSummary(ticketInfo.CustId, currentEventDraw.StartDate.UtcDateTime, currentEventDraw.EndDate.UtcDateTime);
                                 var levelData = levelTurnOverSetting.FirstOrDefault(x => x.CurrencyId == ticketInfo.CurrencyId && x.TurnOverStart <= custTurnOver && x.TurnOverEnd >= custTurnOver);
                                 if (levelData is null)
                                 {
@@ -107,14 +108,14 @@ namespace HangfireService.Core.Jobs
                                     
                                     if (data.LotteryPrizeCategory == LotteryPrizeCategory.FirstPrize)
                                     {
-                                        var custSticker = _reportDbDataLayer.GetCustLotteryTicket(ticketInfo.CustId,  lotteryEventDrawSetting.RoundId, (int)LotteryTicketEnum.Sticker).FirstOrDefault();
+                                        var custSticker = _reportDbDataLayer.GetCustLotteryTicket(ticketInfo.CustId,  currentEventDraw.RoundId, (int)LotteryTicketEnum.Sticker).FirstOrDefault();
                                         if (custSticker is not null && custSticker.StickerId == winnerList.StickerId)
                                         {
                                             isPayoutJackpot = true;
                                         }
                                     }
                                     
-                                    var result = PayOutPrize(jobName, lotteryEventDrawSetting.RoundId, siteId,winnerList.StickerId, rateList, ticketInfo, data, prizeData, isPayoutJackpot ,jackpotAccumulation, trans).Result;
+                                    var result = PayOutPrize(jobName, currentEventDraw.RoundId, siteId,winnerList.StickerId, rateList, ticketInfo, data, prizeData, isPayoutJackpot ,jackpotAccumulation, trans).Result;
                                 }
                             }
                         }
@@ -124,7 +125,7 @@ namespace HangfireService.Core.Jobs
                         var jackpotAccumulationSetResult = _mainDbDataLayer.DrawPrizeJackpotAccumulationSet(jackpotData.PrizeId, accumulationAmount ,trans) > 0;
                         
                         // SET Finish
-                        var setSettingResult = _mainDbDataLayer.LotteryEventDrawSettingSet(option.SiteId, lotteryEventDrawSetting.RoundId, (int) LotteryEventDrawEnum.PayOut ,trans )  > 0;
+                        var setSettingResult = _mainDbDataLayer.LotteryEventDrawSettingSet(option.SiteId, currentEventDraw.RoundId, (int) LotteryEventDrawEnum.PayOut ,trans )  > 0;
                         
                         if (setSettingResult && jackpotAccumulationSetResult)
                         {

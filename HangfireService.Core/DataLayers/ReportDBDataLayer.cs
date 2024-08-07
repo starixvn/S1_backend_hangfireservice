@@ -269,12 +269,12 @@ namespace HangfireService.Core.DataLayers
             return await _dbClient.QueryAsync<ExchangeRate>("Service_ExchangeRate_Get", p);
         }
         
-        public LotteryEvent GetLotteryEventDrawSetting(int siteId , DateTime? date )
+        public IEnumerable<LotteryEvent> GetLotteryEventDrawSetting(int siteId , DateTime? date )
         {
             var p = new DynamicParameters();
             p.Add("_SiteId", siteId);
             p.Add("_Date", date);
-            var result = _dbClient.QueryFirstOrDefault<LotteryEvent>("Service_LotteryEventDrawSetting_Get", p);
+            var result = _dbClient.Query<LotteryEvent>("Service_LotteryEventDrawSetting_Get", p);
             return result;
         }
         
