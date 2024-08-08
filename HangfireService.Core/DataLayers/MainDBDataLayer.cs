@@ -6,6 +6,7 @@ using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
 using HangfireService.Core.Models.MpaExchangeRate;
+using HangfireService.Core.Models.Options;
 using HangfireService.Core.Service;
 
 using MySql.Data.MySqlClient;
@@ -245,6 +246,26 @@ namespace HangfireService.Core.DataLayers
                 _SiteId = siteId,
                 _CurrencyId = currencyId,
                 _SettleTime = settleTime
+            });
+        }
+
+        public int InsertCustFPS(CustFPSDto custFPSDto)
+        {
+            return _dbClient.Execute("Service_CustFPS_Ins", new
+            {
+                _SiteId = custFPSDto.SiteId,
+                _CustId = custFPSDto.CustId,
+                _UserName = custFPSDto.UserName,
+                _TrackingNumber = custFPSDto.TrackingNumber,
+                _Action = custFPSDto.Action,
+                _DeviceId = custFPSDto.DeviceId,
+                _DeviceType = custFPSDto.DeviceType,
+                _Browser = custFPSDto.Browser ,
+                _Domain = custFPSDto.Domain,
+                _IP = custFPSDto.IP,
+                _RobotTracking = custFPSDto.RobotTracking,
+                _RiskLevel = custFPSDto.RiskLevel,
+                _UpdateTime = custFPSDto.UpdateTime
             });
         }
     }
