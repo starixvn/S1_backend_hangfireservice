@@ -54,7 +54,7 @@ namespace HangfireService.Core.Service
                     UserName = item.account,
                     TrackingNumber = item.trackingNumber,
                     Action = item.action,
-                    DeviceId = item.device,
+                    DeviceId = item.device ?? "NA",
                     DeviceType = item.deviceType,
                     Browser = item.browser ,
                     Domain = item.domain,
@@ -62,7 +62,7 @@ namespace HangfireService.Core.Service
                     RobotTracking = item.robotTracking,
                     //目前還沒有傳RiskLevel 需要再跟FPS追蹤
                     //RiskLevel = item.riskLevel,
-                    RiskLevel = "NA",
+                    RiskLevel = item.riskLevel ?? "NA",
                     UpdateTime = item.dateTime
 
                 };
