@@ -30,13 +30,13 @@ namespace HangfireService.Core.Service
         public async Task<int> GetFPSDataAsyncJob(int siteId,string siteName,string token,string apiUrl)
         {
             long lastTrackingNumber = 0;
-            var getSiteTicketKey = await GetSiteTicketKey(siteId);
+            var getSiteTicketKey = await GetSiteTicketKey(siteId,1);
             var getFPSResponse = await GetFPSData(getSiteTicketKey.TicketKey,siteName,token,apiUrl);
 
             #region Dev
             
             lastTrackingNumber = getFPSResponse.LastOrDefault().trackingNumber;
-            var setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber);
+            var setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber,1);
 
             var filteredTransactions = getFPSResponse.Where(t => t.account.StartsWith("D"));
             getFPSResponse = filteredTransactions;
@@ -75,6 +75,43 @@ namespace HangfireService.Core.Service
             return setTicketKey;
         }
 
+        public async Task<int> GetFPSRiskLevelDataAsyncJob(int siteId, string siteName, string token, string apiUrl)
+        {
+            long lastTrackingNumber = 0;
+            var getSiteTicketKey = await GetSiteTicketKey(siteId,2);
+            var getFPSRiskLevelResponse = await GetFPSRiskLevelData(getSiteTicketKey.TicketKey,siteName,token,apiUrl);
+            
+            #region Dev
+            
+            lastTrackingNumber = getFPSRiskLevelResponse.LastOrDefault().id;
+            var setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber,2);
+
+            var filteredTransactions = getFPSRiskLevelResponse.Where(t => t.account.StartsWith("D"));
+            getFPSRiskLevelResponse = filteredTransactions;
+            
+            #endregion
+            
+            if (!getFPSRiskLevelResponse.Any()) return setTicketKey;
+            
+            foreach (var item in getFPSRiskLevelResponse)
+            {
+                var insertCustFPSRiskLevelDto = new CustFPSRiskLevelDto()
+                {
+                    CustId = FilterCustId(item.account),
+                    //目前還沒有傳RiskLevel 需要再跟FPS追蹤
+                    //RiskLevel = item.riskLevel,
+                    RiskLevel = item.riskLevel ?? "NA",
+                };
+                var insertResult = _mainDBDataLayer.InsertCustFPSRiskLevel(insertCustFPSRiskLevelDto);
+            }
+
+            // lastTrackingNumber = getFPSResponse.LastOrDefault().trackingNumber;
+            // var setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber);
+            
+            return setTicketKey;
+            
+        }
+
         private async Task <IEnumerable<FPSTransaction>> GetFPSData(long ticketKey,string siteName, string token, string apiUrl)
         {
             var url = $"{apiUrl}/api/GetTransactionBySubscriber/{siteName}/{ticketKey}";
@@ -95,26 +132,47 @@ namespace HangfireService.Core.Service
 
             return resultResp.trans;
         }
+        
+        private async Task <IEnumerable<FPSRiskLevel>> GetFPSRiskLevelData(long ticketKey,string siteName, string token, string apiUrl)
+        {
+            var url = $"{apiUrl}/api/GetRiskLevelBySubscriber/{siteName}/{ticketKey}";
+            var headerParams = new Dictionary<string, string>
+            {
+                { "Authorization", token },
+            };
 
-        private async Task<SiteTicketKey> GetSiteTicketKey(int siteId)
+            using var result = await _httpHelper.HttpGetAsync(url, headerParams, "application/json");
+            if (result.StatusCode != HttpStatusCode.OK)
+            {
+                _logger.LogError($"GetFPSRiskLevelData httpResponse error URL : {url}  StatusCode: {result.StatusCode}");
+                return null;
+            }
+
+            var contentResult = await result.Content.ReadAsStringAsync();
+            var resultResp = JsonConvert.DeserializeObject<FPSRiskLevelResponse>(contentResult);
+
+            return resultResp.trans;
+        }
+
+        private async Task<SiteTicketKey> GetSiteTicketKey(int siteId,int workerType)
         {
             var result = await _mainDbClient.QueryAsync<SiteTicketKey>("Service_SiteTicketKey_Get", new
             {
                 SiteId = siteId,
                 TpId = "999",
-                WorkerType = 1
+                WorkerType = workerType
             });
             
             return result.FirstOrDefault();
         }
 
-        private async Task<int> SetSiteTicketKey(int siteId,long ticketKey)
+        private async Task<int> SetSiteTicketKey(int siteId,long ticketKey,int workerType)
         {
             var parameter = new DynamicParameters(new
             {
                 SiteId = siteId,
                 TpId = "999",
-                WorkerType = 1,
+                WorkerType = workerType,
                 TicketKey = ticketKey
             });
 

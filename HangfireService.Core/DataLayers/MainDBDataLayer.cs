@@ -331,6 +331,15 @@ namespace HangfireService.Core.DataLayers
                 _UpdateTime = custFPSDto.UpdateTime
             });
         }
+        
+        public int InsertCustFPSRiskLevel(CustFPSRiskLevelDto custFPSDto)
+        {
+            return _dbClient.Execute("Service_CustFPSRiskLevel_Ins", new
+            {
+                _CustId = custFPSDto.CustId,
+                _RiskLevel = custFPSDto.RiskLevel,
+            });
+        }
     }
 }
 
