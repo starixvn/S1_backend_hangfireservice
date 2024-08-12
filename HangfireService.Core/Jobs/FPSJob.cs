@@ -44,6 +44,8 @@ namespace HangfireService.Core.Jobs
             try
             {
                 await _fpsService.GetFPSDataAsyncJob(option.SiteId,option.Subscribers,option.Token,option.ApiUrl);
+                //不知道RiskLevel會不會放在上面 如果可以的話最好 先做
+                await _fpsService.GetFPSRiskLevelDataAsyncJob(option.SiteId,option.Subscribers,option.Token,option.ApiUrl);
             }
             catch (Exception ex)
             {

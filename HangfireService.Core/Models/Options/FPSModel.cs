@@ -32,6 +32,21 @@ namespace HangfireService.Core.Models.Options
         public string riskLevel { get; set; }
         public DateTime dateTime { get; set; }
     }
+    
+    public class FPSRiskLevelResponse
+    {
+        public int statusCode { get; set; }
+        public string errorMessage { get; set; }
+        public int totalTrans { get; set; }
+        public List<FPSRiskLevel> trans { get; set; }
+    }
+
+    public class FPSRiskLevel
+    {
+        public long id { get; set; }
+        public string account { get; set; }
+        public string riskLevel { get; set; }
+    }
 
     #region DataLayer
     
@@ -55,6 +70,12 @@ namespace HangfireService.Core.Models.Options
         public string RobotTracking { get; set; }
         public string RiskLevel { get; set; }
         public DateTime UpdateTime { get; set; }
+    }
+    
+    public class CustFPSRiskLevelDto
+    {
+        public int CustId { get; set; }
+        public string RiskLevel { get; set; }
     }
     
     #endregion
