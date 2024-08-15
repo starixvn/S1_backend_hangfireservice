@@ -51,7 +51,7 @@ namespace HangfireService.Core.DataLayers
             {
                 try
                 {
-                    var connection = new MySqlConnection(backupConn);
+                    using var connection = new MySqlConnection(backupConn);
                     var dbSlaveStatus = connection.QueryFirstOrDefault<DBSlaveStatus>("Service_HealthCheck_V2", commandType: CommandType.StoredProcedure);
 
                     // 拿不到Status或延遲太久都換下一個連線
@@ -86,24 +86,26 @@ namespace HangfireService.Core.DataLayers
             try
             {
                 var conn = HealthCheck();
-                var connection = new MySqlConnection(conn);
+                using var connection = new MySqlConnection(conn);
                 var command = new CommandDefinition(name, parameters,
                     commandTimeout: commandTimeout,
                     commandType: CommandType.StoredProcedure,
                     flags: CommandFlags.NoCache);
-                result = connection.Query<T>(command);
+                result = connection.Query<T>(command).ToList();
+                connection.Close();
+                connection.Dispose();
+                return result;
             }
             catch (Exception e)
             {
                 _logger.LogError(e, name);
                 throw;
             }
-
-
-            LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
-            _logger.LogDebug($"{name} {sw.Elapsed:c}");
-            return result.ToList();
-
+            finally
+            {
+                LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
+                _logger.LogDebug($"{name} {sw.Elapsed:c}");
+            }
         }
 
         public async Task<IEnumerable<T>> QueryAsync<T>(string name, object parameters = null, int? commandTimeout = null)
@@ -113,8 +115,10 @@ namespace HangfireService.Core.DataLayers
             try
             {
                 var conn = HealthCheck();
-                var connection = new MySqlConnection(conn);
+                await using var connection = new MySqlConnection(conn);
                 result = await connection.QueryAsync<T>(name, parameters, commandType: CommandType.StoredProcedure, commandTimeout: commandTimeout);
+                await connection.CloseAsync();
+                await connection.DisposeAsync();
             }
             catch (Exception e)
             {
@@ -125,7 +129,7 @@ namespace HangfireService.Core.DataLayers
             LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
             _logger.LogDebug($"{name} {sw.Elapsed:c}");
             return result.ToList();
-        }
+        }        
 
         public IEnumerable<dynamic> Query(string name, object parameters = null, int? commandTimeout = null)
         {
@@ -134,8 +138,10 @@ namespace HangfireService.Core.DataLayers
             try
             {
                 var conn = HealthCheck();
-                var connection = new MySqlConnection(conn);
+                using var connection = new MySqlConnection(conn);
                 result = connection.Query(name, param: parameters, commandType: CommandType.StoredProcedure, commandTimeout: commandTimeout);
+                connection.Close();
+                connection.Dispose();
             }
             catch (Exception e)
             {
@@ -177,12 +183,14 @@ namespace HangfireService.Core.DataLayers
             try
             {
                 var conn = HealthCheck();
-                var connection = new MySqlConnection(conn);
+                using var connection = new MySqlConnection(conn);
                 var command = new CommandDefinition(name, parameters,
                     commandTimeout: commandTimeout,
                     commandType: CommandType.StoredProcedure,
                     flags: CommandFlags.NoCache);
                 result = connection.QueryFirst<T>(command);
+                connection.Close();
+                connection.Dispose();
             }
             catch (Exception e)
             {
@@ -228,8 +236,10 @@ namespace HangfireService.Core.DataLayers
             int result;
             try
             {
-                var connection = new MySqlConnection(_connectionString);
+                await using var connection = new MySqlConnection(_connectionString);
                 result = await connection.ExecuteAsync(name, param: parameters, commandType: CommandType.StoredProcedure);
+                await connection.CloseAsync();
+                await connection.DisposeAsync();
             }
             catch (Exception e)
             {
@@ -267,8 +277,10 @@ namespace HangfireService.Core.DataLayers
             var sw = Stopwatch.StartNew();
             try
             {
-                var connection = new MySqlConnection(_connectionString);
+                using var connection = new MySqlConnection(_connectionString);
                 result = connection.Execute(name, parameters, commandType: CommandType.StoredProcedure);
+                connection.Close();
+                connection.Dispose();
             }
             catch (Exception e)
             {
@@ -280,15 +292,17 @@ namespace HangfireService.Core.DataLayers
             _logger.LogDebug($"{name} {sw.Elapsed:c}");
             return result;
         }
-
-        public async Task<IEnumerable<T>> QueryWithConnectionAsync<T>(string name, object parameters = null, int? commandTimeout = null, string connectionString = null)
+        
+        public async Task<IEnumerable<T>> QueryWithConnectionAsync<T>(string name, object parameters = null, int? commandTimeout = null,string connectionString = null)
         {
             IEnumerable<T> result;
             var sw = Stopwatch.StartNew();
             try
             {
-                var connection = new MySqlConnection(connectionString);
+                await using var connection = new MySqlConnection(connectionString);
                 result = await connection.QueryAsync<T>(name, parameters, commandType: CommandType.StoredProcedure, commandTimeout: commandTimeout);
+                await connection.CloseAsync();
+                await connection.DisposeAsync();
             }
             catch (Exception e)
             {
