@@ -91,19 +91,23 @@ namespace HangfireService.Core.DataLayers
                     commandTimeout: commandTimeout,
                     commandType: CommandType.StoredProcedure,
                     flags: CommandFlags.NoCache);
-                result = connection.Query<T>(command);
+                result = connection.Query<T>(command).ToList();
                 connection.Close();
                 connection.Dispose();
+                return result;
+
             }
             catch (Exception e)
             {
                 _logger.LogError(e, name);
                 throw;
             }
+            finally
+            {
+                LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
+                _logger.LogDebug($"{name} {sw.Elapsed:c}");
+            }
 
-            LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
-            _logger.LogDebug($"{name} {sw.Elapsed:c}");
-            return result.ToList();
         }
 
         public async Task<IEnumerable<T>> QueryAsync<T>(string name, object parameters = null, int? commandTimeout = null)
@@ -127,7 +131,7 @@ namespace HangfireService.Core.DataLayers
             LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
             _logger.LogDebug($"{name} {sw.Elapsed:c}");
             return result.ToList();
-        }        
+        }
 
         public IEnumerable<dynamic> Query(string name, object parameters = null, int? commandTimeout = null)
         {
@@ -263,8 +267,8 @@ namespace HangfireService.Core.DataLayers
             _logger.LogDebug($"{name} {sw.Elapsed:c}");
             return result;
         }
-        
-        public async Task<IEnumerable<T>> QueryWithConnectionAsync<T>(string name, object parameters = null, int? commandTimeout = null,string connectionString = null)
+
+        public async Task<IEnumerable<T>> QueryWithConnectionAsync<T>(string name, object parameters = null, int? commandTimeout = null, string connectionString = null)
         {
             IEnumerable<T> result;
             var sw = Stopwatch.StartNew();
