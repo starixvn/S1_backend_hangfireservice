@@ -64,10 +64,10 @@ namespace HangfireService.Core.Jobs
             {
                 try
                 {
-                    // 连接到 SFTP 服务器
+                    // 連接到 SFTP 服務器
                     sftp.Connect();
 
-                    // 检查远程目录是否存在，不存在则创建
+                    // 檢查遠程目錄是否存在，不存在則創建
                     if (!sftp.Exists(remoteDirectory))
                     {
                         sftp.CreateDirectory(remoteDirectory);
@@ -75,7 +75,7 @@ namespace HangfireService.Core.Jobs
 
                     using (var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(csv)))
                     {
-                        // 上传 MemoryStream 到 SFTP 服务器
+                        // 上傳 MemoryStream 到 SFTP 服務器
                         sftp.UploadFile(memoryStream, Path.Combine(remoteDirectory, fileName));
                     }
 
@@ -87,7 +87,7 @@ namespace HangfireService.Core.Jobs
                 }
                 finally
                 {
-                    // 断开连接
+                    // 斷開連結
                     sftp.Disconnect();
                 }
             }
@@ -98,19 +98,19 @@ namespace HangfireService.Core.Jobs
             if (records == null || !records.Any())
                 return string.Empty;
 
-            // 获取第一个记录的属性名作为CSV头部
+            //  獲取第一個紀錄的屬性名稱作為CSV欄位名稱
             var firstRecord = records.First();
             var properties = ((IDictionary<string, object>)firstRecord).Keys.ToList();
             var header = string.Join(",", properties);
 
-            // 获取CSV每一行的数据
+            // 獲取CSV每一行的數據
             var rows = records.Select(record =>
             {
                 var values = properties.Select(property => ((IDictionary<string, object>)record)[property]?.ToString() ?? string.Empty);
                 return string.Join(",", values);
             });
 
-            // 合并头部和行数据
+            // 合併欄位名稱和數據
             var csv = header + Environment.NewLine + string.Join(Environment.NewLine, rows);
 
             return csv;
