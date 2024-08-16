@@ -162,6 +162,9 @@ namespace HangfireService.Core.DataLayers
         public async Task<IEnumerable<DormantSettingDto>> GetDormantSetting()
             => await _dbClient.QueryAsync<DormantSettingDto>("Service_DormantSetting_Get");
 
+        public async Task<IEnumerable<CustTemporaryStatus>> GetCustTemporaryStatus()
+            => await _dbClient.QueryAsync<CustTemporaryStatus>("Service_CustTemporaryStatus_Get");
+        
         public async Task<IEnumerable<DormantCustomerDto>> GetDormantCustomer(int siteId, int days, string statusStr)
            => await _dbClient.QueryAsync<DormantCustomerDto>("Service_DormantAccount_Get_V2",
                parameters: new { SiteId = siteId, Day = days, StatusList = statusStr },
