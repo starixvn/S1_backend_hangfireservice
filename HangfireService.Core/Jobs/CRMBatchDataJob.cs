@@ -19,13 +19,13 @@ namespace HangfireService.Core.Jobs
     [ManagementPage("CRMBatchDataJob", queue: "report")]
     public class CRMBatchDataJob : BaseJob, IScheduledJob
     {
-        private readonly ReportDBDataLayer _reportDBDataLayer;
+        private readonly ReportBackupDBDataLayer _reportBackupDBDataLayer;
         private readonly CRMSFTPConfig _cRMSFTPConfig;
 
         public CRMBatchDataJob(IServiceProvider provider) : base(provider)
         {
             LogContext.PushProperty("ClassName", GetType().Name);
-            _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
+            _reportBackupDBDataLayer = provider.GetRequiredService<ReportBackupDBDataLayer>();
             _cRMSFTPConfig = provider.GetRequiredService<ConfigBLL>().GetConfigValue<CRMSFTPConfig>("CRMSFTP");
         }
 
@@ -44,7 +44,7 @@ namespace HangfireService.Core.Jobs
             DateTime Today = new(currentUtcTime.Year, currentUtcTime.Month, currentUtcTime.Day);
             DateTime startTime = Today.AddDays(-1);
             DateTime endTime = Today.AddSeconds(-1);
-            var crmData = await _reportDBDataLayer.GetCrmData(option.SP, startTime, endTime);
+            var crmData = await _reportBackupDBDataLayer.GetCrmData(option.SP, startTime, endTime);
             var csv = ToCsv(crmData);
 
             //SFTP路徑

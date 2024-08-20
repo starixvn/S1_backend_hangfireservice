@@ -269,12 +269,5 @@ namespace HangfireService.Core.DataLayers
             p.Add("_EndDate", endDate);
             return await _dbClient.QueryAsync<ExchangeRate>("Service_ExchangeRate_Get", p);
         }
-        public async Task<IEnumerable<dynamic>> GetCrmData(string sp, DateTime startDate, DateTime endDate)
-        {
-            var p = new DynamicParameters();
-            p.Add("_StartTime", startDate);
-            p.Add("_EndTime", endDate);
-            return await _dbClient.QueryAsync<dynamic>(sp, p);
-        }
     }
 }
