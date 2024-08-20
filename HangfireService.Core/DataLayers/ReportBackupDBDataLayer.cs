@@ -27,4 +27,11 @@ public class ReportBackupDBDataLayer
 
         return _dbClient.Query<WinLoss9WCommissionSourceModel>("WinLoss_9WCommission_Get", p);
     }
+    public async Task<IEnumerable<dynamic>> GetCrmData(string sp, DateTime startDate, DateTime endDate)
+    {
+        var p = new DynamicParameters();
+        p.Add("_StartTime", startDate);
+        p.Add("_EndTime", endDate);
+        return await _dbClient.QueryAsync<dynamic>(sp, p);
+    }
 }
