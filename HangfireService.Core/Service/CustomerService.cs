@@ -1,12 +1,9 @@
 using Dapper;
-
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Models.Affiliate;
 using HangfireService.Core.Models.Customer;
 using HangfireService.Core.Models.Enums;
-
 using Newtonsoft.Json;
-
 using static HangfireService.Core.Service.AffiliateApi;
 
 namespace HangfireService.Core.Service;
@@ -57,4 +54,31 @@ public class CustomerService
 
     public async Task CreateOrUpdateAffiliateInfo(List<AffiliateInfo> affiliateInfo) =>
         await _mainDbClient.ExecuteAsync("Service_AffiliateInfo_Set", new { _AffiliateInfo = JsonConvert.SerializeObject(affiliateInfo) });
+
+    private async Task SetCustTag(int custId, List<int> tagList)
+    {
+        var p = new DynamicParameters();
+        p.Add("CustId", custId);
+        p.Add("TagList", JsonConvert.SerializeObject(tagList));
+        await _mainDbClient.ExecuteAsync("Admin_CustInofoTagList_Set", p);
+    }
+
+    private string GetCustomerTagsAsync(int custId)
+    {
+        var p = new DynamicParameters(new { _CustId = custId });
+        return _reportDbClient.QueryFirst<string>("Admin_CustomerTagList_Get", p);
+    }
+    
+    public async Task RemoveCustTagAsync(int custId, int tagId)
+    {
+        var tagListStr = GetCustomerTagsAsync(custId);
+        if (string.IsNullOrEmpty(tagListStr)) return;
+        var tagList = JsonConvert.DeserializeObject<List<int>>(tagListStr);
+
+        var idx = tagList.FindIndex(id => id == tagId);
+        if (idx == -1) return;
+
+        tagList.RemoveAt(idx);
+        await SetCustTag(custId, tagList);
+    }
 }

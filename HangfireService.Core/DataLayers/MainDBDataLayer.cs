@@ -152,6 +152,15 @@ namespace HangfireService.Core.DataLayers
         public async Task<int> SetDormantSetting(int siteId)
             => await _dbClient.ExecuteAsync("Service_DormantSetting_Set", new { SiteId = siteId });
 
+        public async Task<bool> SetCustStatus(int custId, int status, int taskId)
+        {
+            var parameter = new DynamicParameters();
+            parameter.Add("CustId", custId);
+            parameter.Add("Status", status);
+            parameter.Add("TaskId", taskId);
+            return await _dbClient.ExecuteAsync("Admin_CustStatus_Set_V2", parameter) > 0;
+        }
+        
         #endregion
 
         #region Statistical-Cust Closing Balance

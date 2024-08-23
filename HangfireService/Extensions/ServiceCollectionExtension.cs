@@ -127,6 +127,7 @@ namespace HangfireService.Extensions
                 .AddSingleton<CustomerService>()
                 .AddSingleton<OnlineCountService>()
                 .AddSingleton<CustomerAutoLockService>()
+                .AddSingleton<CustomerAutoUnFreezeService>()
                 .AddSingleton<CustClosingBalanceService>()
                 .AddSingleton<MpaUpdateExchangeRateService>()
                 .AddSingleton<AffiliateApi>()
