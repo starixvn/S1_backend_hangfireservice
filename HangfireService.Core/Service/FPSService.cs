@@ -54,16 +54,15 @@ namespace HangfireService.Core.Service
                     UserName = item.account,
                     TrackingNumber = item.trackingNumber,
                     Action = item.action,
-                    DeviceId = item.device ?? "NA",
+                    DeviceId = string.IsNullOrWhiteSpace(item.device) ? "NA" : item.riskLevel,
                     DeviceType = item.deviceType,
                     Browser = item.browser ,
                     Domain = item.domain,
                     IP = item.ip,
                     RobotTracking = item.robotTracking,
-                    //目前還沒有傳RiskLevel 需要再跟FPS追蹤
-                    //RiskLevel = item.riskLevel,
-                    RiskLevel = item.riskLevel ?? "NA",
-                    UpdateTime = item.dateTime
+                    RiskLevel = string.IsNullOrWhiteSpace(item.riskLevel) ? "NA" : item.riskLevel,
+                    //抓回來是GMT-4 直接強加4小時變成+0
+                    UpdateTime = item.dateTime.AddHours(4)
 
                 };
                 var insertResult = _mainDBDataLayer.InsertCustFPS(insertCustFPSDto);
@@ -99,8 +98,7 @@ namespace HangfireService.Core.Service
                 {
                     CustId = FilterCustId(item.account),
                     //目前還沒有傳RiskLevel 需要再跟FPS追蹤
-                    //RiskLevel = item.riskLevel,
-                    RiskLevel = item.riskLevel ?? "NA",
+                    RiskLevel = string.IsNullOrWhiteSpace(item.riskLevel) ? "NA" : item.riskLevel,
                 };
                 var insertResult = _mainDBDataLayer.InsertCustFPSRiskLevel(insertCustFPSRiskLevelDto);
             }
@@ -185,7 +183,6 @@ namespace HangfireService.Core.Service
             var match = regex.Match(accountName);
             var custIdStr = match.Groups[1].Value;
             int.TryParse(custIdStr, out var custId);
-            //Console.WriteLine(int.TryParse(custIdStr, out var custId) ? $"CustId: {custId}" : "無法轉換為數字");
             return custId;
         }
         
