@@ -54,7 +54,7 @@ namespace HangfireService.Core.Service
                     UserName = item.account,
                     TrackingNumber = item.trackingNumber,
                     Action = item.action,
-                    DeviceId = string.IsNullOrWhiteSpace(item.device) ? "NA" : item.riskLevel,
+                    DeviceId = string.IsNullOrWhiteSpace(item.device) ? "NA" : item.device,
                     DeviceType = item.deviceType,
                     Browser = item.browser ,
                     Domain = item.domain,
