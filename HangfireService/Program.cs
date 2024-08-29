@@ -10,7 +10,7 @@ using Serilog.Formatting.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var remoteUrls = builder.Configuration.GetSection("ConfigService").Get<string[]>();
+var remoteUrls = GetRemoteUrls();
 remoteUrls = builder.Configuration.CheckLocalConfig(builder.Environment, args, remoteUrls);
 builder.Configuration.AddRemoteJsonConfig(remoteUrls);
 
@@ -29,23 +29,6 @@ builder.Host.UseSerilog((context, Configuration) =>
 
     OverrideLoggerWriteToLFile(Configuration);
 });
-
-void OverrideLoggerWriteToLFile(LoggerConfiguration configuration)
-{
-    const string cashSiteBrand = "Nova";
-
-    var brand = Environment.GetEnvironmentVariable("Brand") ?? string.Empty;
-    if (brand != cashSiteBrand) return;
-
-    var logFilePath = $"/hangfire/hangfire-{DateTime.Now:yyyyMMddHHmmssfff}.log";
-    configuration
-        .WriteTo.File(new JsonFormatter(),
-            logFilePath,
-            rollingInterval: RollingInterval.Day,
-            retainedFileCountLimit: 60,
-            fileSizeLimitBytes: 10485760,
-            rollOnFileSizeLimit: true);
-}
 
 
 // Add services to the container.
@@ -92,3 +75,30 @@ var minIOCPs = Environment.ProcessorCount * 8;
 ThreadPool.SetMinThreads(minWorkers, minIOCPs);
 
 app.Run();
+return;
+
+void OverrideLoggerWriteToLFile(LoggerConfiguration configuration)
+{
+    const string cashSiteBrand = "Nova";
+
+    var brand = Environment.GetEnvironmentVariable("Brand") ?? string.Empty;
+    if (brand != cashSiteBrand) return;
+
+    var logFilePath = $"/hangfire/hangfire-{DateTime.Now:yyyyMMddHHmmssfff}.log";
+    configuration
+        .WriteTo.File(new JsonFormatter(),
+            logFilePath,
+            rollingInterval: RollingInterval.Day,
+            retainedFileCountLimit: 60,
+            fileSizeLimitBytes: 10485760,
+            rollOnFileSizeLimit: true);
+}
+
+string[] GetRemoteUrls()
+{
+    // 如果有 Runtime Environment Variable 優先使用
+    // 沒有則使用預設 AppSetting
+    return Environment.GetEnvironmentVariable("ConfigServiceUrl") is null
+        ? builder.Configuration.GetSection("ConfigService").Get<string[]>()
+        : new List<string>() { Environment.GetEnvironmentVariable("ConfigServiceUrl") }.ToArray();
+}
