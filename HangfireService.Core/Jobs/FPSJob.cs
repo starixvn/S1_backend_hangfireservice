@@ -43,8 +43,8 @@ namespace HangfireService.Core.Jobs
             _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
             try
             {
-                await _fpsService.GetFPSDataAsyncJob(option.SiteId,option.Subscribers,option.Token,option.ApiUrl);
-                await _fpsService.GetFPSRiskLevelDataAsyncJob(option.SiteId,option.Subscribers,option.Token,option.ApiUrl);
+                await _fpsService.GetFPSDataAsyncJob(option.SiteId,option.Subscribers,option.Token,option.ApiUrl,option.Mode);
+                await _fpsService.GetFPSRiskLevelDataAsyncJob(option.SiteId,option.Subscribers,option.Token,option.ApiUrl,option.Mode);
             }
             catch (Exception ex)
             {
@@ -53,7 +53,6 @@ namespace HangfireService.Core.Jobs
             }
             _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} End......");
             return true;
-            throw new NotImplementedException();
         }
         
         [Job]
