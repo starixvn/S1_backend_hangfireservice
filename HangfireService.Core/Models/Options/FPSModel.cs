@@ -8,6 +8,7 @@ namespace HangfireService.Core.Models.Options
         public string Subscribers { get; set; }
         public string Token { get; set; }
         public string ApiUrl { get; set; }
+        public int Mode { get; set; }
     }
     
     public class FPSResponse

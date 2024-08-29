@@ -27,23 +27,24 @@ namespace HangfireService.Core.Service
             _mainDbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Main);
         }
 
-        public async Task<int> GetFPSDataAsyncJob(int siteId,string siteName,string token,string apiUrl)
+        public async Task<int> GetFPSDataAsyncJob(int siteId,string siteName,string token,string apiUrl,int mode)
         {
             long lastTrackingNumber = 0;
             var getSiteTicketKey = await GetSiteTicketKey(siteId,1);
             var getFPSResponse = await GetFPSData(getSiteTicketKey.TicketKey,siteName,token,apiUrl);
+            
+            if (!getFPSResponse.Any()) return 1;
 
-            #region Dev
+            var filteredTransactions = FPSDataEnvironmentFilter(getFPSResponse, mode);
             
             lastTrackingNumber = getFPSResponse.LastOrDefault().trackingNumber;
-            var setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber,1);
-
-            var filteredTransactions = getFPSResponse.Where(t => t.account.StartsWith("D"));
-            getFPSResponse = filteredTransactions;
+            if (!filteredTransactions.Any())
+            {
+                getFPSResponse = filteredTransactions;
+            }
             
-            #endregion
-
-            if (!getFPSResponse.Any()) return setTicketKey;
+            
+            var setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber,1);
             
             foreach (var item in getFPSResponse)
             {
@@ -74,30 +75,28 @@ namespace HangfireService.Core.Service
             return setTicketKey;
         }
 
-        public async Task<int> GetFPSRiskLevelDataAsyncJob(int siteId, string siteName, string token, string apiUrl)
+        public async Task<int> GetFPSRiskLevelDataAsyncJob(int siteId, string siteName, string token, string apiUrl,int mode)
         {
             long lastTrackingNumber = 0;
             var getSiteTicketKey = await GetSiteTicketKey(siteId,2);
             var getFPSRiskLevelResponse = await GetFPSRiskLevelData(getSiteTicketKey.TicketKey,siteName,token,apiUrl);
+            if (!getFPSRiskLevelResponse.Any()) return 1;
             
-            #region Dev
+            var filteredTransactions = FPSDataEnvironmentFilter(getFPSRiskLevelResponse, mode);
+            
+            if (!filteredTransactions.Any())
+            {
+                getFPSRiskLevelResponse = filteredTransactions;
+            }
             
             lastTrackingNumber = getFPSRiskLevelResponse.LastOrDefault().id;
             var setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber,2);
-
-            var filteredTransactions = getFPSRiskLevelResponse.Where(t => t.account.StartsWith("D"));
-            getFPSRiskLevelResponse = filteredTransactions;
-            
-            #endregion
-            
-            if (!getFPSRiskLevelResponse.Any()) return setTicketKey;
             
             foreach (var item in getFPSRiskLevelResponse)
             {
                 var insertCustFPSRiskLevelDto = new CustFPSRiskLevelDto()
                 {
                     CustId = FilterCustId(item.account),
-                    //目前還沒有傳RiskLevel 需要再跟FPS追蹤
                     RiskLevel = string.IsNullOrWhiteSpace(item.riskLevel) ? "NA" : item.riskLevel,
                 };
                 var insertResult = _mainDBDataLayer.InsertCustFPSRiskLevel(insertCustFPSRiskLevelDto);
@@ -184,6 +183,17 @@ namespace HangfireService.Core.Service
             var custIdStr = match.Groups[1].Value;
             int.TryParse(custIdStr, out var custId);
             return custId;
+        }
+        
+        private IEnumerable<T> FPSDataEnvironmentFilter<T>(IEnumerable<T> insertData, int mode)
+        {
+            // 0 = DEV, 1 = PRD & RLS
+            return mode switch
+            {
+                0 => insertData.Where(t => ((dynamic)t).account.StartsWith("D")),
+                1 => insertData.Where(t => !((dynamic)t).account.StartsWith("D")),
+                _ => null
+            };
         }
         
     }
