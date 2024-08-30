@@ -30,6 +30,7 @@ namespace HangfireService.Core.Service
         public async Task<int> GetFPSDataAsyncJob(int siteId,string siteName,string token,string apiUrl,int mode)
         {
             long lastTrackingNumber = 0;
+            var setTicketKey = 0;
             var getSiteTicketKey = await GetSiteTicketKey(siteId,1);
             var getFPSResponse = await GetFPSData(getSiteTicketKey.TicketKey,siteName,token,apiUrl);
             
@@ -40,13 +41,13 @@ namespace HangfireService.Core.Service
             lastTrackingNumber = getFPSResponse.LastOrDefault().trackingNumber;
             if (!filteredTransactions.Any())
             {
-                getFPSResponse = filteredTransactions;
+                setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber,1);
+                return setTicketKey;
             }
             
+            setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber,1);
             
-            var setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber,1);
-            
-            foreach (var item in getFPSResponse)
+            foreach (var item in filteredTransactions)
             {
                 var insertCustFPSDto = new CustFPSDto()
                 {
@@ -78,21 +79,23 @@ namespace HangfireService.Core.Service
         public async Task<int> GetFPSRiskLevelDataAsyncJob(int siteId, string siteName, string token, string apiUrl,int mode)
         {
             long lastTrackingNumber = 0;
+            var setTicketKey = 0;
             var getSiteTicketKey = await GetSiteTicketKey(siteId,2);
             var getFPSRiskLevelResponse = await GetFPSRiskLevelData(getSiteTicketKey.TicketKey,siteName,token,apiUrl);
             if (!getFPSRiskLevelResponse.Any()) return 1;
             
             var filteredTransactions = FPSDataEnvironmentFilter(getFPSRiskLevelResponse, mode);
             
+            lastTrackingNumber = getFPSRiskLevelResponse.LastOrDefault().id;
             if (!filteredTransactions.Any())
             {
-                getFPSRiskLevelResponse = filteredTransactions;
+                setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber,1);
+                return setTicketKey;
             }
             
-            lastTrackingNumber = getFPSRiskLevelResponse.LastOrDefault().id;
-            var setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber,2);
+            setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber,2);
             
-            foreach (var item in getFPSRiskLevelResponse)
+            foreach (var item in filteredTransactions)
             {
                 var insertCustFPSRiskLevelDto = new CustFPSRiskLevelDto()
                 {
