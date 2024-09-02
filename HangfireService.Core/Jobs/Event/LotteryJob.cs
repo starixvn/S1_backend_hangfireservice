@@ -37,11 +37,11 @@ namespace HangfireService.Core.Jobs
                 
                 var lotteryEventDrawSetting = _reportDbDataLayer.GetLotteryEventDrawSetting(option.SiteId, null);
                 var now = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(8));
-                var currentEventDraw = lotteryEventDrawSetting.FirstOrDefault(x => x.Status == (int) LotteryEventDrawEnum.Running
-                    && now >= x.StartDate
-                    && now <= x.EndDate);
-                
-                if (currentEventDraw is not null)
+                var currentEventDrawList = lotteryEventDrawSetting.Where(x => 
+                    x.Status == (int) LotteryEventDrawEnum.Running 
+                    && now >= x.StartDate);
+
+                foreach (var currentEventDraw in currentEventDrawList)
                 {
                     _logger.LogInformation($"{jobName} running ||  Site :{option.SiteId} || RoundId :{currentEventDraw.RoundId} || Range :{currentEventDraw.StartDate} ~ {currentEventDraw.EndDate}" );
                     
