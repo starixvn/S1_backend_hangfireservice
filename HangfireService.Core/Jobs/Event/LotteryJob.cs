@@ -45,7 +45,7 @@ namespace HangfireService.Core.Jobs
                 {
                     _logger.LogInformation($"{jobName} running ||  Site :{option.SiteId} || RoundId :{currentEventDraw.RoundId} || Range :{currentEventDraw.StartDate} ~ {currentEventDraw.EndDate}" );
                     
-                    var ticketStickerSetting = _reportDbDataLayer.GetRaffleTicketStickerSetting(option.SiteId).ToList();
+                    var ticketStickerSetting = _reportDbDataLayer.GetRaffleTicketStickerSetting(option.SiteId ,currentEventDraw.StartDate.DateTime).ToList();
                  
                     var currencyList = ticketStickerSetting.Select(x => x.CurrencyId);
                 

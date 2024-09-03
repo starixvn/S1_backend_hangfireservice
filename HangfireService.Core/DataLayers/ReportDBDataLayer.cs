@@ -266,11 +266,11 @@ namespace HangfireService.Core.DataLayers
             return result;
         }
         
-        public IEnumerable<RaffleTicketSticker> GetRaffleTicketStickerSetting(int siteId)
+        public IEnumerable<RaffleTicketSticker> GetRaffleTicketStickerSetting(int siteId, DateTime time)
         {
             var p = new DynamicParameters();
             p.Add("_SiteId", siteId, dbType: DbType.Int32);
-            p.Add("_Time", DateTime.UtcNow.AddHours(8) , dbType: DbType.DateTime);
+            p.Add("_Time", time , dbType: DbType.DateTime);
             return _dbClient.Query<RaffleTicketSticker>("Service_RaffleTicketStickerSetting_Get" , p);
         }
         
