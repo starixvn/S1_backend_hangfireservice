@@ -89,7 +89,7 @@ namespace HangfireService.Core.Service
             lastTrackingNumber = getFPSRiskLevelResponse.LastOrDefault().id;
             if (!filteredTransactions.Any())
             {
-                setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber,1);
+                setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber,2);
                 return setTicketKey;
             }
             
