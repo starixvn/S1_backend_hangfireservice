@@ -31,8 +31,8 @@ namespace HangfireService.Core.Jobs
                 {LotteryPrizeCategory.FirstPrize, new LotteryDrawCount {DrawCount = 1  }},
                 {LotteryPrizeCategory.SecondPrize, new LotteryDrawCount {DrawCount = 1 }},
                 {LotteryPrizeCategory.ThirdPrize,new LotteryDrawCount {DrawCount = 1}},
-                {LotteryPrizeCategory.ConsolationPrize, new LotteryDrawCount {DrawCount = 20 }},
-                {LotteryPrizeCategory.SmallPrize, new LotteryDrawCount {DrawCount = 10 }},
+                {LotteryPrizeCategory.ConsolationPrize, new LotteryDrawCount {DrawCount = 10 }},
+                {LotteryPrizeCategory.SmallPrize, new LotteryDrawCount {DrawCount = 20 }},
             };
         }
 
