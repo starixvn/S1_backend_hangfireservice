@@ -163,12 +163,21 @@ namespace HangfireService.Core.Jobs
             WinnerPayoutData data , Prize prizeData , bool isJackpotPayout, DrawPrizeJackpotAccumulation jackpotAccumulation , MySqlTransaction trans)
         {
             var rateDto = rateList.FirstOrDefault(x => x.CurrencyId == 3 && x.TargetCurrencyId == ticketInfo.CurrencyId);
+            decimal prizeAmount;
             if (rateDto is null)
             {
-                throw new InvalidOperationException($"{jobName} running || {data.TicketNo} Ticket || Can't find rate" );
+                var rateContraryDto = rateList.FirstOrDefault(x => x.CurrencyId == ticketInfo.CurrencyId && x.TargetCurrencyId == 3);
+                prizeAmount = prizeData.Amount / rateContraryDto.Rate;
+                if (rateContraryDto is null)
+                {
+                    throw new InvalidOperationException($"{jobName} running || {data.TicketNo} Ticket || Can't find rate" );
+                }
             }
-            
-            var prizeAmount = prizeData.Amount * rateDto.Rate;
+            else
+            {
+                prizeAmount = prizeData.Amount * rateDto.Rate;
+            }
+           
             var result = _mainDbDataLayer.LotteryDrawPrizeSet(data.TicketNo, prizeAmount, roundId, 
                 (int)data.LotteryPrizeCategory, prizeData.EventId, prizeData.PrizeId, ticketInfo.CustId, DateTime.UtcNow, 0, 0, trans) > 0;
 
