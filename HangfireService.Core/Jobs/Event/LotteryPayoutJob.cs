@@ -178,16 +178,14 @@ namespace HangfireService.Core.Jobs
                 prizeAmount = prizeData.Amount * rateDto.Rate;
             }
            
-            var result = _mainDbDataLayer.LotteryDrawPrizeSet(data.TicketNo, prizeAmount, roundId, 
-                (int)data.LotteryPrizeCategory, prizeData.EventId, prizeData.PrizeId, ticketInfo.CustId, DateTime.UtcNow, 0, 0, trans) > 0;
+            var result = _mainDbDataLayer.LotteryDrawPrizeSet(data.TicketNo, prizeAmount, roundId, prizeData.EventId, prizeData.PrizeId, ticketInfo.CustId, DateTime.UtcNow, 0, trans) > 0;
 
             #region Jackpot
 
             if (isJackpotPayout && result)
             {
                 var jackpotAmount = jackpotAccumulation.JackpotAmount * rateDto.Rate;
-                result = _mainDbDataLayer.LotteryDrawPrizeSet(null , jackpotAmount, roundId, 
-                    (int)LotteryPrizeCategory.Jackpot, jackpotAccumulation.EventId, jackpotAccumulation.PrizeId, ticketInfo.CustId, DateTime.UtcNow, 1 , winStickerId , trans) > 0;
+                result = _mainDbDataLayer.LotteryDrawPrizeSet(null , jackpotAmount, roundId, jackpotAccumulation.EventId, jackpotAccumulation.PrizeId, ticketInfo.CustId, DateTime.UtcNow, winStickerId , trans) > 0;
                 
                 if (result)
                 {
