@@ -106,8 +106,7 @@ namespace HangfireService.Core.Service
 
         private async Task <IEnumerable<FPSTransaction>> GetFPSData(long ticketKey,string siteName, string token, string apiUrl)
         {
-            //var url = $"{apiUrl}/api/GetTransactionBySubscriber/{siteName}/{ticketKey}";
-            var url = "https://exapi.detecas.com/api/GetTransactionBySubscriber/N8G/6590783060";
+            var url = $"{apiUrl}/api/GetTransactionBySubscriber/{siteName}/{ticketKey}";
             var headerParams = new Dictionary<string, string>
             {
                 { "Authorization", token },
