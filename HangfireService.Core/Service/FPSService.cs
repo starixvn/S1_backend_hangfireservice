@@ -36,16 +36,12 @@ namespace HangfireService.Core.Service
             
             if (!getFPSResponse.Any()) return 1;
 
-            var filteredTransactions = FPSDataEnvironmentFilter(getFPSResponse, mode);
+            var filteredTransactions = FPSDataEnvironmentFilter(getFPSResponse, 1);
             
-            lastTrackingNumber = getFPSResponse.LastOrDefault().trackingNumber;
             if (!filteredTransactions.Any())
             {
-                setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber,1);
-                return setTicketKey;
+                return 1;
             }
-            
-            setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber,1);
             
             foreach (var item in filteredTransactions)
             {
@@ -57,7 +53,7 @@ namespace HangfireService.Core.Service
                     TrackingNumber = item.trackingNumber,
                     Action = item.action,
                     DeviceId = string.IsNullOrWhiteSpace(item.device) ? "NA" : item.device,
-                    DeviceType = item.deviceType,
+                    DeviceType = string.IsNullOrWhiteSpace(item.deviceType) ? "NA" : item.deviceType,
                     Browser = item.browser ,
                     Domain = item.domain,
                     IP = item.ip,
@@ -70,8 +66,8 @@ namespace HangfireService.Core.Service
                 var insertResult = _mainDBDataLayer.InsertCustFPS(insertCustFPSDto);
             }
 
-            // lastTrackingNumber = getFPSResponse.LastOrDefault().trackingNumber;
-            // var setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber);
+            lastTrackingNumber = getFPSResponse.LastOrDefault().trackingNumber;
+            setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber,1);
             
             return setTicketKey;
         }
@@ -86,14 +82,10 @@ namespace HangfireService.Core.Service
             
             var filteredTransactions = FPSDataEnvironmentFilter(getFPSRiskLevelResponse, mode);
             
-            lastTrackingNumber = getFPSRiskLevelResponse.LastOrDefault().id;
             if (!filteredTransactions.Any())
             {
-                setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber,2);
-                return setTicketKey;
+                return 1;
             }
-            
-            setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber,2);
             
             foreach (var item in filteredTransactions)
             {
@@ -105,8 +97,8 @@ namespace HangfireService.Core.Service
                 var insertResult = _mainDBDataLayer.InsertCustFPSRiskLevel(insertCustFPSRiskLevelDto);
             }
 
-            // lastTrackingNumber = getFPSResponse.LastOrDefault().trackingNumber;
-            // var setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber);
+            lastTrackingNumber = getFPSRiskLevelResponse.LastOrDefault().id;
+            setTicketKey = await SetSiteTicketKey(siteId, lastTrackingNumber,2);
             
             return setTicketKey;
             
@@ -114,12 +106,13 @@ namespace HangfireService.Core.Service
 
         private async Task <IEnumerable<FPSTransaction>> GetFPSData(long ticketKey,string siteName, string token, string apiUrl)
         {
-            var url = $"{apiUrl}/api/GetTransactionBySubscriber/{siteName}/{ticketKey}";
+            //var url = $"{apiUrl}/api/GetTransactionBySubscriber/{siteName}/{ticketKey}";
+            var url = "https://exapi.detecas.com/api/GetTransactionBySubscriber/N8G/6590783060";
             var headerParams = new Dictionary<string, string>
             {
                 { "Authorization", token },
-            };
 
+            };
             using var result = await _httpHelper.HttpGetAsync(url, headerParams, "application/json");
             if (result.StatusCode != HttpStatusCode.OK)
             {
