@@ -98,6 +98,10 @@ namespace HangfireService.Core.Jobs
                         StickerId = random.Next(1, 13)
                     };
                     
+                    await using var conn = _mainDbDataLayer.GetMySqlConnection();
+                    conn.Open();
+                    var trans = await conn.BeginTransactionAsync();
+                    
                     foreach (var prize in _prizeList)
                     {
                         var winnerList = new List<string>();
@@ -122,6 +126,19 @@ namespace HangfireService.Core.Jobs
                                 
                                 winnerList.Add(selectedElement.TicketNo);
                                 
+                                // check is jackpot
+                                var isJackpot = false;
+                                if (prize.Key == LotteryPrizeCategory.FirstPrize)
+                                {
+                                    var custSticker = _reportDbDataLayer.GetCustLotteryTicket(selectedElement.CustId,  currentEventDraw.RoundId, (int)LotteryTicketEnum.Sticker).FirstOrDefault();
+                                    if (custSticker is not null && custSticker.StickerId == insertData.StickerId)
+                                    {
+                                        isJackpot = true;
+                                    }
+                                }
+                                
+                                _mainDbDataLayer.SetCustLotteryTicket(selectedElement.TicketNo, currentEventDraw.RoundId, (int)prize.Key , selectedElement.CustId , isJackpot, insertData.StickerId , trans);
+                                    
                                 //排除抽獎箱的票
                                 ticketList.RemoveAt(index);
                                 ticketList.RemoveAll(x => x.CustId == selectedElement.CustId);
@@ -154,10 +171,6 @@ namespace HangfireService.Core.Jobs
                         }
                     }
                     
-                    await using var conn = _mainDbDataLayer.GetMySqlConnection();
-                    conn.Open();
-                    var trans = await conn.BeginTransactionAsync();
-                        
                     try
                     {
                         var insertResult = _mainDbDataLayer.InsertLotteryTicketHistory(insertData , trans) > 0;

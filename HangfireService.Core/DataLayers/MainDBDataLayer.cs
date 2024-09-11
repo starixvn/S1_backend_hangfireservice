@@ -245,6 +245,19 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Execute("Service_CustLotteryTicket_Ins", trans ,ticket);
         }
         
+        public int SetCustLotteryTicket(string ticketNo,  int roundId , int lotteryPrizeCategory , int custId , bool isJackpot, int stickerId,  IDbTransaction trans)
+        {
+            return _dbClient.Execute("Service_CustLotteryTicket_Set", trans, new
+            {
+                _TicketNo = ticketNo,
+                _RoundId=  roundId,
+                _LotteryPrizeCategory = lotteryPrizeCategory,
+                _CustId = custId, 
+                _IsJackpot = isJackpot,
+                _StickerId = stickerId
+            });
+        }
+        
         public int InsertLotteryTicketHistory(LotteryTicketHistory history ,IDbTransaction trans)
         {
             return _dbClient.Execute("Service_LotteryTicketHistory_Ins", trans, parameters: new DynamicParameters(new
@@ -273,19 +286,17 @@ namespace HangfireService.Core.DataLayers
             
         }
         
-        public int LotteryDrawPrizeSet(string ticketNo, decimal amount , int roundId , int lotteryPrizeCategory ,int eventId ,int prizeId, int custId ,DateTime checkDate, int isJackpot, int stickerId,  IDbTransaction trans)
+        public int LotteryDrawPrizeSet(string ticketNo, decimal amount , int roundId ,int eventId ,int prizeId, int custId ,DateTime checkDate, int stickerId,  IDbTransaction trans)
         {
             return _dbClient.Execute("Service_LotteryDrawPrize_Set", trans, new
             {
                 _TicketNo = ticketNo,
                 _Amount= amount,
                 _RoundId=  roundId,
-                _LotteryPrizeCategory = lotteryPrizeCategory,
                 _EventId = eventId, 
                 _PrizeId = prizeId, 
                 _CustId = custId, 
                 _DrawDate = checkDate,
-                _IsJackpot = isJackpot,
                 _StickerId = stickerId
             });
         }
