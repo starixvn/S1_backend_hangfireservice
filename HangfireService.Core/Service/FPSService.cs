@@ -36,7 +36,7 @@ namespace HangfireService.Core.Service
             
             if (!getFPSResponse.Any()) return 1;
 
-            var filteredTransactions = FPSDataEnvironmentFilter(getFPSResponse, 1);
+            var filteredTransactions = FPSDataEnvironmentFilter(getFPSResponse, mode);
             
             if (!filteredTransactions.Any())
             {
