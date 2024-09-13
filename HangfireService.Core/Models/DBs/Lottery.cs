@@ -47,6 +47,7 @@ namespace HangfireService.Core.Models.DBs
     public class CustLotteryTicket
     {
         public int CustId { get; set; }
+        public int Status { get; set; }
         public string UserName { get; set; }
         public int CurrencyId { get; set; }
         public int RoundId { get; set; }
