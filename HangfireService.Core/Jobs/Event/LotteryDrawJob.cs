@@ -87,6 +87,7 @@ namespace HangfireService.Core.Jobs
 
                     var custEventRestriction = _reportDbDataLayer.GetEventRestriction(option.SiteId);
                     ticketList.RemoveAll(x => custEventRestriction.Select(y=>y.CustId).Contains(x.CustId));
+                    ticketList.RemoveAll(x => x.Status is (int) CustomerStatusEnum.Lock or (int) CustomerStatusEnum.Suspend or (int)CustomerStatusEnum.Closed );
                     
                     #endregion
                     
