@@ -105,17 +105,18 @@ namespace HangfireService.Core.Jobs
                                 var prizeData = drawPrizeList.FirstOrDefault(x => x.Tier == levelData.Level && x.PrizeName.Contains(data.Name));
                                 if (prizeData is not null)
                                 {
-                                    
+                                    var payOutJackpot = false;
                                     if (data.LotteryPrizeCategory == LotteryPrizeCategory.FirstPrize)
                                     {
                                         var custSticker = _reportDbDataLayer.GetCustLotteryTicket(ticketInfo.CustId,  currentEventDraw.RoundId, (int)LotteryTicketEnum.Sticker).FirstOrDefault();
                                         if (custSticker is not null && custSticker.StickerId == winnerList.StickerId)
                                         {
                                             isPayoutJackpot = true;
+                                            payOutJackpot = true;
                                         }
                                     }
                                     
-                                    var result = PayOutPrize(jobName, currentEventDraw.RoundId, siteId,winnerList.StickerId, rateList, ticketInfo, data, prizeData, isPayoutJackpot ,jackpotAccumulation, trans).Result;
+                                    var result = PayOutPrize(jobName, currentEventDraw.RoundId, siteId, rateList, ticketInfo, data, prizeData, payOutJackpot ,jackpotAccumulation, trans).Result;
                                 }
                             }
                         }
@@ -159,8 +160,8 @@ namespace HangfireService.Core.Jobs
             }
         }
 
-        private async Task<bool> PayOutPrize( string jobName ,int roundId ,int siteId , int winStickerId , List<MpaRateDto> rateList ,CustLotteryTicket ticketInfo ,
-            WinnerPayoutData data , Prize prizeData , bool isJackpotPayout, DrawPrizeJackpotAccumulation jackpotAccumulation , MySqlTransaction trans)
+        private async Task<bool> PayOutPrize( string jobName ,int roundId ,int siteId, List<MpaRateDto> rateList ,CustLotteryTicket ticketInfo ,
+            WinnerPayoutData data , Prize prizeData , bool payOutJackpot, DrawPrizeJackpotAccumulation jackpotAccumulation , MySqlTransaction trans)
         {
             var rateDto = rateList.FirstOrDefault(x => x.CurrencyId == 3 && x.TargetCurrencyId == ticketInfo.CurrencyId);
             decimal prizeAmount;
@@ -182,7 +183,7 @@ namespace HangfireService.Core.Jobs
 
             #region Jackpot
 
-            if (isJackpotPayout && result)
+            if (payOutJackpot && result)
             {
                 var jackpotAmount = jackpotAccumulation.JackpotAmount * rateDto.Rate;
                 result = _mainDbDataLayer.LotteryDrawPrizeSet(null , jackpotAmount, roundId, jackpotAccumulation.EventId, jackpotAccumulation.PrizeId, ticketInfo.CustId, DateTime.UtcNow , trans) > 0;
