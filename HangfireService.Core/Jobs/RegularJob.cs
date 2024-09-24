@@ -33,11 +33,11 @@ namespace HangfireService.Core.Jobs
 
         public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
         {
-            _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
-            var option = JsonConvert.DeserializeObject<RegularOption>(jobOption.Parameters);
+            _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");         
             try
             {
                 //DB定期排程Job
+                var option = JsonConvert.DeserializeObject<RegularOption>(jobOption.Parameters);
                 var SpParameters = option.SpParameters != null ? JsonConvert.DeserializeObject<dynamic>(option.SpParameters) : null;
                 var result = _mainDbClient.Execute(option.SpName, parameters: SpParameters);
                 return $"SpExecute result: {result}";
