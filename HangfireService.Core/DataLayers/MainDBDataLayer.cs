@@ -280,15 +280,6 @@ namespace HangfireService.Core.DataLayers
             });
         }
 
-        public int SetCustFPSReplaceAccumulation(string startTime,string endTime)
-        {
-            return _dbClient.Execute("Service_CustFPS_ReplaceAccumulation",new
-            {
-                _StartTime = startTime,
-                _EndTime = endTime
-            });
-        }
-
         #endregion
     }
 }

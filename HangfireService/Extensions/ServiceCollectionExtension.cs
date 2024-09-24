@@ -138,8 +138,7 @@ namespace HangfireService.Extensions
                 .AddSingleton<WinLossSummaryService>()
                 .AddSingleton<MpaUpdateMonthRateService>()
                 .AddSingleton<HotEventService>()
-                .AddSingleton<FPSService>()
-                .AddSingleton<RegularService>();
+                .AddSingleton<FPSService>();
         }
 
         public static IServiceCollection RegisterHttpClient(this IServiceCollection services)
