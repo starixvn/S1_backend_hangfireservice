@@ -4,11 +4,8 @@ using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using Hangfire.Server;
 using HangfireService.Core.DataLayers;
-using HangfireService.Core.Extensions;
 using HangfireService.Core.Helpers;
 using HangfireService.Core.Jobs.Interfaces;
-using HangfireService.Core.Models.DBs;
-using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.Service;
@@ -66,8 +63,6 @@ namespace HangfireService.Core.Jobs
                 return null;
             }
             var jobOption = _jobList.First(i => i.JobName == jobName);
-            // jobOption.Parameters = jobOption.Parameters.Update("StartTime", StartTime);
-            // jobOption.Parameters = jobOption.Parameters.Update("EndTime", EndTime);
 
             var result = ExecuteAsync($"Execute.{jobName}", jobOption, context, cancellationToken).Result;
 

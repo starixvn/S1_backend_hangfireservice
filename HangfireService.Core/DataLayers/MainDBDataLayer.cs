@@ -249,6 +249,8 @@ namespace HangfireService.Core.DataLayers
             });
         }
 
+        #region FPS
+
         public int InsertCustFPS(CustFPSDto custFPSDto)
         {
             return _dbClient.Execute("Service_CustFPS_Ins", new
@@ -277,6 +279,17 @@ namespace HangfireService.Core.DataLayers
                 _RiskLevel = custFPSDto.RiskLevel,
             });
         }
+
+        public int SetCustFPSReplaceAccumulation(string startTime,string endTime)
+        {
+            return _dbClient.Execute("Service_CustFPS_ReplaceAccumulation",new
+            {
+                _StartTime = startTime,
+                _EndTime = endTime
+            });
+        }
+
+        #endregion
     }
 }
 
