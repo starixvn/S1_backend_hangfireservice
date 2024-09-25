@@ -258,6 +258,8 @@ namespace HangfireService.Core.DataLayers
             });
         }
 
+        #region FPS
+
         public int InsertCustFPS(CustFPSDto custFPSDto)
         {
             return _dbClient.Execute("Service_CustFPS_Ins", new
@@ -286,6 +288,8 @@ namespace HangfireService.Core.DataLayers
                 _RiskLevel = custFPSDto.RiskLevel,
             });
         }
+
+        #endregion
     }
 }
 
