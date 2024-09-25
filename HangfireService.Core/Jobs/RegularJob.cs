@@ -40,6 +40,8 @@ namespace HangfireService.Core.Jobs
                 var option = JsonConvert.DeserializeObject<RegularOption>(jobOption.Parameters);
                 var SpParameters = option.SpParameters != null ? JsonConvert.DeserializeObject<dynamic>(option.SpParameters) : null;
                 var result = _mainDbClient.Execute(option.SpName, parameters: SpParameters);
+                _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || RegularJob , SpName :{option.SpName} , SpExecute result: {result}.");
+                _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} End......");
                 return $"SpExecute result: {result}";
             }
             catch (Exception ex)
