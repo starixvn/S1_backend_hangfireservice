@@ -38,7 +38,7 @@ namespace HangfireService.Core.ThirdParty
             var EndTime = checkOption.EndTime.GetUnixTimeByDay() - 1;
 
             var tasks = new List<Task<IEnumerable<BettransCheckData>>>();
-            var bettrans = await _reportDbClient.QueryAsync<BettransCheckData>("Service_BettransRng_DragonGaming_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
+            var bettrans = await _reportDbClient.QueryAsync<BettransCheckData>("Finance_BettransRng_DragonGaming_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
 
             foreach (var item in bettrans)
             {
