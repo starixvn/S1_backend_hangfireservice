@@ -6,7 +6,7 @@
       "commandLineArgs": "Nova", // Nova or Leobet
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Local",
+        "ASPNETCORE_ENVIRONMENT": "Development",
         "ServiceType": "Worker"
       },
       "applicationUrl": "http://localhost:45678"

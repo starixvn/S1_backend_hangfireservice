@@ -1,4 +1,5 @@
-﻿using HangfireService.Core.Models.SiteConfig;
+﻿using System.Collections.Generic;
+using HangfireService.Core.Models.SiteConfig;
 
 using Microsoft.AspNetCore.Hosting;
 
@@ -19,7 +20,7 @@ namespace HangfireService.Core.Helpers
         public ConfigBLL(IServiceProvider provider)
         {
             var siteConfigList = provider.GetServices<SiteConfig>();
-            _defaultSiteConfig = siteConfigList.First(i => i.SiteId == 0).Config;
+            _defaultSiteConfig = siteConfigList.FirstOrDefault(i => i.SiteId == 0)?.Config ?? new Dictionary<string, string>();
             var siteConfigs = siteConfigList.Where(i => i.SiteId != 0);
             _siteIdConfigs = siteConfigs.ToDictionary(i => i.SiteId, i => i);
             _rawConfigs = provider.GetRequiredService<IEnumerable<Config>>();

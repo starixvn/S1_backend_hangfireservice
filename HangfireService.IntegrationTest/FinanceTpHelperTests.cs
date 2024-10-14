@@ -30,7 +30,7 @@ namespace HangfireService.IntegrationTest
             });
 
             var remoteUrls = builder.Configuration.GetSection("ConfigService").Get<string[]>();
-            remoteUrls = builder.Configuration.CheckLocalConfig(builder.Environment, new[] { "Nova" }, remoteUrls);
+            //remoteUrls = builder.Configuration.CheckLocalConfig(builder.Environment, new[] { "Nova" }, remoteUrls);
             builder.Configuration.AddRemoteJsonConfig(remoteUrls);
 
             var logger = Substitute.For<ILogger<MySqlClient>>();
@@ -62,6 +62,5 @@ namespace HangfireService.IntegrationTest
             var resultList = _tpHelper.GetBettransCheckData(new FinanceCheckOption()).ConfigureAwait(false).GetAwaiter().GetResult();
             Assert.IsTrue(resultList.Any());
         }
-
     }
 }

@@ -147,23 +147,26 @@ namespace HangfireService.Extensions
             var provider = services.BuildServiceProvider();
 
             var proxyConfig = provider.GetRequiredService<ConfigBLL>().GetConfigValue<ProxyConfig>("ProxySetting");
-            var proxyHost = proxyConfig.ProxyHost;
-            var proxyPort = proxyConfig.ProxyPort;
-
-            if (!string.IsNullOrEmpty(proxyHost))
+            if (proxyConfig != default) 
             {
-                var proxy = new HttpClientHandler
+                var proxyHost = proxyConfig.ProxyHost;
+                var proxyPort = proxyConfig.ProxyPort;
+
+                if (!string.IsNullOrEmpty(proxyHost))
                 {
-                    Proxy = new WebProxy(proxyHost, proxyPort),
-                    UseProxy = true
-                };
+                    var proxy = new HttpClientHandler
+                    {
+                        Proxy = new WebProxy(proxyHost, proxyPort),
+                        UseProxy = true
+                    };
 
-                services.AddHttpClient("with_proxy")
-                    .ConfigurePrimaryHttpMessageHandler(() => proxy);
-            }
-            else
-            {
-                services.AddHttpClient();
+                    services.AddHttpClient("with_proxy")
+                        .ConfigurePrimaryHttpMessageHandler(() => proxy);
+                }
+                else
+                {
+                    services.AddHttpClient();
+                }
             }
 
             return services;
@@ -279,9 +282,12 @@ namespace HangfireService.Extensions
             foreach (var serverInfo in serverInfoList)
             {
                 //設定SiteConfig
-                var siteConfig = siteConfigGroup.FirstOrDefault(i => i.Key == serverInfo.SiteId) ?? siteConfigGroup.First(i => i.Key == 0);
-                var config = siteConfig.ToDictionary(i => i.ConfigKey, i => i.ConfigValue);
-                services.AddSingleton(new SiteConfig(serverInfo, config));
+                var siteConfig = siteConfigGroup.FirstOrDefault(i => i.Key == serverInfo.SiteId || i.Key == 0);
+                if(siteConfig != default)
+                {
+                    var config = siteConfig.ToDictionary(i => i.ConfigKey, i => i.ConfigValue);
+                    services.AddSingleton(new SiteConfig(serverInfo, config));
+                }
             }
             return services;
         }
