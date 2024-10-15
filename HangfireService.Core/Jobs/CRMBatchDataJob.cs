@@ -13,26 +13,31 @@ using HangfireService.Core.Helpers;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Text;
+using Hangfire.Dashboard.Management.Support;
+using HangfireService.Core.Extensions;
 
 namespace HangfireService.Core.Jobs
 {
-    [ManagementPage("CRMBatchDataJob", queue: "report")]
+    [ManagementPage("CRMBatchDataJob", queue: "Report")]
     public class CRMBatchDataJob : BaseJob, IScheduledJob
     {
         private readonly ReportBackupDBDataLayer _reportBackupDBDataLayer;
         private readonly CRMSFTPConfig _cRMSFTPConfig;
+        private static List<JobOption> _jobList;
 
         public CRMBatchDataJob(IServiceProvider provider) : base(provider)
         {
             LogContext.PushProperty("ClassName", GetType().Name);
             _reportBackupDBDataLayer = provider.GetRequiredService<ReportBackupDBDataLayer>();
             _cRMSFTPConfig = provider.GetRequiredService<ConfigBLL>().GetConfigValue<CRMSFTPConfig>("CRMSFTP");
+            MyJobManager.GetJobGroups()?.TryGetValue("Report", out _jobList);
         }
 
         public class CRMOption
         {
             public string SP { set; get; }
             public string FileName { get; set; }
+            public string Date { get; set; } = string.Empty;
         }
         [DisplayName("{0}")]
         public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context,
@@ -40,22 +45,42 @@ namespace HangfireService.Core.Jobs
         {
             _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
             var option = JsonConvert.DeserializeObject<CRMOption>(jobOption.Parameters);
-            DateTime currentUtcTime = DateTime.UtcNow;
-            DateTime Today = new(currentUtcTime.Year, currentUtcTime.Month, currentUtcTime.Day);
-            DateTime startTime = Today.AddDays(-1);
-            DateTime endTime = Today.AddSeconds(-1);
+            DateTime targetTime = string.IsNullOrEmpty(option.Date) ? DateTime.UtcNow : DateTime.ParseExact(option.Date, "yyyy-MM-dd", null);
+            DateTime target = new(targetTime.Year, targetTime.Month, targetTime.Day);
+            DateTime startTime = target.AddDays(-1);
+            DateTime endTime = target.AddSeconds(-1);
             var crmData = await _reportBackupDBDataLayer.GetCrmData(option.SP, startTime, endTime);
             var csv = ToCsv(crmData);
 
             //SFTP路徑
-            string remoteDirectory = $"{currentUtcTime.Year}-{currentUtcTime.Month}-{currentUtcTime.Day}";
+            string remoteDirectory = $"{targetTime.Year}-{targetTime.Month}-{targetTime.Day}";
             //檔名
-            string fileName = $"{option.FileName}_{currentUtcTime.Year}-{currentUtcTime.Month}-{currentUtcTime.Day}.csv";
+            string fileName = $"{option.FileName}_{targetTime.Year}-{targetTime.Month}-{targetTime.Day}.csv";
             if (!string.IsNullOrEmpty(csv))
             {
                 SendSFTP(csv, remoteDirectory, fileName);
             }
             return true;
+        }
+
+        [Job]
+        [DisplayName("Run {2} by ManagementPage")]
+        public object Run(
+            PerformContext context = null,
+            IJobCancellationToken cancellationToken = null,
+            [DisplayData("JobName", ConvertType = typeof(JobList))] string jobName = null,
+            [DisplayData("Date", placeholderText: "yyyy-MM-dd")] string date = null)
+        {
+            if (!_jobList.Any())
+            {
+                return null;
+            }
+            var jobOption = _jobList.First(i => i.JobName == jobName);
+            jobOption.Parameters = jobOption.Parameters.Update("Date", date);
+
+            var result = ExecuteAsync($"Execute.{jobName}", jobOption, context, cancellationToken).Result;
+
+            return result;
         }
 
         private void SendSFTP(string csv, string remoteDirectory, string fileName)
@@ -114,6 +139,20 @@ namespace HangfireService.Core.Jobs
             var csv = header + Environment.NewLine + string.Join(Environment.NewLine, rows);
 
             return csv;
+        }
+
+        private class JobList : IInputDataList
+        {
+            public Dictionary<string, string> GetData()
+            {
+                return _jobList?.Where(i =>
+                    i.JobName.Contains("CRMBatchData")
+                    ).ToDictionary(f => f.JobName, f => f.JobName);
+            }
+            public string GetDefaultValue()
+            {
+                return null;
+            }
         }
     }
 }
