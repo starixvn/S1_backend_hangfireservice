@@ -6,7 +6,6 @@ using HangfireService.Core.Models.Jobs;
 using Serilog.Context;
 using System.ComponentModel;
 using Renci.SshNet;
-using Renci.SshNet.Sftp;
 using Hangfire.Dashboard.Management.Metadata;
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.Helpers;
@@ -35,32 +34,45 @@ namespace HangfireService.Core.Jobs
 
         public class CRMOption
         {
-            public string SP { set; get; }
-            public string FileName { get; set; }
+            public List<CRMDetail> BatchList { get; set; }
             public string Date { get; set; } = string.Empty;
         }
+
+        public class CRMDetail
+        {
+            public string SP { set; get; }
+            public string FileName { get; set; }
+        }
+
         [DisplayName("{0}")]
         public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context,
             IJobCancellationToken cancellationToken)
         {
             _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
             var option = JsonConvert.DeserializeObject<CRMOption>(jobOption.Parameters);
+
             DateTime targetTime = string.IsNullOrEmpty(option.Date) ? DateTime.UtcNow : DateTime.ParseExact(option.Date, "yyyy-MM-dd", null);
             DateTime target = new(targetTime.Year, targetTime.Month, targetTime.Day);
             DateTime startTime = target.AddDays(-1);
             DateTime endTime = target.AddSeconds(-1);
-            var crmData = await _reportBackupDBDataLayer.GetCrmData(option.SP, startTime, endTime);
-            var csv = ToCsv(crmData);
-
-            //SFTP路徑
-            string remoteDirectory = $"{targetTime.Year}-{targetTime.Month}-{targetTime.Day}";
-            //檔名
-            string fileName = $"{option.FileName}_{targetTime.Year}-{targetTime.Month}-{targetTime.Day}.csv";
-            if (!string.IsNullOrEmpty(csv))
+            var uploadFileCount = 0;
+            foreach (var job in option.BatchList)
             {
-                SendSFTP(csv, remoteDirectory, fileName);
+                var crmData = await _reportBackupDBDataLayer.GetCrmData(job.SP, startTime, endTime);
+                var csv = ToCsv(crmData);
+
+                //SFTP路徑
+                string remoteDirectory = $"{targetTime.Year}-{targetTime.Month}-{targetTime.Day}";
+                //檔名
+                string fileName = $"{job.FileName}_{targetTime.Year}-{targetTime.Month}-{targetTime.Day}.csv";
+                if (!string.IsNullOrEmpty(csv))
+                {
+                    SendSFTP(csv, remoteDirectory, fileName);
+                    uploadFileCount++;
+                }
             }
-            return true;
+
+            return $"success upload file count: {uploadFileCount}";
         }
 
         [Job]
@@ -104,11 +116,11 @@ namespace HangfireService.Core.Jobs
                         sftp.UploadFile(memoryStream, Path.Combine(remoteDirectory, fileName));
                     }
 
-                    _logger.LogInformation("文件上傳成功！");
+                    _logger.LogInformation($"{remoteDirectory}/{fileName} 文件上傳成功！");
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError($"文件上傳失敗: {ex.Message}");
+                    _logger.LogError($"{remoteDirectory}/{fileName} 文件上傳失敗: {ex.Message}");
                 }
                 finally
                 {
