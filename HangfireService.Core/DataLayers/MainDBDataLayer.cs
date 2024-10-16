@@ -306,12 +306,13 @@ namespace HangfireService.Core.DataLayers
             
         }
         
-        public int LotteryDrawPrizeSet(string ticketNo, decimal amount , int roundId ,int eventId ,int prizeId, int custId ,DateTime checkDate, IDbTransaction trans)
+        public int LotteryDrawPrizeSet(string ticketNo, decimal amount ,  decimal amountRate ,int roundId ,int eventId ,int prizeId, int custId ,DateTime checkDate, IDbTransaction trans)
         {
             return _dbClient.Execute("Service_LotteryDrawPrize_Set", trans, new
             {
                 _TicketNo = ticketNo,
                 _Amount= amount,
+                _AmountRate = amountRate,
                 _RoundId=  roundId,
                 _EventId = eventId, 
                 _PrizeId = prizeId, 
