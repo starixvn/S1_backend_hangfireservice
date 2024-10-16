@@ -165,28 +165,29 @@ namespace HangfireService.Core.Jobs
         {
             var rateDto = rateList.FirstOrDefault(x => x.CurrencyId == 3 && x.TargetCurrencyId == ticketInfo.CurrencyId);
             decimal prizeAmount;
+            
             if (rateDto is null)
             {
-                var rateContraryDto = rateList.FirstOrDefault(x => x.CurrencyId == ticketInfo.CurrencyId && x.TargetCurrencyId == 3);
-                prizeAmount = prizeData.Amount / rateContraryDto.Rate;
-                if (rateContraryDto is null)
+                rateDto = rateList.FirstOrDefault(x => x.CurrencyId == ticketInfo.CurrencyId && x.TargetCurrencyId == 3);
+                if (rateDto is null)
                 {
                     throw new InvalidOperationException($"{jobName} running || {data.TicketNo} Ticket || Can't find rate" );
                 }
+                prizeAmount = prizeData.Amount / rateDto.Rate;
             }
             else
             {
                 prizeAmount = prizeData.Amount * rateDto.Rate;
             }
            
-            var result = _mainDbDataLayer.LotteryDrawPrizeSet(data.TicketNo, prizeAmount, roundId, prizeData.EventId, prizeData.PrizeId, ticketInfo.CustId, DateTime.UtcNow, trans) > 0;
+            var result = _mainDbDataLayer.LotteryDrawPrizeSet(data.TicketNo, prizeAmount, rateDto.Rate, roundId, prizeData.EventId, prizeData.PrizeId, ticketInfo.CustId, DateTime.UtcNow, trans) > 0;
 
             #region Jackpot
 
             if (payOutJackpot && result)
             {
                 var jackpotAmount = jackpotAccumulation.JackpotAmount * rateDto.Rate;
-                result = _mainDbDataLayer.LotteryDrawPrizeSet(null , jackpotAmount, roundId, jackpotAccumulation.EventId, jackpotAccumulation.PrizeId, ticketInfo.CustId, DateTime.UtcNow , trans) > 0;
+                result = _mainDbDataLayer.LotteryDrawPrizeSet(null , jackpotAmount,  rateDto.Rate, roundId, jackpotAccumulation.EventId, jackpotAccumulation.PrizeId, ticketInfo.CustId, DateTime.UtcNow , trans) > 0;
                 
                 if (result)
                 {
