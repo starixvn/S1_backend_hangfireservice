@@ -54,9 +54,9 @@ namespace HangfireService.Core.Service
                     Action = item.action,
                     DeviceId = string.IsNullOrWhiteSpace(item.device) ? "NA" : item.device,
                     DeviceType = string.IsNullOrWhiteSpace(item.deviceType) ? "NA" : item.deviceType,
-                    Browser = item.browser ,
+                    Browser = item.browser,
                     Domain = item.domain,
-                    IP = item.ip,
+                    IP = string.IsNullOrWhiteSpace(item.ip) ? "NA" : item.ip,
                     RobotTracking = item.robotTracking,
                     RiskLevel = string.IsNullOrWhiteSpace(item.riskLevel) ? "NA" : item.riskLevel,
                     //抓回來是GMT-4 直接強加4小時變成+0
