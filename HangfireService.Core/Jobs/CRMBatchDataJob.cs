@@ -90,7 +90,7 @@ namespace HangfireService.Core.Jobs
             var jobOption = _jobList.First(i => i.JobName == jobName);
             jobOption.Parameters = jobOption.Parameters.Update("Date", date);
 
-            var result = ExecuteAsync($"Execute.{jobName}", jobOption, context, cancellationToken).Result;
+            var result = ExecuteAsync($"Execute.{jobName}.{date}", jobOption, context, cancellationToken).Result;
 
             return result;
         }
