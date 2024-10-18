@@ -13,6 +13,8 @@ builder.Configuration.AddJsonFile("appsettings.json",
         optional: true,
         reloadOnChange: false);
 var remoteUrls = GetRemoteUrls();
+builder.Environment.EnvironmentName = builder.Configuration.GetSection("env").Get<string>();
+
 //remoteUrls = builder.Configuration.CheckLocalConfig(builder.Environment, args, remoteUrls);
 builder.Configuration.AddRemoteJsonConfig(remoteUrls);
 
