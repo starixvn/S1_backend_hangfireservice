@@ -61,7 +61,7 @@ if (app.Environment.EnvironmentName.Equals("Local"))
 app.UseRouting();
 app.UseEndpoints(endpoints =>
 {
-    endpoints.MapGet("/health", () => "OK.");
+    endpoints.MapGet("/health", () => $"{builder.Environment.EnvironmentName}-OK.");
 });
 
 app.UseHangfireDashboard(pathMatch: "", options: new DashboardOptions()
