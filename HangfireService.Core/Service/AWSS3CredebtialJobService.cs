@@ -48,13 +48,13 @@ public class AWSS3CredebtialJobService
 
     private Credentials GetFromRedis(int keyId)
     {
-        var value = _redisHelper.StringGet($"{_redisKeyPerfix}_{keyId}", RedisDataBase.AWS);
+        var value = _redisHelper.StringGet($"{_redisKeyPerfix}_{keyId}", RedisDataBase.Shared);
         return string.IsNullOrWhiteSpace(value) ? new Credentials() : JsonConvert.DeserializeObject<Credentials>(value);
     }
 
     private void AddRedis(int keyId, string value)
     {
-        _redisHelper.StringSet($"{_redisKeyPerfix}_{keyId}", value, null, RedisDataBase.AWS);
+        _redisHelper.StringSet($"{_redisKeyPerfix}_{keyId}", value, null, RedisDataBase.Shared);
     }
 
     private async Task<Credentials> GetCredentialsAsync()
@@ -63,7 +63,7 @@ public class AWSS3CredebtialJobService
         var stsClient = new AmazonSecurityTokenServiceClient(_awsMFAKeyConfig.AccessKey, _awsMFAKeyConfig.SecretAccessKey);
         var pass = false;
         var credentials = new Credentials();
-        int getTimes = 5;
+        int getTimes = 10;
         while (!pass && getTimes > 0)
         {
             try
@@ -88,7 +88,7 @@ public class AWSS3CredebtialJobService
                 _logger.LogError(ex.Message, ex);
                 getTimes--;
 
-                Thread.Sleep(5000); //5秒後重新嘗試
+                Thread.Sleep(7000); //5秒後重新嘗試
             }
         }
         return credentials;
