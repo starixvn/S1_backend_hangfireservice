@@ -16,7 +16,7 @@ public class AWSS3CredebtialJobService
     private readonly ICacheHelper _redisHelper;
     private readonly ILogger<BaseJob> _logger;
 
-    private readonly string _redisKeyPerfix = "AWSS3Credebtial";
+    private readonly string _redisKeyPerfix = "AWSS3Credential";
 
     public AWSS3CredebtialJobService(IServiceProvider provider)
     {
