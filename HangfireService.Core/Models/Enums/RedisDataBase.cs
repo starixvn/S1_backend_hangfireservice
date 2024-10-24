@@ -10,6 +10,7 @@ namespace HangfireService.Core.Models.Enums
         Admin = 4,
         Payment = 5,
         Token = 6,
-        IP = 7
+        IP = 7,
+        AWS = 8
     }
 }
