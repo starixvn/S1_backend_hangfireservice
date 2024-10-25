@@ -140,7 +140,7 @@ namespace HangfireService.Extensions
                 .AddSingleton<MpaUpdateMonthRateService>()
                 .AddSingleton<HotEventService>()
                 .AddSingleton<FPSService>()
-               .AddSingleton<AWSS3CredebtialJobService>();
+               .AddSingleton<AWSCredebtialJobService>();
         }
 
         public static IServiceCollection RegisterHttpClient(this IServiceCollection services)
