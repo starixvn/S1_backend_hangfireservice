@@ -17,7 +17,6 @@ public class AWSS3Helper
     private readonly ILogger<AWSS3Helper> _logger;
 
     private readonly AWSKeyConfig _awsKeyConfig;
-    private readonly AWSMFAConfig _awsMFAKeyConfig;
     private readonly AmazonS3Config _amazonS3Config;
     private readonly ICacheHelper _cacheHelper;
     private readonly string _redisKey = "AWSS3Credential";
@@ -26,7 +25,6 @@ public class AWSS3Helper
     {
         var configBll = provider.GetRequiredService<ConfigBLL>();
         _awsKeyConfig = configBll.GetConfigValue<AWSKeyConfig>("HangfireAwsKey");
-        _awsMFAKeyConfig = configBll.GetConfigValue<AWSMFAConfig>("AWSS3WithMFA");
         var region = configBll.GetConfigValue("AWSRegion");
         var proxyConfig = configBll.GetConfigValue<ProxyConfig>("ProxySetting");
         var proxyHost = proxyConfig.ProxyHost;
@@ -74,22 +72,22 @@ public class AWSS3Helper
 
     private async Task<AmazonS3Client> GetClientAsync()
     {
-        if (_awsMFAKeyConfig != null)
+        var credentials = new Credentials();
+
+        if (_cacheHelper.KeyExists($"{_redisKey}_1", RedisDataBase.Shared))
+            credentials = await _cacheHelper.StringGetAsync<Credentials>($"{_redisKey}_1", RedisDataBase.Shared);
+
+        if (credentials.AccessKeyId is null && _cacheHelper.KeyExists($"{_redisKey}_2", RedisDataBase.Shared))
+            credentials = await _cacheHelper.StringGetAsync<Credentials>($"{_redisKey}_2", RedisDataBase.Shared);
+
+        if (credentials.AccessKeyId is not null)
         {
-            var credentials = new Credentials();
-
-            if (_cacheHelper.KeyExists($"{_redisKey}_1", RedisDataBase.Shared))
-                credentials = await _cacheHelper.StringGetAsync<Credentials>($"{_redisKey}_1", RedisDataBase.Shared);
-            if (credentials.AccessKeyId is null)
-            {
-                if (_cacheHelper.KeyExists($"{_redisKey}_2", RedisDataBase.Shared))
-                    credentials = await _cacheHelper.StringGetAsync<Credentials>($"{_redisKey}_2", RedisDataBase.Shared);
-            }
-
+            _logger.LogInformation("Create S3 Clinet By Credentials.");
             return new AmazonS3Client(credentials.AccessKeyId, credentials.SecretAccessKey, credentials.SessionToken, _amazonS3Config);
         }
         else
         {
+            _logger.LogInformation("Create S3 Clinet By AwsKey.");
             return new AmazonS3Client(_awsKeyConfig.AccessKey, _awsKeyConfig.SecretKey, _amazonS3Config);
         }
     }
