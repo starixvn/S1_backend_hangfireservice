@@ -13,17 +13,17 @@ using HangfireService.Core.Models.AWS;
 
 namespace HangfireService.Core.Jobs.AWS;
 
-[ManagementPage("AWSS3CredentialJob", queue: "aws")]
-internal class AWSS3CredentialJob : BaseJob, IScheduledJob
+[ManagementPage("AWSCredentialJob", queue: "aws")]
+internal class AWSCredentialJob : BaseJob, IScheduledJob
 {
-    private readonly AWSS3CredebtialJobService _aWSS3CredebtialJobService;
+    private readonly AWSCredebtialJobService _aWSS3CredebtialJobService;
     private static List<JobOption> _jobList;
 
-    public AWSS3CredentialJob(IServiceProvider provider) : base(provider)
+    public AWSCredentialJob(IServiceProvider provider) : base(provider)
     {
         LogContext.PushProperty("ClassName", GetType().Name);
         MyJobManager.GetJobGroups()?.TryGetValue("AWS", out _jobList);
-        _aWSS3CredebtialJobService = provider.GetRequiredService<AWSS3CredebtialJobService>();
+        _aWSS3CredebtialJobService = provider.GetRequiredService<AWSCredebtialJobService>();
     }
 
     [DisplayName("{0}")]
@@ -37,13 +37,13 @@ internal class AWSS3CredentialJob : BaseJob, IScheduledJob
         {
             var option = JsonConvert.DeserializeObject<AWSS3CredebtialOption>(jobOption.Parameters);
             int keyId = option.KeyId;
-            if (option.Type == 0)
+            if (option.Type == 0) // 0=worker check and update, 1= manual update
             {
-                await _aWSS3CredebtialJobService.RunCheckJobAsync(keyId);
+                await _aWSS3CredebtialJobService.RunCheckJobAsync(option.KeyName, option.KeyId);
             }
             else
             {
-                await _aWSS3CredebtialJobService.RunUpdateJobAsync(keyId);
+                await _aWSS3CredebtialJobService.RunUpdateJobAsync(option.KeyName, option.KeyId);
             }
         }
         catch (Exception ex)
@@ -55,6 +55,13 @@ internal class AWSS3CredentialJob : BaseJob, IScheduledJob
         return true;
     }
 
+    /// <summary>
+    /// 手動更新憑證
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="cancellationToken"></param>
+    /// <param name="jobName"></param>
+    /// <returns></returns>
     [Job]
     [DisplayName("Run {2} by ManagementPage")]
     [AutomaticRetry(Attempts = 0, OnAttemptsExceeded = AttemptsExceededAction.Delete)]
@@ -71,7 +78,7 @@ internal class AWSS3CredentialJob : BaseJob, IScheduledJob
         var option = JsonConvert.DeserializeObject<AWSS3CredebtialOption>(jobOption.Parameters);
         option.Type = 1;
         jobOption.Parameters = JsonConvert.SerializeObject(option);
-        return await ExecuteAsync($"Execute.{jobName}.((Type:1,KeyId:{option.KeyId})", jobOption, context, cancellationToken);
+        return await ExecuteAsync($"Execute.{jobName}.((Type:Manual Update)", jobOption, context, cancellationToken);
 
     }
 
@@ -79,7 +86,7 @@ internal class AWSS3CredentialJob : BaseJob, IScheduledJob
     {
         public Dictionary<string, string> GetData()
         {
-            return _jobList?.Where(i => i.JobName.Contains("AWSS3Credential"))
+            return _jobList?.Where(i => i.JobName.Contains("AWSCredential"))
                 .ToDictionary(f => f.JobName, f => f.JobName);
         }
 
