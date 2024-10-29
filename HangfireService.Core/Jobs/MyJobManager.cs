@@ -57,7 +57,7 @@ namespace HangfireService.Core.Jobs
             }
 
             //全部job延遲時啟動    
-            if (!webHostEnvironment.EnvironmentName.Equals("Local"))
+            if (!webHostEnvironment.EnvironmentName.Equals("Development"))
             {
                 AllDelayStart();
             }
