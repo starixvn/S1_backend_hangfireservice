@@ -1,7 +1,4 @@
 using System.ComponentModel;
-using System.Net;
-using Amazon;
-using Amazon.S3;
 using Amazon.S3.Model;
 using Hangfire;
 using Hangfire.Dashboard.Management.Metadata;
@@ -34,6 +31,8 @@ namespace HangfireService.Core.Jobs
         private readonly BaseTpHelper _baseTpHelper;
         private static List<JobOption> _reportJobList;
         private readonly Dictionary<string, LicenseReportConfig> _licenseReportConfig;
+        private readonly AWSS3Helper _s3Helper;
+        private static string region;
 
         public LicenseReportJob(IServiceProvider provider) : base(provider)
         {
@@ -42,15 +41,8 @@ namespace HangfireService.Core.Jobs
             _baseTpHelper = provider.GetRequiredService<BaseTpHelper>();
             MyJobManager.GetJobGroups()?.TryGetValue("Report", out _reportJobList);
             _excelHelper = provider.GetRequiredService<ExcelHelper>();
-
+            _s3Helper = provider.GetRequiredService<AWSS3Helper>();
             var configBll = provider.GetRequiredService<ConfigBLL>();
-            var proxyConfig = configBll.GetConfigValue<ProxyConfig>("ProxySetting");
-            _proxyHost = proxyConfig.ProxyHost;
-            _proxyPort = proxyConfig.ProxyPort;
-
-            var awsConfig = configBll.GetConfigValue<AwsConfig>("HangfireAwsKey");
-            _awsAccessKey = awsConfig?.AccessKey;
-            _awsSecretKey = awsConfig?.SecretKey;
 
             // 巢狀 Json object 處理
             var configValue = configBll.GetConfigValue<dynamic>("LicenseReport");
@@ -127,47 +119,16 @@ namespace HangfireService.Core.Jobs
 
         private async Task<bool> UploadS3FileAsync(MemoryStream stream, string name)
         {
-            try
-            {
-                var config = new AmazonS3Config
-                {
-                    RegionEndpoint = RegionEndpoint.APSoutheast1
-                };
-
-                if (!string.IsNullOrEmpty(_proxyHost) && _proxyPort != 0)
-                {
-                    config.ProxyHost = _proxyHost;
-                    config.ProxyPort = _proxyPort;
-                }
-
-                IAmazonS3 client = new AmazonS3Client(_awsAccessKey, _awsSecretKey, config);
-                var putRequest = new PutObjectRequest
+            var putResponse = await _s3Helper.PutObjectAsync(
+                new PutObjectRequest
                 {
                     BucketName = "ailab-license",
                     ContentType = "text/csv",
                     InputStream = stream,
                     Key = name
-                };
+                });
 
-                var putResponse = await client.PutObjectAsync(putRequest);
-
-                if (putResponse.HttpStatusCode != HttpStatusCode.OK)
-                {
-                    _logger.LogError($"UploadS3File, Response={JsonConvert.SerializeObject(putResponse)}");
-                }
-
-                return putResponse.HttpStatusCode == HttpStatusCode.OK;
-            }
-            catch (AmazonS3Exception ex)
-            {
-                _logger.LogError(ex, MethodExtension.GetCurrentAsyncMethod());
-                return false;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, MethodExtension.GetCurrentAsyncMethod());
-                return false;
-            }
+            return putResponse;
         }
 
         private class JobList : IInputDataList

@@ -22,9 +22,11 @@ public class AWSCloudWatchLogsHelper
         var configBll = provider.GetRequiredService<ConfigBLL>();
         var proxyConfig = configBll.GetConfigValue<ProxyConfig>("ProxySetting");
 
+        var region = configBll.GetConfigValue("AWSRegion");
+
         var config = new AmazonCloudWatchLogsConfig
         {
-            RegionEndpoint = RegionEndpoint.APSoutheast1
+            RegionEndpoint = RegionEndpoint.GetBySystemName(region)
         };
 
         if (!string.IsNullOrEmpty(proxyConfig.ProxyHost))
