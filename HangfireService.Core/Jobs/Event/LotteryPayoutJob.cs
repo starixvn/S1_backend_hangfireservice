@@ -56,7 +56,7 @@ namespace HangfireService.Core.Jobs
                     var drawPrizeList = await _reportDbDataLayer.GetPrizes(21, 3);
                     var jackpotData = drawPrizeList.FirstOrDefault(x => x.Jackpot == 1);
                     var jackpotAccumulation = _reportDbDataLayer.GetDrawPrizeJackpotAccumulation(jackpotData.EventId);
-                    var rateDate = new DateTimeOffset(new DateTime(currentEventDraw.StartDate.Year, currentEventDraw.StartDate.Month, 1), TimeSpan.Zero);
+                    var rateDate = new DateTimeOffset(new DateTime(currentEventDraw.StartDate.Year, currentEventDraw.StartDate.Month, 1), new TimeSpan(8, 0, 0));
                     var rateList = _reportDbDataLayer.GetMPARate(rateDate, rateDate, 2).ToList();
                     
                     #region DealData
@@ -108,8 +108,8 @@ namespace HangfireService.Core.Jobs
                                     var payOutJackpot = false;
                                     if (data.LotteryPrizeCategory == LotteryPrizeCategory.FirstPrize)
                                     {
-                                        var custSticker = _reportDbDataLayer.GetCustLotteryTicket(ticketInfo.CustId,  currentEventDraw.RoundId, (int)LotteryTicketEnum.Sticker).FirstOrDefault();
-                                        if (custSticker is not null && custSticker.StickerId == winnerList.StickerId)
+                                        var custSticker = _reportDbDataLayer.GetCustLotteryTicket(ticketInfo.CustId,  currentEventDraw.RoundId, (int)LotteryTicketEnum.Sticker).ToList();
+                                        if (custSticker.Any(x => x.StickerId == winnerList.StickerId))
                                         {
                                             isPayoutJackpot = true;
                                             payOutJackpot = true;

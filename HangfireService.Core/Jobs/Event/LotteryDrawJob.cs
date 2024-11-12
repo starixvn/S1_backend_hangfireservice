@@ -56,7 +56,8 @@ namespace HangfireService.Core.Jobs
                     
                     #region DealSettingData
 
-                    var excludeList = JsonConvert.DeserializeObject<List<int>>(currentEventDraw.ExcludeSetting);
+                    var excludePrizeList = JsonConvert.DeserializeObject<List<int>>(currentEventDraw.ExcludeSetting);
+                    var excludeTagList = JsonConvert.DeserializeObject<List<int>>(currentEventDraw.ExcludeTagList);
                     
                     // 設定每個獎項的 ExcludeCount
                     LotteryPrizeCategory[] categories = 
@@ -72,8 +73,8 @@ namespace HangfireService.Core.Jobs
                     {
                         if (_prizeList.ContainsKey(categories[i]))
                         {
-                            _prizeList[categories[i]].ExcludeCount = excludeList[i];
-                            _prizeList[categories[i]].DrawCount -= excludeList[i];
+                            _prizeList[categories[i]].ExcludeCount = excludePrizeList[i];
+                            _prizeList[categories[i]].DrawCount -= excludePrizeList[i];
                         }
                     }
                     
@@ -88,6 +89,16 @@ namespace HangfireService.Core.Jobs
                     var custEventRestriction = _reportDbDataLayer.GetEventRestriction(option.SiteId);
                     ticketList.RemoveAll(x => custEventRestriction.Select(y=>y.CustId).Contains(x.CustId));
                     ticketList.RemoveAll(x => x.Status is (int) CustomerStatusEnum.Lock or (int) CustomerStatusEnum.Suspend or (int)CustomerStatusEnum.Closed );
+
+                    var checkTagCustList = ticketList.Where(x => x.Tags.Any()).Select(x => x.CustId).Distinct().ToList();
+                    foreach (var custId in checkTagCustList)
+                    {
+                        var custTag = ticketList.FirstOrDefault(x=>x.CustId == custId)?.Tags;
+                        if (CheckExcludeTags(custTag, excludeTagList))  
+                        {
+                            ticketList.RemoveAll(x => x.CustId == custId);
+                        }
+                    }
                     
                     #endregion
                     
@@ -230,6 +241,19 @@ namespace HangfireService.Core.Jobs
             } while ( tickets.Select(x=>x.TicketNo).Contains(randomTicketNo) );
             
             return randomTicketNo;
+        }
+        
+        private bool CheckExcludeTags(List<int> custTags, List<int> excludeTags)
+        {
+            // 沒有設定 tag 就不用檢查
+            if (!excludeTags.Any()) return false;
+
+            // 取交集
+            var intersectTagResult = custTags.Intersect(excludeTags).ToList();
+            // 如果沒有相同 tag 表示可以領
+            if (!intersectTagResult.Any()) return false;
+            
+            return true;
         }
         
     }
