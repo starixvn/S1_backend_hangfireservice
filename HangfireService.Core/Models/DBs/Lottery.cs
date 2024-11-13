@@ -26,7 +26,7 @@ namespace HangfireService.Core.Models.DBs
         }
         public int Status { get; set; }
         public string ExcludeSetting { get; set; }
-        
+        public string ExcludeTagList { get; set; }
     }
     
     public class RaffleTicketSticker
@@ -55,6 +55,18 @@ namespace HangfireService.Core.Models.DBs
         public decimal StickerAmount { get; set; }
         public string TicketNo { get; set; }
         public int Type { get; set; }
+        public string TagList { get; set; }
+        public List<int> Tags
+        {
+            get
+            {
+                var tags = string.IsNullOrEmpty(TagList)
+                    ? new List<int>()
+                    : System.Text.Json.JsonSerializer.Deserialize<List<int>>(TagList);
+
+                return tags;
+            }
+        }
     }
     
     public class LotteryEventDrawTurnOverSetting
