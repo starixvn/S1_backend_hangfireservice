@@ -1,15 +1,8 @@
 ﻿using HangfireService.Core.ThirdParty.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
 using HangfireService.Core.Models.Options;
-using HangfireService.Core.Extensions;
 using HangfireService.Core.Service;
-using HangfireService.Core.Models.DBs;
 
 namespace HangfireService.Core.ThirdParty
 {
@@ -29,8 +22,8 @@ namespace HangfireService.Core.ThirdParty
         public int TpId => 71;
         public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
         {
-            var BeginTime = checkOption.BeginTime.GetUnixTimeByDay();
-            var EndTime = checkOption.EndTime.GetUnixTimeByDay() - 1;
+            var BeginTime = checkOption.BeginTime;
+            var EndTime = checkOption.EndTime;
 
             var tasks = new List<Task<IEnumerable<BettransCheckData>>>();
             tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransRng_PG2_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }));
