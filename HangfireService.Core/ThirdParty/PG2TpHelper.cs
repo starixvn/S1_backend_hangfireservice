@@ -3,6 +3,7 @@ using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.Service;
+using HangfireService.Core.DataLayers;
 
 namespace HangfireService.Core.ThirdParty
 {
@@ -10,11 +11,12 @@ namespace HangfireService.Core.ThirdParty
     {
         public PG2TpHelper(IServiceProvider provider) : base(provider)
         {
-            _partitionService = provider.GetRequiredService<PartitionService>();
             _fincanceService = provider.GetRequiredService<FincanceService>();
+            _dbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Report);
         }
-        private readonly PartitionService _partitionService;
+
         private readonly FincanceService _fincanceService;
+        private readonly MySqlClient _dbClient;
 
         public bool CheckTransId => false;
         public bool BindCommonCurrency => false;
@@ -26,7 +28,7 @@ namespace HangfireService.Core.ThirdParty
             var EndTime = checkOption.EndTime;
 
             var tasks = new List<Task<IEnumerable<BettransCheckData>>>();
-            tasks.AddRange(_partitionService.QueryAsync<BettransCheckData>(checkOption.BeginTime, checkOption.EndTime, "Finance_BettransRng_PG2_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime }));
+            tasks.Add(_dbClient.QueryAsync<BettransCheckData>( "Finance_BettransRng_PG2_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime },120));
             await Task.WhenAll(tasks);
 
             var CheckData = new List<BettransCheckData>();
