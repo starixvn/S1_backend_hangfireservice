@@ -53,7 +53,7 @@ builder.Services
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.EnvironmentName.Equals("Local"))
+if (app.Environment.EnvironmentName.Equals("LOCAL"))
 {
     app.UseDeveloperExceptionPage();
 }
