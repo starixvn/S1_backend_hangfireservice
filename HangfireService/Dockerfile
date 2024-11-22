@@ -4,7 +4,7 @@ FROM $CI_REGISTRY_IMAGE:builder as deps
 
 RUN mkdir -p /src/packages
 
-FROM hub.lumigame.com/base/dotnet/core/sdk:6.0-alpine AS builder
+FROM hub.nexdev.net/base/dotnet/core/sdk:6.0 as builder
 ENV NUGET_PACKAGES=/src/packages
 
 COPY --from=deps $NUGET_PACKAGES/. $NUGET_PACKAGES/
@@ -22,7 +22,7 @@ FROM builder AS publish
 RUN dotnet publish -r linux-x64 --self-contained false -c Release -o /app/publish /p:UseAppHost=false
 
 
-FROM hub.lumigame.com/base/dotnet/core/aspnet:6.0-alpine AS base
+FROM hub.nexdev.net/base/dotnet/core/aspnet:6.0-alpine
 WORKDIR /app
 COPY --from=publish /app/publish .
 EXPOSE 5000

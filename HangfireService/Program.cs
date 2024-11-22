@@ -7,6 +7,7 @@ using HangfireService.Extensions.ActionFilters;
 using Serilog;
 using Serilog.Exceptions;
 using Serilog.Formatting.Json;
+using Serilog.Sinks.Network;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.json",
@@ -29,7 +30,13 @@ builder.Host.UseSerilog((context, Configuration) =>
             c.Properties.Any(p =>
                 excludesApiEndpoints.Any(item => p.Value.ToString().Contains(item))
                 || excludesMessage.Any(item => c.MessageTemplate.ToString().Contains(item))))
-        .Enrich.WithExceptionDetails();
+        .Enrich.WithExceptionDetails()
+        .Enrich.WithProperty("ApplicationName", builder.Configuration.GetValue<string>("ServiceName"))
+        .Enrich.WithProperty("Env", builder.Configuration.GetValue<string>("env"))
+        .WriteTo.UDPSink(
+            builder.Configuration.GetValue<string>("OpenSearch:Uri"),
+            builder.Configuration.GetValue<int>("OpenSearch:Port"),
+            new JsonFormatter());
 
     OverrideLoggerWriteToLFile(Configuration);
 });
