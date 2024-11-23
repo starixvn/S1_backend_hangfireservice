@@ -42,15 +42,21 @@ namespace HangfireService.Core.Jobs
 
                         if (job != null)
                         {
-                            jobManager.AddOrUpdate(
-                              recurringJobId: option.JobName,
-                              methodCall: () => job.ExecuteAsync(option.JobName, option, null, null),
-                              cronExpression: option.Cron,
-                              queue: queue,
-                              timeZone: TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time"));
 
-                            //都先設定為暫停狀態
-                            Pause(option.JobName);
+                            // TODO: Stop SMSCheckStatusJob because it spam sentry
+                            if (option.JobName != "SMSCheckStatus")
+                            {
+                                jobManager.AddOrUpdate(
+                                    recurringJobId: option.JobName,
+                                    methodCall: () => job.ExecuteAsync(option.JobName, option, null, null),
+                                    cronExpression: option.Cron,
+                                    queue: queue,
+                                    timeZone: TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time"));
+
+                                //都先設定為暫停狀態
+                                Pause(option.JobName);
+                            }
+                            
                         }
                     }
                 }
