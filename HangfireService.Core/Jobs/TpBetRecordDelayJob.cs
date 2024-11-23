@@ -58,8 +58,8 @@ namespace HangfireService.Core.Jobs
                     }
                     else
                     {
-                        _logger.LogError($"取得檢查資料異常: {tpId}");
-                        throw new InvalidOperationException($"取得檢查資料異常: {tpId}");
+                        _logger.LogError($"Error in retrieving inspection data: {tpId}");
+                        throw new InvalidOperationException($"Error in retrieving inspection data: {tpId}");
                     }
                 }
 
