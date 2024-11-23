@@ -104,7 +104,7 @@ namespace HangfireService.Core.Jobs
                 BackgroundJob.Schedule(
                    () => ExecuteAsync(jobName, jobOption, null, null),
                     TimeSpan.FromMinutes(5));
-                _telegramBotHelper.SendMessage($"{jobName} 執行發生錯誤，五分鐘後重試。");
+                _telegramBotHelper.SendMessage($"{jobName} error occurred during execution. Please try again in five minutes");
                 return JsonConvert.SerializeObject(ex);
             }
         }

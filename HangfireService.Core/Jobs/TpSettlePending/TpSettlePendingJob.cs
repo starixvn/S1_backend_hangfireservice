@@ -153,7 +153,7 @@ namespace HangfireService.Core.Jobs
                             break;
                         default:
                             cnt = -1;
-                            _logger.LogError($"遊戲: {tpGameType.TypeName}, CategoryName: {categoryName}, CategoryId 尚不支援: {categoryId}");
+                            _logger.LogError($"Game: {tpGameType.TypeName}, CategoryName: {categoryName}, CategoryId currently unsupported: {categoryId}");
                             break;
                     }
 
@@ -167,17 +167,17 @@ namespace HangfireService.Core.Jobs
                             TransId = s.Aggregate(string.Empty, (c, n) => c + (string.IsNullOrEmpty(c) ? string.Empty : ", ") + n.TransId)
                         });
 
-                        var msgRow = "未結帳資料:";
+                        var msgRow = "unpaid information:";
                         foreach (var i in result)
                         {
                             msgRow += $"\r\nTpUserName: {i.TpUserName}, TransId: {i.TransId}";
                         }
-                        subMsg += $"遊戲: {tpGameType.TypeName}, 未結帳筆數: {bettrans.Count()}\r\n{msgRow}\r\n";
+                        subMsg += $"Game: {tpGameType.TypeName}, unpaid transaction count: {bettrans.Count()}\r\n{msgRow}\r\n";
                         //_logger.LogError($"遊戲: {tpGameType.TypeName}, 未結帳筆數: {bettrans.Count()}\r\n{msgRow}");
                     }
                 }
 
-                var msg = $"[結帳檢查: {DateTime.Today:yyyy-MM-dd}] 未結帳總筆數: {cnt}\r\nCategoryName: {categoryName}, CategoryId: {categoryId}, 時間範圍: {begin} ~ {end}";
+                var msg = $"[Billing check: {DateTime.Today:yyyy-MM-dd}] Total number of unpaid transactions: {cnt}\r\nCategoryName: {categoryName}, CategoryId: {categoryId}, time frame: {begin} ~ {end}";
                 if (cnt != 0)
                 {
                     _logger.LogError($"{msg}\r\n{subMsg}");

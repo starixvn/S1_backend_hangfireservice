@@ -63,7 +63,7 @@ namespace HangfireService.Core.Jobs
                     }
                 }
 
-                msg = $"[結帳延遲檢查: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}] 延遲筆數: {cnt}";
+                msg = $"[Checkout delay check: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}] Delay count: {cnt}";
 
                 if (cnt > 0)
                 {

@@ -169,7 +169,7 @@ namespace HangfireService.Core.Jobs
                             }
                             break;
                         default:
-                            _logger.LogWarning($"遊戲: {tpName}, Type 尚不支援: {data.Type}");
+                            _logger.LogWarning($"Game: {tpName}, Type currently unsupported: {data.Type}");
                             break;
                     }
                 }
@@ -182,15 +182,15 @@ namespace HangfireService.Core.Jobs
                         Detail = JsonConvert.SerializeObject(s),
                     });
 
-                    var msgRow = "異常資料: ";
+                    var msgRow = "Exceptional data: ";
                     foreach (var i in result)
                     {
-                        msgRow += $"\r\n遊戲: {i.TpName}, 資料: {i.Detail}";
+                        msgRow += $"\r\ngame: {i.TpName}, information: {i.Detail}";
                     }
-                    subMsg += $"{msgRow}\r\n請優先檢查Type 1資料，如遊戲維護中請忽略，詳細資訊請見Hangfire Log。";
+                    subMsg += $"{msgRow}\r\nPlease prioritize checking Type 1 data. If the game is under maintenance, please ignore it. For detailed information, refer to the Hangfire Log.";
                 }
 
-                var msg = $"[抄單檢查: {now:yyyy-MM-dd HH:mm:ss}] 檢查異常筆數: {checkList.Count} \r\n{subMsg}";
+                var msg = $"[Order duplication check: {now:yyyy-MM-dd HH:mm:ss}] check the count of abnormal records: {checkList.Count} \r\n{subMsg}";
                 if (checkList.Any())
                 {
                     _logger.LogError(msg);

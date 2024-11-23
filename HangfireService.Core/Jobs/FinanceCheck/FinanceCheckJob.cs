@@ -116,12 +116,12 @@ namespace HangfireService.Core.Jobs
 
             if (!checkFilter.Any())
             {
-                result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} 帳務檢查正常 {specialMsg}");
+                result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} account audit check is normal: {specialMsg}");
                 return result.ToString();
             }
 
 
-            result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} 帳務檢查異常  {specialMsg}");
+            result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} account audit check is abnormal.  {specialMsg}");
             var group = checkFilter.GroupBy(i => i.CurrencyId);
             foreach (var check in group)
             {
