@@ -5,6 +5,7 @@ using HangfireService.Extensions;
 using HangfireService.Extensions.ActionFilters;
 
 using Serilog;
+using Serilog.Events;
 using Serilog.Exceptions;
 using Serilog.Formatting.Json;
 using Serilog.Sinks.Network;
@@ -36,7 +37,16 @@ builder.Host.UseSerilog((context, Configuration) =>
         .WriteTo.UDPSink(
             builder.Configuration.GetValue<string>("OpenSearch:Uri"),
             builder.Configuration.GetValue<int>("OpenSearch:Port"),
-            new JsonFormatter());
+            new JsonFormatter())
+        .WriteTo.Sentry(o =>
+        {
+            // Debug and higher are stored as breadcrumbs (default is Information)
+            o.MinimumBreadcrumbLevel = LogEventLevel.Debug;
+            // Warning and higher is sent as event (default is Error)
+            o.MinimumEventLevel = LogEventLevel.Error;
+            o.Dsn = builder.Configuration.GetValue<string>("Sentry:Dsn");
+            o.Environment = builder.Configuration.GetValue<string>("Sentry:Environment");
+        });
 
     OverrideLoggerWriteToLFile(Configuration);
 });
