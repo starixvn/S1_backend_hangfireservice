@@ -41,27 +41,27 @@ namespace HangfireService.Core.Models.Finance
 
             if (stakeDiff != 0)
             {
-                result.Add($"Stake 差額:{stakeDiff:f4}");
+                result.Add($"Stake difference:{stakeDiff:f4}");
             }
             if (validBetDiff != 0)
             {
-                result.Add($"ValidBet 差額:{validBetDiff:f4}");
+                result.Add($"ValidBet difference:{validBetDiff:f4}");
             }
             if (winlostAmountDiff != 0)
             {
-                result.Add($"WinlostAmount 差額:{winlostAmountDiff:f4}");
+                result.Add($"WinlostAmount difference:{winlostAmountDiff:f4}");
             }
             if (revenueDiff != 0)
             {
-                result.Add($"Revenue 差額:{revenueDiff:f4}");
+                result.Add($"Revenue difference:{revenueDiff:f4}");
             }
             if (progressiveBetDiff != 0)
             {
-                result.Add($"ProgressiveBet 差額:{progressiveBetDiff:f4}");
+                result.Add($"ProgressiveBet difference:{progressiveBetDiff:f4}");
             }
             if (progressiveWinDiff != 0)
             {
-                result.Add($"ProgressiveWin 差額:{progressiveWinDiff:f4}");
+                result.Add($"ProgressiveWin difference:{progressiveWinDiff:f4}");
             }
 
             return new FinanceCheckResult(checkType, CurrencyId, result);
@@ -94,7 +94,7 @@ namespace HangfireService.Core.Models.Finance
             var payoutDiff = Payout - check.Payout;
             if (payoutDiff != 0)
             {
-                result.Add($"Payout 差額:{payoutDiff:f4}");
+                result.Add($"Payout difference:{payoutDiff:f4}");
                 if (baseCheck != null)
                 {
                     baseCheck.ErrorList.AddRange(result);
