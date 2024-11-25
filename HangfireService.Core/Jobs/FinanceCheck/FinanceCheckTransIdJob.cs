@@ -124,12 +124,12 @@ namespace HangfireService.Core.Jobs
 
             if (!checkFilter.Any())
             {
-                result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd HH:00:00}] TpId:{TpId} 帳務單號檢查正常");
+                result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd HH:00:00}] TpId:{TpId} The account number check is normal");
                 _logger.LogInformation(result.ToString());
                 return result.ToString();
             }
 
-            result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd HH:00:00}] TpId:{TpId} 帳務單號檢查異常");
+            result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd HH:00:00}] TpId:{TpId} The account number check is abnormal");
             foreach (var check in checkResults)
             {
                 result.AppendLine($"\u3000\u3000{check.FinanceCheckTransIdType}");
@@ -144,11 +144,11 @@ namespace HangfireService.Core.Jobs
                 }
                 else if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.結算與交易金額檢查)
                 {
-                    _logger.LogError($"{check.FinanceCheckTransIdType}-異常資料 TpId:{TpId},異常筆數: {check.Count}\r\n{check.ErrorData}");
+                    _logger.LogError($"{check.FinanceCheckTransIdType}-Abnormal data TpId:{TpId},Abnormal count: {check.Count}\r\n{check.ErrorData}");
                 }
                 else
                 {
-                    _logger.LogError($"{check.FinanceCheckTransIdType}-異常資料 TpId:{TpId},異常筆數: {check.Count}\r\n{JsonConvert.SerializeObject(check.ErrorList)}");
+                    _logger.LogError($"{check.FinanceCheckTransIdType}-Abnormal data TpId:{TpId},Abnormal entries: {check.Count}\r\n{JsonConvert.SerializeObject(check.ErrorList)}");
                 }
             }
             return result.ToString();
