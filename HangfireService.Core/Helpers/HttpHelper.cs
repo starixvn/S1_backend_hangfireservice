@@ -108,6 +108,32 @@ namespace HangfireService.Core.Helpers
             return response;
         }
 
+        public async Task<HttpResponseMessage> HttpPostNoProxyAsync(string url, Dictionary<string, string> headerParams, string parameters, string contentType)
+        {
+            LogContext.PushProperty("RequestId", Guid.NewGuid().ToString());
+            LogContext.PushProperty("HttpHelper.Request.URL", url);
+            HttpClientHandler handler = new HttpClientHandler();
+
+            using var client = new HttpClient(handler);
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(contentType));
+            if (headerParams != null)
+            {
+                foreach (var param in headerParams)
+                {
+                    client.DefaultRequestHeaders.Add(param.Key, param.Value);
+                }
+            }
+
+            _logger.LogInformation($"HttpHelper.Request.BODY:{parameters}");
+
+            using var data = new StringContent(parameters, Encoding.UTF8, contentType);
+            var response = await client.PostAsync(url, data);
+            var result = await response.Content.ReadAsStringAsync();
+
+            _logger.LogInformation($"HttpHelper.Request.Response:{result}");
+            return response;
+        }
+
         public async Task<HttpResponseMessage> HttpFromPostAsync(string url, Dictionary<string, string> headerParams, Dictionary<string, string> parameters, string contentType)
         {
             LogContext.PushProperty("RequestId", Guid.NewGuid().ToString());
