@@ -59,16 +59,15 @@ namespace HangfireService.Core.Jobs
             foreach (var job in option.BatchList)
             {
                 var crmData = await _reportBackupDBDataLayer.GetCrmData(job.SP, startTime, endTime);
-                //var csv = ToCsv(crmData);
-                var json = JsonConvert.SerializeObject(crmData);
+                var csv = ToCsv(crmData);
 
                 //SFTP路徑
                 string remoteDirectory = $"{targetTime.Year}-{targetTime.Month}-{targetTime.Day}";
                 //檔名
-                string fileName = $"{job.FileName}_{targetTime.Year}-{targetTime.Month}-{targetTime.Day}.json";
-                if (!string.IsNullOrEmpty(json))
+                string fileName = $"{job.FileName}_{targetTime.Year}-{targetTime.Month}-{targetTime.Day}.csv";
+                if (!string.IsNullOrEmpty(csv))
                 {
-                    SendSFTP(json, remoteDirectory, fileName);
+                    SendSFTP(csv, remoteDirectory, fileName);
                     uploadFileCount++;
                 }
             }
@@ -96,7 +95,7 @@ namespace HangfireService.Core.Jobs
             return result;
         }
 
-        private void SendSFTP(string json, string remoteDirectory, string fileName)
+        private void SendSFTP(string csv, string remoteDirectory, string fileName)
         {
             using (var sftp = new SftpClient(_cRMSFTPConfig.Url, _cRMSFTPConfig.User, _cRMSFTPConfig.Password))
             {
@@ -111,7 +110,7 @@ namespace HangfireService.Core.Jobs
                         sftp.CreateDirectory(remoteDirectory);
                     }
 
-                    using (var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(json)))
+                    using (var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(csv)))
                     {
                         // 上傳 MemoryStream 到 SFTP 服務器
                         sftp.UploadFile(memoryStream, Path.Combine(remoteDirectory, fileName));
@@ -145,7 +144,7 @@ namespace HangfireService.Core.Jobs
             var rows = records.Select(record =>
             {
                 var values = properties.Select(property => ((IDictionary<string, object>)record)[property]?.ToString() ?? string.Empty);
-                return string.Join(",", values);
+                return string.Join("\t", values);
             });
 
             // 合併欄位名稱和數據
