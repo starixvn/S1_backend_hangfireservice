@@ -138,7 +138,7 @@ namespace HangfireService.Core.Jobs
             //  獲取第一個紀錄的屬性名稱作為CSV欄位名稱
             var firstRecord = records.First();
             var properties = ((IDictionary<string, object>)firstRecord).Keys.ToList();
-            var header = string.Join(",", properties);
+            var header = string.Join("\t", properties);
 
             // 獲取CSV每一行的數據
             var rows = records.Select(record =>
