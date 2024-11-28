@@ -59,7 +59,7 @@ namespace HangfireService.Core.Jobs
                     else
                     {
                         _logger.LogError($"Error in retrieving inspection data: {tpId}");
-                        throw new InvalidOperationException($"Error in retrieving inspection data: {tpId}");
+                        //throw new InvalidOperationException($"Error in retrieving inspection data: {tpId}");
                     }
                 }
 
