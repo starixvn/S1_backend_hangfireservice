@@ -4,7 +4,7 @@ using Amazon.CloudWatchLogs.Model;
 
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.Models.ThirdParty.Saba;
-
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 using Newtonsoft.Json;
@@ -15,22 +15,22 @@ public class AWSCloudWatchLogsHelper
 {
     private readonly IAmazonCloudWatchLogs _client;
     private readonly ILogger<AWSCloudWatchLogsHelper> _logger;
-    public AWSCloudWatchLogsHelper(IServiceProvider provider)
+
+    public AWSCloudWatchLogsHelper(IServiceProvider provider, IConfiguration configuration)
     {
         _logger = provider.GetRequiredService<ILogger<AWSCloudWatchLogsHelper>>();
 
         var configBll = provider.GetRequiredService<ConfigBLL>();
-        var proxyConfig = configBll.GetConfigValue<ProxyConfig>("ProxySetting");
 
         var config = new AmazonCloudWatchLogsConfig
         {
             RegionEndpoint = RegionEndpoint.APSoutheast1
         };
 
-        if (!string.IsNullOrEmpty(proxyConfig.ProxyHost))
+        if (!string.IsNullOrWhiteSpace(configuration.GetValue<string>("ProxyHost")))
         {
-            config.ProxyHost = proxyConfig.ProxyHost;
-            config.ProxyPort = proxyConfig.ProxyPort;
+            config.ProxyHost = configuration.GetValue<string>("ProxyHost");
+            config.ProxyPort = configuration.GetValue<int>("ProxyPort");
         }
 
         var awsCloudWatchConfig = configBll.GetConfigValue<AwsCloudWatchConfig>("AwsCloudWatch");

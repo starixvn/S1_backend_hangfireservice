@@ -15,6 +15,7 @@ using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Models.Options;
 using HangfireService.Core.ThirdParty;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Serilog.Context;
@@ -35,7 +36,7 @@ namespace HangfireService.Core.Jobs
         private static List<JobOption> _reportJobList;
         private readonly Dictionary<string, LicenseReportConfig> _licenseReportConfig;
 
-        public LicenseReportJob(IServiceProvider provider) : base(provider)
+        public LicenseReportJob(IServiceProvider provider, IConfiguration configuration) : base(provider)
         {
             LogContext.PushProperty("ClassName", GetType().Name);
             _reportDbDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
@@ -44,9 +45,9 @@ namespace HangfireService.Core.Jobs
             _excelHelper = provider.GetRequiredService<ExcelHelper>();
 
             var configBll = provider.GetRequiredService<ConfigBLL>();
-            var proxyConfig = configBll.GetConfigValue<ProxyConfig>("ProxySetting");
-            _proxyHost = proxyConfig.ProxyHost;
-            _proxyPort = proxyConfig.ProxyPort;
+
+            _proxyHost = configuration.GetValue<string>("ProxyHost");
+            _proxyPort = configuration.GetValue<int>("ProxyPort");
 
             var awsConfig = configBll.GetConfigValue<AwsConfig>("HangfireAwsKey");
             _awsAccessKey = awsConfig?.AccessKey;
@@ -117,7 +118,6 @@ namespace HangfireService.Core.Jobs
                 BackgroundJob.Schedule(() => ExecuteAsync(jobName, jobOption, null, null), TimeSpan.FromMinutes(5));
                 return JsonConvert.SerializeObject(ex);
             }
-
         }
 
         private static DateTime GetLastDayOfMonth(DateTime dateTime)

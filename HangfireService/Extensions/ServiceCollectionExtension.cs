@@ -142,36 +142,26 @@ namespace HangfireService.Extensions
                 .AddSingleton<FPSService>();
         }
 
-        public static IServiceCollection RegisterHttpClient(this IServiceCollection services)
+        public static IServiceCollection RegisterHttpClient(this IServiceCollection services, IConfiguration configuration)
         {
-            var provider = services.BuildServiceProvider();
-
-            var proxyConfig = provider.GetRequiredService<ConfigBLL>().GetConfigValue<ProxyConfig>("ProxySetting");
-            if (proxyConfig != default) 
+            var proxyHost = configuration.GetValue<string>("ProxyHost");
+            var proxyPort = configuration.GetValue<int>("ProxyPort");
+            if (!string.IsNullOrWhiteSpace(proxyHost))
             {
-                var proxyHost = proxyConfig.ProxyHost;
-                var proxyPort = proxyConfig.ProxyPort;
-
-                if (!string.IsNullOrEmpty(proxyHost))
+                var proxy = new HttpClientHandler
                 {
-                    var proxy = new HttpClientHandler
-                    {
-                        Proxy = new WebProxy(proxyHost, proxyPort),
-                        UseProxy = true
-                    };
+                    Proxy = new WebProxy(proxyHost, proxyPort),
+                    UseProxy = true
+                };
 
-                    services.AddHttpClient("with_proxy")
-                        .ConfigurePrimaryHttpMessageHandler(() => proxy);
-                }
-                else
-                {
-                    services.AddHttpClient();
-                }
+                services.AddHttpClient("with_proxy")
+                    .ConfigurePrimaryHttpMessageHandler(() => proxy);
             }
+
+            services.AddHttpClient();
 
             return services;
         }
-
 
         public static IServiceCollection RegisterPromotion(this IServiceCollection services)
         {
@@ -283,7 +273,7 @@ namespace HangfireService.Extensions
             {
                 //設定SiteConfig
                 var siteConfig = siteConfigGroup.FirstOrDefault(i => i.Key == serverInfo.SiteId || i.Key == 0);
-                if(siteConfig != default)
+                if (siteConfig != default)
                 {
                     var config = siteConfig.ToDictionary(i => i.ConfigKey, i => i.ConfigValue);
                     services.AddSingleton(new SiteConfig(serverInfo, config));
@@ -293,6 +283,3 @@ namespace HangfireService.Extensions
         }
     }
 }
-
-
-

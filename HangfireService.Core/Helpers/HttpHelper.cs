@@ -1,9 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
-
-using HangfireService.Core.Models.Options;
-
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 using Serilog.Context;
@@ -17,16 +15,15 @@ namespace HangfireService.Core.Helpers
         private readonly string _proxyHost;
         private readonly int _proxyPort;
 
-        public HttpHelper(IServiceProvider provider)
+        public HttpHelper(IServiceProvider provider, IConfiguration configuration)
         {
             var clientFactory = provider.GetRequiredService<IHttpClientFactory>();
             _logger = provider.GetRequiredService<ILogger<HttpHelper>>();
-            var proxyConfig = provider.GetRequiredService<ConfigBLL>().GetConfigValue<ProxyConfig>("ProxySetting");
 
-            _proxyHost = proxyConfig.ProxyHost;
-            _proxyPort = proxyConfig.ProxyPort;
+            _proxyHost = configuration.GetValue<string>("ProxyHost");
+            _proxyPort = configuration.GetValue<int>("ProxyPort");
 
-            _client = _proxyHost != null
+            _client = !string.IsNullOrWhiteSpace(_proxyHost)
                 ? clientFactory.CreateClient("with_proxy")
                 : clientFactory.CreateClient();
         }
@@ -40,7 +37,7 @@ namespace HangfireService.Core.Helpers
             LogContext.PushProperty("RequestId", Guid.NewGuid().ToString());
             LogContext.PushProperty("HttpHelper.Request.URL", url);
             HttpClientHandler handler = null;
-            if (!string.IsNullOrEmpty(_proxyHost))
+            if (!string.IsNullOrWhiteSpace(_proxyHost))
             {
                 handler = new HttpClientHandler()
                 {
@@ -170,7 +167,6 @@ namespace HangfireService.Core.Helpers
 
             _logger.LogInformation($"HttpHelper.Request.Response:{result}");
             return response;
-
         }
 
         public async Task<HttpResponseMessage> HttpGetAsync(string url, Dictionary<string, string> headerParams, string contentType)
@@ -210,6 +206,5 @@ namespace HangfireService.Core.Helpers
             _logger.LogInformation($"HttpHelper.Request.Response:{response.Content.ReadAsStringAsync().Result}");
             return response;
         }
-
     }
 }

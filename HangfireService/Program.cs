@@ -65,7 +65,7 @@ builder.Services
     .AddConfig()
     .AddServerInfo()
     .AddSiteConfig()
-    .RegisterHttpClient();
+    .RegisterHttpClient(builder.Configuration);
 
 var app = builder.Build();
 
