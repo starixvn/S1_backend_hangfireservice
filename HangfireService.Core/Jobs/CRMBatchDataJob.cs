@@ -143,7 +143,11 @@ namespace HangfireService.Core.Jobs
             // 獲取CSV每一行的數據
             var rows = records.Select(record =>
             {
-                var values = properties.Select(property => ((IDictionary<string, object>)record)[property]?.ToString() ?? string.Empty);
+                var values = properties.Select(property =>
+                {
+                    var str = ((IDictionary<string, object>)record)[property]?.ToString() ?? string.Empty;
+                    return str.Replace("\t", ""); // 移除tab符號
+                });
                 return string.Join("\t", values);
             });
 
