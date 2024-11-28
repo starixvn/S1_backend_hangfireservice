@@ -56,11 +56,11 @@ namespace HangfireService.Core.Jobs
                             }
                         }
                     }
-                    else
-                    {
-                        _logger.LogError($"Error in retrieving inspection data: {tpId}");
-                        //throw new InvalidOperationException($"Error in retrieving inspection data: {tpId}");
-                    }
+                    //else
+                    //{
+                    //    _logger.LogError($"Error in retrieving inspection data: {tpId}");
+                    //    throw new InvalidOperationException($"Error in retrieving inspection data: {tpId}");
+                    //}
                 }
 
                 msg = $"[Checkout delay check: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}] Delay count: {cnt}";
@@ -68,7 +68,7 @@ namespace HangfireService.Core.Jobs
                 if (cnt > 0)
                 {
                     _telegramBotHelper.SendMessage(msg);
-                    _logger.LogError($"{msg}\r\n{msgRow}");
+                    //_logger.LogError($"{msg}\r\n{msgRow}");
                 }
                 else
                 {
