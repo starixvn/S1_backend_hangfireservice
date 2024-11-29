@@ -24,23 +24,18 @@ namespace HangfireService.Core.Jobs
     {
         private readonly MainDBDataLayer _mainDbDataLayer;
         private readonly ReportDBDataLayer _reportDbDataLayer;
-        private readonly HttpHelper _httpHelper;
-        private readonly string _letsTalkGroupName;
-        private readonly string _commonServiceHost;
+       
+        private readonly TelegramBotHelper _telegramBotHelper;
 
         public TpBettingCheck(IServiceProvider provider) : base(provider)
         {
             LogContext.PushProperty("ClassName", GetType().Name);
             _mainDbDataLayer = provider.GetRequiredService<MainDBDataLayer>();
             _reportDbDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
-            _httpHelper = provider.GetRequiredService<HttpHelper>();
 
-            var configBll = provider.GetRequiredService<ConfigBLL>();
-
-            // 共用同一組設定
-            _letsTalkGroupName = configBll.GetConfigValue<LetsTalkConfig>("HangfireLetsTalk").MonitoringGroupName;
-            _commonServiceHost = configBll.GetConfigValueByEnvironment<ServiceHostConfig>("ServiceHost").CommonService;
-        }
+          
+            _telegramBotHelper = provider.GetRequiredService<TelegramBotHelper>();
+            }
 
         [DisplayName("{0}")]
         public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
@@ -77,7 +72,8 @@ namespace HangfireService.Core.Jobs
 
                         if (!maintain.Any())
                         {
-                            await SandLesTalkMessage(data, data.LastBettingTime);
+                            var message = MakeAlertMessage(data, data.LastBettingTime);
+                            _telegramBotHelper.SendMessage(message);
                         }
                     }
                 }
@@ -88,32 +84,6 @@ namespace HangfireService.Core.Jobs
                 _logger.LogError(ex, ex.Message);
                 return JsonConvert.SerializeObject(ex);
             }
-        }
-
-        private async Task<bool> SandLesTalkMessage(TpBettingCheckModel smsOption, DateTime lastBettingTime)
-        {
-            try
-            {
-                var postData = new
-                {
-                    GroupName = _letsTalkGroupName,
-                    Message = MakeAlertMessage(smsOption, lastBettingTime)
-                };
-
-                var parameters = JsonConvert.SerializeObject(postData);
-                var httpResponse = await _httpHelper.HttpPost1Async($"{_commonServiceHost}LetsTalk/SendMessage",
-                    null, parameters, "application/json");
-                if (httpResponse.StatusCode == HttpStatusCode.OK)
-                {
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-                return false;
-            }
-            return false;
         }
 
         private static string MakeAlertMessage(TpBettingCheckModel model, DateTime lastBettingTime)
