@@ -43,77 +43,76 @@ namespace HangfireService.Core.Jobs
         [DisplayName("{0}")]
         public async Task<object> ExecuteAsync(string jobName, JobOption jobOption, PerformContext context, IJobCancellationToken cancellationToken)
         {
-            //var sw = Stopwatch.StartNew();
+            var sw = Stopwatch.StartNew();
             var message = $"{jobName} ||";
 
-            //var lockKey = $"AllArchiveJob";
-            //var lockValue = context.BackgroundJob.Id; // 每次取鎖使用唯一值，確保為同一個執行序所執行
-            //var lockExpiry = TimeSpan.FromMinutes(2); //lock 2 mins   
-            //if (!_redisHelper.TryCreateLock(lockKey, lockValue, lockExpiry, RedisDataBase.Shared))
-            //{
-            //    return EndJob($"{message} Job is lock.");
-            //}
+            var lockKey = $"AllArchiveJob";
+            var lockValue = context.BackgroundJob.Id; // 每次取鎖使用唯一值，確保為同一個執行序所執行
+            var lockExpiry = TimeSpan.FromMinutes(2); //lock 2 mins   
+            if (!_redisHelper.TryCreateLock(lockKey, lockValue, lockExpiry, RedisDataBase.Shared))
+            {
+                return EndJob($"{message} Job is lock.");
+            }
 
-            //try
-            //{
-            //    var option = JsonConvert.DeserializeObject<AllArchiveOption>(jobOption.Parameters);
+            try
+            {
+                var option = JsonConvert.DeserializeObject<AllArchiveOption>(jobOption.Parameters);
 
-            //    // 檢查是否在DB離峰時間
-            //    var taipeiLocalTime = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(8)).DateTime;
-            //    if (!taipeiLocalTime.IsBetween(option.SafeRangeStartTime, option.SafeRangeEndTime))
-            //    {
-            //        return EndJob($"{message} Database is busy.");
-            //    }
+                // 檢查是否在DB離峰時間
+                var taipeiLocalTime = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(8)).DateTime;
+                if (!taipeiLocalTime.IsBetween(option.SafeRangeStartTime, option.SafeRangeEndTime))
+                {
+                    return EndJob($"{message} Database is busy.");
+                }
 
-            //    // 判斷目前要搬哪個Archive
-            //    var (archiveDetail, archiveList) = GetArchiveData(option, out bool isContinue);
-            //    if (archiveDetail == null)
-            //    {
-            //        return EndJob($"{message} archive data complete.");
-            //    }
+                // 判斷目前要搬哪個Archive
+                var (archiveDetail, archiveList) = GetArchiveData(option, out bool isContinue);
+                if (archiveDetail == null)
+                {
+                    return EndJob($"{message} archive data complete.");
+                }
 
-            //    //執行Archive作業
-            //    var success = 0;
-            //    Parallel.ForEach(
-            //        archiveList,
-            //        new ParallelOptions()
-            //        {
-            //            MaxDegreeOfParallelism = option.TaskCount
-            //        },
-            //        async (data) =>
-            //        {
-            //            int excuteResult = await ExcuteArchive(archiveDetail, data);
-            //            Interlocked.Add(ref success, excuteResult);
-            //            cancellationToken.ThrowIfCancellationRequested();
-            //        });
+                //執行Archive作業
+                var success = 0;
+                Parallel.ForEach(
+                    archiveList,
+                    new ParallelOptions()
+                    {
+                        MaxDegreeOfParallelism = option.TaskCount
+                    },
+                    async (data) =>
+                    {
+                        int excuteResult = await ExcuteArchive(archiveDetail, data);
+                        Interlocked.Add(ref success, excuteResult);
+                        cancellationToken.ThrowIfCancellationRequested();
+                    });
 
-            //    //判斷是否啟動下一次Job
-            //    if (isContinue)
-            //    {
-            //        BackgroundJob.Enqueue(() => ExecuteAsync(jobName, jobOption, null, null));
-            //    }
+                //判斷是否啟動下一次Job
+                if (isContinue)
+                {
+                    BackgroundJob.Enqueue(() => ExecuteAsync(jobName, jobOption, null, null));
+                }
 
-            //    if (success > 0)
-            //    {
-            //        message += $" {archiveDetail.ArchiveName} archive {success} data complete. TotalSeconds:{sw.Elapsed.TotalSeconds}.";
-            //    }
-            //}
-            //catch (OperationCanceledException ex)
-            //{
-            //    message += $" || {ex.Message}";
-            //    _logger.LogWarning(ex, message);
-            //}
-            //catch (Exception ex)
-            //{
-            //    BackgroundJob.Schedule(() => ExecuteAsync(jobName, jobOption, null, null), TimeSpan.FromSeconds(15));
-            //    message += $" || {ex.Message}";
-            //    _logger.LogError(ex, message);
-            //}
-            //finally
-            //{
-            //    _redisHelper.UnLock(lockKey, lockValue, RedisDataBase.Shared);
-            //}
-
+                if (success > 0)
+                {
+                    message += $" {archiveDetail.ArchiveName} archive {success} data complete. TotalSeconds:{sw.Elapsed.TotalSeconds}.";
+                }
+            }
+            catch (OperationCanceledException ex)
+            {
+                message += $" || {ex.Message}";
+                _logger.LogWarning(ex, message);
+            }
+            catch (Exception ex)
+            {
+                BackgroundJob.Schedule(() => ExecuteAsync(jobName, jobOption, null, null), TimeSpan.FromSeconds(15));
+                message += $" || {ex.Message}";
+                _logger.LogError(ex, message);
+            }
+            finally
+            {
+                _redisHelper.UnLock(lockKey, lockValue, RedisDataBase.Shared);
+            }
             return EndJob(message);
 
             string EndJob(string message)

@@ -1,123 +1,120 @@
 ﻿using System.ComponentModel;
-
 using Hangfire;
 using Hangfire.Dashboard.Management.Pages;
-
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
-
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 
-namespace HangfireService.Core.Jobs
+namespace HangfireService.Core.Jobs;
+
+public static class MyJobManager
 {
-    public static class MyJobManager
+    private static IReadOnlyDictionary<string, List<JobOption>> _jobGroups;
+
+    public static void SettingJob(Dictionary<string, List<JobOption>> jobGroups)
     {
-        private static IReadOnlyDictionary<string, List<JobOption>> _jobGroups;
+        _jobGroups = jobGroups;
+    }
 
-        public static void SettingJob(Dictionary<string, List<JobOption>> jobGroups)
+    public static IReadOnlyDictionary<string, List<JobOption>> GetJobGroups()
+    {
+        return _jobGroups;
+    }
+
+    public static void AddRecurringJob(IServiceProvider provider)
+    {
+        var webHostEnvironment = provider.GetRequiredService<IWebHostEnvironment>();
+        var jobManager = new RecurringJobManager();
+
+        foreach (var jobGroup in _jobGroups)
         {
-            _jobGroups = jobGroups;
-        }
-
-        public static IReadOnlyDictionary<string, List<JobOption>> GetJobGroups()
-        {
-            return _jobGroups;
-        }
-
-        public static void AddRecurringJob(IServiceProvider provider)
-        {
-            var webHostEnvironment = provider.GetRequiredService<IWebHostEnvironment>();
-            var jobManager = new RecurringJobManager();
-
-            foreach (var jobGroup in _jobGroups)
+            var queue = jobGroup.Key.ToLower();
+            var mins = 0;
+            foreach (var option in jobGroup.Value)
             {
-                var queue = jobGroup.Key.ToLower();
-                var mins = 0;
-                foreach (var option in jobGroup.Value)
+                if (option.Enable)
                 {
-                    if (option.Enable)
+                    var job = provider.GetServices<IScheduledJob>()
+                        .FirstOrDefault(job => job.GetType().Name.Equals(option.ClassName, StringComparison.OrdinalIgnoreCase));
+
+                    if (job != null)
                     {
-                        var job = provider.GetServices<IScheduledJob>()
-                            .FirstOrDefault(job => job.GetType().Name.Equals(option.ClassName, StringComparison.OrdinalIgnoreCase));
 
-                        if (job != null)
+                        // TODO: Stop SMSCheckStatusJob because it spam sentry
+                        if (option.JobName != "SMSCheckStatus")
                         {
+                            jobManager.AddOrUpdate(
+                                recurringJobId: option.JobName,
+                                methodCall: () => job.ExecuteAsync(option.JobName, option, null, null),
+                                cronExpression: option.Cron,
+                                queue: queue,
+                                timeZone: TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time"));
 
-                            // TODO: Stop SMSCheckStatusJob because it spam sentry
-                            if (option.JobName != "SMSCheckStatus")
-                            {
-                                jobManager.AddOrUpdate(
-                                    recurringJobId: option.JobName,
-                                    methodCall: () => job.ExecuteAsync(option.JobName, option, null, null),
-                                    cronExpression: option.Cron,
-                                    queue: queue,
-                                    timeZone: TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time"));
-
-                                //都先設定為暫停狀態
-                                Pause(option.JobName);
-                            }
-                            
+                            //都先設定為暫停狀態
+                            Pause(option.JobName);
                         }
+                        
                     }
                 }
             }
-
-            //全部job延遲時啟動    
-            if (!webHostEnvironment.EnvironmentName.Equals("Development"))
-            {
-                AllDelayStart();
-            }
         }
 
-        public static void Pause(string jobName)
+        //全部job延遲時啟動    
+        if (!webHostEnvironment.IsDevelopment())
         {
-            using var connection = JobStorage.Current.GetConnection();
-            var job = connection.GetRecurringJob(jobName);
-            if (job != null && !job.PauseState)
-            {
-                connection.SetPauseState(jobName, true);
-            }
+            AllDelayStart();
         }
+    }
 
-        public static void Start(string jobName)
+    public static void Pause(string jobName)
+    {
+        using var connection = JobStorage.Current.GetConnection();
+        var job = connection.GetRecurringJob(jobName);
+        if (job != null && !job.PauseState)
         {
-            using var connection = JobStorage.Current.GetConnection();
-            var job = connection.GetRecurringJob(jobName);
-            if (job != null && job.PauseState)
-            {
-                connection.SetPauseState(jobName, false);
-            }
+            connection.SetPauseState(jobName, true);
         }
+    }
 
-        [DisplayName("{0} restart after {1} hours, because {2}.")]
-        public static void RestartByHours(string jobName, int pauseHours, string reason)
+    public static void Start(string jobName)
+    {
+        using var connection = JobStorage.Current.GetConnection();
+        var job = connection.GetRecurringJob(jobName);
+        if (job != null && job.PauseState)
         {
-            using var connection = JobStorage.Current.GetConnection();
-            if (connection.GetRecurringJob(jobName).PauseState)
-            {
-                connection.SetPauseState(jobName, false);
-            }
+            connection.SetPauseState(jobName, false);
         }
+    }
 
-        public static void AllDelayStart()
+    [DisplayName("{0} restart after {1} hours, because {2}.")]
+    public static void RestartByHours(string jobName, int pauseHours, string reason)
+    {
+        using var connection = JobStorage.Current.GetConnection();
+        if (connection.GetRecurringJob(jobName).PauseState)
         {
-            using var connection = JobStorage.Current.GetConnection();
-            var seconds = 0;
-            foreach (var job in connection.GetRecurringJobs())
-            {
-                BackgroundJob.Schedule(() => StartAfterSeconds(job.Id, seconds), TimeSpan.FromSeconds(seconds));
-                seconds += 5;
-            }
+            connection.SetPauseState(jobName, false);
         }
+    }
 
-        [DisplayName("{0} start after {1} Seconds")]
-        public static void StartAfterSeconds(string jobName, int Seconds)
+    public static void AllDelayStart()
+    {
+        using var connection = JobStorage.Current.GetConnection();
+        var seconds = 0;
+        foreach (var job in connection.GetRecurringJobs())
         {
-            using var connection = JobStorage.Current.GetConnection();
-            if (connection.GetRecurringJob(jobName).PauseState)
-            {
-                connection.SetPauseState(jobName, false);
-            }
+            BackgroundJob.Schedule(() => StartAfterSeconds(job.Id, seconds), TimeSpan.FromSeconds(seconds));
+            seconds += 5;
+        }
+    }
+
+    [DisplayName("{0} start after {1} Seconds")]
+    public static void StartAfterSeconds(string jobName, int Seconds)
+    {
+        using var connection = JobStorage.Current.GetConnection();
+        if (connection.GetRecurringJob(jobName).PauseState)
+        {
+            connection.SetPauseState(jobName, false);
         }
     }
 }

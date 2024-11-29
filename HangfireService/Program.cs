@@ -1,9 +1,7 @@
 using Hangfire;
-
 using HangfireService.Core.Jobs;
 using HangfireService.Extensions;
 using HangfireService.Extensions.ActionFilters;
-
 using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
@@ -15,9 +13,7 @@ builder.Configuration.AddJsonFile("appsettings.json",
         optional: true,
         reloadOnChange: false);
 var remoteUrls = GetRemoteUrls();
-builder.Environment.EnvironmentName = builder.Configuration.GetSection("env").Get<string>();
 
-//remoteUrls = builder.Configuration.CheckLocalConfig(builder.Environment, args, remoteUrls);
 builder.Configuration.AddRemoteJsonConfig(remoteUrls);
 
 var excludesMessage = builder.Configuration.GetSection("ExcludesMessage").Get<string[]>();
@@ -70,7 +66,7 @@ builder.Services
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.EnvironmentName.Equals("LOCAL"))
+if (!builder.Environment.IsProduction())
 {
     app.UseDeveloperExceptionPage();
 }
