@@ -68,18 +68,11 @@ public class AllArchiveJob : BaseJob, IScheduledJob
 
             //執行Archive作業
             var success = 0;
-            Parallel.ForEach(
-                archiveList,
-                new ParallelOptions()
-                {
-                    MaxDegreeOfParallelism = option.TaskCount
-                },
-                async (data) =>
-                {
-                    int excuteResult = await ExcuteArchive(archiveDetail, data);
-                    Interlocked.Add(ref success, excuteResult);
-                    cancellationToken.ThrowIfCancellationRequested();
-                });
+            foreach (var item in archiveList)
+            {
+                var excuteResult = await ExcuteArchive(archiveDetail, item);
+                success += excuteResult;
+            }
 
             //判斷是否啟動下一次Job
             if (isContinue)

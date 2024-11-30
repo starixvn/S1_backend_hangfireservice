@@ -49,7 +49,7 @@ public static class MyJobManager
                                 methodCall: () => job.ExecuteAsync(option.JobName, option, null, null),
                                 cronExpression: option.Cron,
                                 queue: queue,
-                                timeZone: TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time"));
+                                timeZone: TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
 
                             //都先設定為暫停狀態
                             Pause(option.JobName);
