@@ -195,6 +195,8 @@ public static class ServiceCollectionExtension
         var enableJobList = configService.Query<JobOption>("Service_ScheduledJob_Get", new { Project = "Hangfire" })
             .Where(r => r.Enable);
 
+        enableJobList = enableJobList.Where(r => r.JobName == "AllArchiveJob");
+
         // 依照Job的Group進行分類整理並設定到MyJobManager
         var jobGroups = enableJobList.GroupBy(i => i.Group).ToDictionary(i => i.Key, i => i.ToList());
         services.AddSingleton(serviceProvider => jobGroups);
