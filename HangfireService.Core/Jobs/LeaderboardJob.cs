@@ -65,7 +65,7 @@ namespace HangfireService.Core.Jobs
                             // 計算WTurnover
                             timezone = timezone.Replace("+", "");
                             var calculateDate = option.ExecuteType == ExecuteType.Months ?
-                                startTime.ToString("yyyyMM") : new DateTimeOffset(startTime, TimeSpan.Parse(timezone)).ToString("yyyyMM");
+                                startTime.ToString("yyyyMM") :  new DateTimeOffset(startTime, TimeSpan.Zero).ToOffset(TimeSpan.Parse(timezone)).ToString("yyyyMM");
                             
                             var pointCalculation = _reportDBDataLayer.GetLeaderboardPointCalculation(siteId, calculateDate);
                             foreach (var detail in leaderboardList)
