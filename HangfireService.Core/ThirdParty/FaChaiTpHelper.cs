@@ -1,4 +1,5 @@
 ﻿using HangfireService.Core.DataLayers;
+using HangfireService.Core.Enums;
 using HangfireService.Core.Extensions;
 using HangfireService.Core.Models.DBs;
 using HangfireService.Core.Models.Enums;
@@ -15,7 +16,7 @@ namespace HangfireService.Core.ThirdParty
         public bool BindCommonCurrency => true;
         public TimeOption TimeOptionId => TimeOption.TransTime;
 
-        public int TpId => 55;
+        public int TpId => (int)Tp.FaChai;
 
         private readonly ReportDBDataLayer _reportDbDataLayer;
         private readonly IEnumerable<TpCurrency> _tpCurrency;
