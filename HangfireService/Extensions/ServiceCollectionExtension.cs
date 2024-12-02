@@ -1,8 +1,10 @@
 ﻿using System.Net;
+using System.Reflection;
 using Hangfire;
 using Hangfire.Console.Extensions;
 using Hangfire.Dashboard.Management;
 using Hangfire.MemoryStorage;
+using HangfireService.Core.Attributes;
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Helpers;
 using HangfireService.Core.Jobs;
@@ -223,7 +225,10 @@ public static class ServiceCollectionExtension
         var tpList = provider.GetRequiredService<ThirdPartyManager>().GetAllTpList();
         services.AddSingleton(provider => tpList);
 
-        var financeTypes = typeof(IFinanceTpHelper).Assembly.GetTypes().Where(item => item.GetInterfaces().Contains(typeof(IFinanceTpHelper)));
+        var financeTypes = typeof(IFinanceTpHelper).Assembly.GetTypes().Where(
+            item => item.GetInterfaces().Contains(typeof(IFinanceTpHelper))
+            && item.GetCustomAttributes(typeof(EnabledAttribute), true).Any()
+            );
         foreach (var tp in financeTypes)
         {
             services.AddSingleton(provider => (IFinanceTpHelper)Activator.CreateInstance(tp, new object[] { provider }));

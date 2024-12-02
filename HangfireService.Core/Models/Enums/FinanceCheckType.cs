@@ -1,10 +1,16 @@
-﻿namespace HangfireService.Core.Models.Enums
+﻿using System.ComponentModel;
+using HangfireService.Core.Attributes;
+
+namespace HangfireService.Core.Models.Enums
 {
     public enum FinanceCheckType
     {
-        結算資料與交易資料檢查,
-        結算資料與第三方匯總檢查,
-        交易資料與第三方匯總檢查,
+        [Description("Compare between sum of TpBetRecord and Sum of Bettrans")]
+        CompareTpBetRecordSumAndBettrans,
+        [Description("Compare between Daily Summary from Third Party and sum of TpBetRecord")]
+        CompareTpDailySummaryAndTpBetRecordSum,
+        [Description("Compare between sum of Bettrans and Daily Summary from Third Party")]
+        CompareBettransAndTpDailySummary,
     }
 
     public enum FinanceCheckTransIdType

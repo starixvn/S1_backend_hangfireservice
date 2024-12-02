@@ -56,7 +56,8 @@ namespace HangfireService.Core.Jobs
                 {
                     if (!_tpHandler.TryGetValue(tpBetRecord.Key, out IFinanceTpHelper tpHelper))
                     {
-                        _logger.LogInformation($"TpId:{tpBetRecord.Key} NotImplemented finance check");
+                        var msg = $"TpId:{tpBetRecord.Key} NotImplemented finance check";
+                        _logger.LogInformation(msg);
                         continue;
                     }
 
@@ -125,13 +126,13 @@ namespace HangfireService.Core.Jobs
             var group = checkFilter.GroupBy(i => i.CurrencyId);
             foreach (var check in group)
             {
-                result.AppendLine($"\u3000CurrencyId:{check.Key}");
-                foreach (var item in check.OrderBy(i => i.FinanceCheckType))
+                result.AppendLine($"CurrencyId:{check.Key}");
+                foreach (var item in check.OrderBy(i => i.FinanceCheckType.GetDescription()))
                 {
-                    result.AppendLine($"\u3000\u3000{item.FinanceCheckType}");
+                    result.AppendLine($"{item.FinanceCheckType.GetDescription()}");
                     foreach (var error in item.ErrorList)
                     {
-                        result.AppendLine($"\u3000\u3000\u3000 - {error}");
+                        result.AppendLine($"- {error}");
                     }
                 }
             }
