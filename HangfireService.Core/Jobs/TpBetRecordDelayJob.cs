@@ -72,6 +72,7 @@ namespace HangfireService.Core.Jobs
                 }
                 else
                 {
+                    //_telegramBotHelper.SendMessage(msg);
                     _logger.LogInformation($"{msg}");
                 }
                 return msg;
