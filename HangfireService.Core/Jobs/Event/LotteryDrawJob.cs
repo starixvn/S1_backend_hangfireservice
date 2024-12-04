@@ -57,7 +57,6 @@ namespace HangfireService.Core.Jobs
                     #region DealSettingData
 
                     var excludePrizeList = JsonConvert.DeserializeObject<List<int>>(currentEventDraw.ExcludeSetting);
-                    var excludeTagList = JsonConvert.DeserializeObject<List<int>>(currentEventDraw.ExcludeTagList);
                     
                     // 設定每個獎項的 ExcludeCount
                     LotteryPrizeCategory[] categories = 
@@ -90,6 +89,9 @@ namespace HangfireService.Core.Jobs
                     ticketList.RemoveAll(x => custEventRestriction.Select(y=>y.CustId).Contains(x.CustId));
                     ticketList.RemoveAll(x => x.Status is (int) CustomerStatusEnum.Lock or (int) CustomerStatusEnum.Suspend or (int)CustomerStatusEnum.Closed );
 
+                    var excludeTag = _reportDbDataLayer.GetLotteryEventTagExclude(option.SiteId);
+                    var excludeTagList = JsonConvert.DeserializeObject<List<int>>(excludeTag.TagExcludeList);
+                    
                     var checkTagCustList = ticketList.Where(x => x.Tags.Any()).Select(x => x.CustId).Distinct().ToList();
                     foreach (var custId in checkTagCustList)
                     {

@@ -26,7 +26,6 @@ namespace HangfireService.Core.Models.DBs
         }
         public int Status { get; set; }
         public string ExcludeSetting { get; set; }
-        public string ExcludeTagList { get; set; }
     }
     
     public class RaffleTicketSticker
@@ -117,6 +116,11 @@ namespace HangfireService.Core.Models.DBs
     {
         public int CurrencyId { get; set; }
         public int CustId { get; set; }
+    }
+    
+    public class LotteryEventTagExclude
+    {
+        public string TagExcludeList { get; set; }
     }
     
     public class WinnerPayoutData
