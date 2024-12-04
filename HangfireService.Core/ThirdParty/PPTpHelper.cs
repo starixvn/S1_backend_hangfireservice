@@ -1,0 +1,88 @@
+using System;
+using HangfireService.Core.Attributes;
+using HangfireService.Core.DataLayers;
+using HangfireService.Core.Extensions;
+using HangfireService.Core.Models.DBs;
+using HangfireService.Core.Models.Enums;
+using HangfireService.Core.Models.Finance;
+using HangfireService.Core.Models.Options;
+using HangfireService.Core.Service;
+using HangfireService.Core.ThirdParty.Interfaces;
+
+namespace HangfireService.Core.ThirdParty;
+
+[Enabled]
+public class PPTpHelper : BaseTpHelper, IFinanceTpHelper
+{
+    public bool CheckTransId => false;
+    public bool BindCommonCurrency => false;
+    private readonly ReportDBDataLayer _reportDbDataLayer;
+    public TimeOption TimeOptionId => TimeOption.SettledTime;
+    public int TpId => 5;
+    private readonly PartitionService _partitionService;
+    private readonly FincanceService _financeService;
+    private readonly IEnumerable<TpCurrency> _tpCurrency;
+
+    public PPTpHelper(IServiceProvider provider) : base(provider)
+    {
+        _reportDbDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
+        _partitionService = provider.GetRequiredService<PartitionService>();
+        _financeService = provider.GetRequiredService<FincanceService>();
+        _tpCurrency = _reportDbDataLayer.GetTpCurrency(TpId);
+    }
+
+    public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
+    {
+        var beginTime = checkOption.BeginTime.GetUnixTimeByDay();
+        var endTime = checkOption.EndTime.GetUnixTimeByDay() - 1;
+
+        var tasks = new List<Task<IEnumerable<BettransCheckData>>>();
+        tasks.AddRange(
+            _partitionService
+            .QueryAsync<BettransCheckData>(
+                checkOption.BeginTime, 
+                checkOption.EndTime, 
+                "Finance_BettransRng_PP_Summary_Get",
+                new {
+                    _BeginTime = beginTime,
+                    _EndTime = endTime
+                })
+            );
+        await Task.WhenAll(tasks);
+
+        var checkData = new List<BettransCheckData>();
+        foreach (var task in tasks) {
+            var data = task.Result;
+            checkData.AddRange(data);
+        }
+        
+        var bettransCheckData = checkData
+            .GroupBy(item => item.CurrencyId)
+            .Select(item => new BettransCheckData{
+                TpId = TpId,
+                CurrencyId = item.Key,
+                Stake = item.Sum(i => i.Stake),
+                ValidBet = item.Sum(i => i.ValidBet),
+                Payout = item.Sum(i => i.Payout),
+                WinlostAmount = item.Sum(i => i.WinlostAmount),
+                Revenue = 0,
+                ProgressiveBet = 0,
+                ProgressiveWin = 0
+            });
+            
+        return bettransCheckData;
+    }
+
+    public async Task<IEnumerable<TpDailySummaryCheckData>> GetTpDailySummaryCheckData(FinanceCheckOption checkOption)
+    {
+        var tpDailyList = await _financeService.GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
+        foreach (var tpDaily in tpDailyList) {
+                var rate = _tpCurrency.First(c => c.CurrencyId == tpDaily.CurrencyId).ExchangeRate;
+                tpDaily.Stake = tpDaily.Stake  * rate;
+                tpDaily.ValidBet = tpDaily.ValidBet * rate;
+                tpDaily.Payout *= rate;
+                tpDaily.WinlostAmount = tpDaily.WinlostAmount * rate;
+        }
+        return tpDailyList;
+    }
+}

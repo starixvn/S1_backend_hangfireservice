@@ -15,21 +15,22 @@ namespace HangfireService.Core.ThirdParty;
 internal class PGTpHelper : BaseTpHelper, IFinanceTpHelper
 {
     public bool CheckTransId => false;
-
     public bool BindCommonCurrency => false;
-
+    private readonly ReportDBDataLayer _reportDbDataLayer;
     public TimeOption TimeOptionId => TimeOption.SettledTime;
-
     public int TpId => 14;
-
     private readonly PartitionService _partitionService;
-
     private readonly FincanceService _financeService;
+    private readonly IEnumerable<TpCurrency> _tpCurrency;
+
     
     public PGTpHelper(IServiceProvider provider) : base(provider)
     {
+        _reportDbDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
         _partitionService = provider.GetRequiredService<PartitionService>();
         _financeService = provider.GetRequiredService<FincanceService>();
+        _tpCurrency = _reportDbDataLayer.GetTpCurrency(TpId);
+
     }
 
     public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
@@ -77,6 +78,13 @@ internal class PGTpHelper : BaseTpHelper, IFinanceTpHelper
     public async Task<IEnumerable<TpDailySummaryCheckData>> GetTpDailySummaryCheckData(FinanceCheckOption checkOption)
     {
         var tpDailyList = await _financeService.GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
+        foreach (var tpDaily in tpDailyList) {
+                var rate = _tpCurrency.First(c => c.CurrencyId == tpDaily.CurrencyId).ExchangeRate;
+                tpDaily.Stake = tpDaily.Stake  * rate;
+                tpDaily.ValidBet = tpDaily.ValidBet * rate;
+                tpDaily.Payout *= rate;
+                tpDaily.WinlostAmount = tpDaily.WinlostAmount * rate;
+        }
         return tpDailyList;
     }
 }
