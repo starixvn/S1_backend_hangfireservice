@@ -338,6 +338,11 @@ namespace HangfireService.Core.DataLayers
             return _dbClient.Query<EventRestriction>("Service_EventRestriction_Get", new { _SiteId = siteId });
         }
         
+        public LotteryEventTagExclude GetLotteryEventTagExclude(int siteId)
+        {
+            return _dbClient.QueryFirst<LotteryEventTagExclude>("Service_LotteryEventTagExclude_Get", new { _SiteId = siteId });
+        }
+        
         public LotteryTicketHistory GetLotteryTicketHistory(int siteId ,int roundId)
         {
             return _dbClient.QueryFirstOrDefault<LotteryTicketHistory>("Service_LotteryTicketHistory_Get", new { _SiteId = siteId , _RoundId = roundId });
