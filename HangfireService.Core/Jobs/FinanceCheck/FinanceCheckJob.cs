@@ -69,7 +69,6 @@ namespace HangfireService.Core.Jobs
                     if (checkResult.Any())
                     {
                         var msg = GetMessage(tpBetRecord.Key, checkOption, checkResult);
-                        _logger.LogError(msg);
                         _telegramBotHelper.SendMessage(msg);
                         result.AppendLine(msg);
                     }
