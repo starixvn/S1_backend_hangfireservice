@@ -2,7 +2,7 @@ using System;
 
 namespace HangfireService.Core.Attributes;
 
-[AttributeUsage(AttributeTargets.Class)]
+[AttributeUsage(AttributeTargets.Field)]
 public class EnabledAttribute: Attribute
 {
     

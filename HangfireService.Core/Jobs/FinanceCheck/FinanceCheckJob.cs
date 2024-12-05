@@ -5,6 +5,7 @@ using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using Hangfire.Server;
 using HangfireService.Core.DataLayers;
+using HangfireService.Core.Enums;
 using HangfireService.Core.Extensions;
 using HangfireService.Core.Helpers;
 using HangfireService.Core.Jobs.Interfaces;
@@ -117,12 +118,12 @@ namespace HangfireService.Core.Jobs
 
             if (!checkFilter.Any())
             {
-                result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} account audit check is normal: {specialMsg}");
+                result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} ({TpId.GetName<Tp>()}) account audit check is normal: {specialMsg}");
                 return result.ToString();
             }
 
 
-            result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} account audit check is abnormal.  {specialMsg}");
+            result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} ({TpId.GetName<Tp>()}) account audit check is abnormal.  {specialMsg}");
             var group = checkFilter.GroupBy(i => i.CurrencyId);
             foreach (var check in group)
             {

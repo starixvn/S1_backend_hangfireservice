@@ -6,6 +6,8 @@ using Hangfire.Dashboard.Management;
 using Hangfire.MemoryStorage;
 using HangfireService.Core.Attributes;
 using HangfireService.Core.DataLayers;
+using HangfireService.Core.Enums;
+using HangfireService.Core.Extensions;
 using HangfireService.Core.Helpers;
 using HangfireService.Core.Jobs;
 using HangfireService.Core.Jobs.Interfaces;
@@ -215,6 +217,23 @@ public static class ServiceCollectionExtension
             }
         }
 
+        return services;
+    }
+
+    public static IServiceCollection RegisterSabaplusTpHelper(this IServiceCollection services) {
+        var provider = services.BuildServiceProvider();
+        var tpList = provider.GetRequiredService<ThirdPartyManager>().GetAllTpList();
+        services.AddSingleton(provider => tpList);
+        var TpList = Enum.GetValues(typeof(Tp));
+        foreach (Tp tp in TpList) {
+            if (tp.IsEnabled()) {
+                services
+                    .AddSingleton<IFinanceTpHelper>(
+                        provider => new GenericSabaplusTpHelper(provider, (int)tp
+                    )
+                );
+            }
+        }
         return services;
     }
 

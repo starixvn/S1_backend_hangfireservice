@@ -11,7 +11,6 @@ using HangfireService.Core.ThirdParty.Interfaces;
 
 namespace HangfireService.Core.ThirdParty
 {
-    [Enabled]
     public class FaChaiTpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => false;

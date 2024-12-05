@@ -12,7 +12,6 @@ using HangfireService.Core.ThirdParty.Interfaces;
 
 namespace HangfireService.Core.ThirdParty;
 
-[Enabled]
 internal class PGTpHelper : BaseTpHelper, IFinanceTpHelper
 {
     public bool CheckTransId => false;

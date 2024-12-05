@@ -1,4 +1,6 @@
-﻿namespace HangfireService.Core.Enums
+﻿using HangfireService.Core.Attributes;
+
+namespace HangfireService.Core.Enums
 {
     public enum Tp
     {
@@ -7,6 +9,7 @@
         SA = 2,
         AG = 3,
         DG = 4,
+        [Enabled]
         PP = 5,
         GPI = 6,
         YL = 7,
@@ -16,6 +19,7 @@
         KM = 11,
         Allbet = 12,
         OneGaming = 13,
+        [Enabled]
         PG = 14,
         AESexy = 15,
         CQ9 = 16,
@@ -31,6 +35,7 @@
         N2Live = 28,
         AMB = 30,
         NineW = 31,
+        [Enabled]
         JILI = 32,
         TCG = 33,
         MG = 34,
@@ -49,11 +54,13 @@
         PlayTech = 51,
         IM = 52,
         SPRIBE = 53,
+        [Enabled]
         FaChai = 55,
         Pegasus = 56,
         BNG = 57,
         HaoLong = 58,
         NLC = 59,
+        [Enabled]
         MaxGame = 61,
         NTConnect = 62,
         GA = 63,
@@ -63,8 +70,10 @@
         Live22 = 68,
         FastSpin = 69,
         DragonGaming = 70,
+        [Enabled]
         RNGKeno = 71,
         Lottery = 72,
+        [Enabled]
         TableGame = 73
     }
 }

@@ -9,7 +9,6 @@ using HangfireService.Core.ThirdParty.Interfaces;
 
 namespace HangfireService.Core.ThirdParty
 {
-    [Enabled]
     public class KenoTpHelper : BaseTpHelper, IFinanceTpHelper
     {
         public bool CheckTransId => false;
