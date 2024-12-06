@@ -73,13 +73,14 @@ public class GenericSabaplusTpHelper : BaseTpHelper, IFinanceTpHelper
     public int TpId;
     private readonly PartitionService _partitionService;
     private readonly FincanceService _financeService;
+    private readonly IEnumerable<TpCurrency> _tpCurrency;
 
     public GenericSabaplusTpHelper(IServiceProvider provider, int tpId) : base(provider)
     {
         _partitionService = provider.GetRequiredService<PartitionService>();
         _financeService = provider.GetRequiredService<FincanceService>();
+        _tpCurrency = provider.GetRequiredService<ReportDBDataLayer>().GetTpCurrency(TpId);
         TpId = tpId;
-
     }
 
     public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
@@ -132,6 +133,15 @@ public class GenericSabaplusTpHelper : BaseTpHelper, IFinanceTpHelper
 
     public async Task<IEnumerable<TpDailySummaryCheckData>> GetTpDailySummaryCheckData(FinanceCheckOption checkOption)
     {
+        var tpDailyList = await _financeService
+            .GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
+        foreach (var tpDaily in tpDailyList) {
+                var rate = _tpCurrency.First(c => c.CurrencyId == tpDaily.CurrencyId).ExchangeRate;
+                tpDaily.Stake = tpDaily.Stake  * rate;
+                tpDaily.ValidBet = tpDaily.ValidBet * rate;
+                tpDaily.Payout *= rate;
+                tpDaily.WinlostAmount = tpDaily.WinlostAmount * rate;
+        }
         return await _financeService.GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
     }
 
