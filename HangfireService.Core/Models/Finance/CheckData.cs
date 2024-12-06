@@ -28,7 +28,7 @@ namespace HangfireService.Core.Models.Finance
             var result = new List<string>();
             if (check == null)
             {
-                result.Add($"TpBetRecord not found CurrencyId:{CurrencyId} data.");
+                result.Add($"TpBetRecord not found CurrencyId:{CurrencyId}");
                 return new FinanceCheckResult(checkType, CurrencyId, result);
             }
             var stakeDiff = Stake - check.Stake;
@@ -67,6 +67,8 @@ namespace HangfireService.Core.Models.Finance
             return new FinanceCheckResult(checkType, CurrencyId, result);
         }
     }
+
+    public class TpDailySummaryCheck: TpBetRecordCheck {}
 
     public class TpRewardRecordCheck
     {

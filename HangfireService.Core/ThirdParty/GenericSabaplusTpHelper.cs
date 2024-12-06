@@ -10,6 +10,7 @@ using HangfireService.Core.Models.Options;
 using HangfireService.Core.Service;
 using HangfireService.Core.ThirdParty.Interfaces;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace HangfireService.Core.ThirdParty;
 
@@ -18,7 +19,7 @@ public class GenericSabaplusTpHelper : BaseTpHelper, IFinanceTpHelper
     private readonly static Dictionary<int, TpSpNames> financeTpSpNames = new()
     {
         [(int)Tp.PP] = new TpSpNames {
-            BettransSummaryGet = "Finance_BettransRng_PP_Summary_Get"
+            BettransSummaryGet = "Finance_Bettrans_PP_Summary_Get"
         },
         [(int)Tp.PG] = new TpSpNames {
             BettransSummaryGet = "Finance_BettransRng_PG_Summary_Get"
@@ -37,6 +38,30 @@ public class GenericSabaplusTpHelper : BaseTpHelper, IFinanceTpHelper
         },
         [(int)Tp.MaxGame] = new TpSpNames {
             BettransSummaryGet = "Finance_BettransRng_MaxGame_Summary_Get"
+        },
+        [(int)Tp.SabaPlay] = new TpSpNames {
+            BettransSummaryGet = "Finance_BettransPK_SabaPlay_Summary_Get"
+        },
+        [(int)Tp.UuSlots] = new TpSpNames {
+            BettransSummaryGet = "Finance_BettransRng_UuSlots_Summary_Get"
+        },
+        [(int)Tp.Live22] = new TpSpNames {
+            BettransSummaryGet = "Finance_BettransRng_Live22_Summary_Get"
+        },
+        [(int)Tp.FastSpin] = new TpSpNames {
+            BettransSummaryGet = "Finance_BettransRng_FastSpin_Summary_Get"
+        },
+        [(int)Tp.Allbet] = new TpSpNames {
+            BettransSummaryGet = "Finance_BettransLC_AllBet_Summary_Get"
+        },
+        [(int)Tp.Lottery] = new TpSpNames {
+            BettransSummaryGet = "Finance_BettransLT_Lottery_Summary_Get"
+        },
+        [(int)Tp.WE] = new TpSpNames {
+            BettransSummaryGet = "Finance_BettransLC_WE_Summary_Get"
+        },
+        [(int)Tp.AESexy] = new TpSpNames {
+            BettransSummaryGet = "Finance_BettransLC_Sexy_Summary_Get"
         },
     };
 
@@ -110,6 +135,55 @@ public class GenericSabaplusTpHelper : BaseTpHelper, IFinanceTpHelper
         return await _financeService.GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
     }
 
+    public List<FinanceCheckResult> CheckData(FinanceCheckOption checkOption, List<TpBetRecordCheck> tpBetRecord, List<BettransCheckData> bettransList, List<TpDailySummaryCheckData> tpDailyList)
+    {
+        var checkResult = new List<FinanceCheckResult>();
+
+        if (bettransList.Any())
+        {
+            var bettransResult = bettransList.Select(bettrans
+                => bettrans.CheckData(FinanceCheckType.CompareTpBetRecordSumAndBettrans, tpBetRecord.FirstOrDefault(tpBetRecord => tpBetRecord.CurrencyId == bettrans.CurrencyId)));
+            checkResult.AddRange(bettransResult);
+        } else {
+            checkResult.AddRange(tpBetRecord.Select(record => new FinanceCheckResult(
+                FinanceCheckType.CompareTpBetRecordSumAndBettrans, record.CurrencyId, new List<string>{
+                    "Bettrans has no data"
+                })));
+        }
+
+        if (tpDailyList.Any())
+        {
+            var tpResult = tpDailyList.Select(tpDaily
+                => tpDaily.CheckData(FinanceCheckType.CompareTpDailySummaryAndTpBetRecordSum, tpBetRecord.FirstOrDefault(tpBetRecord => tpBetRecord.CurrencyId == tpDaily.CurrencyId)));
+            checkResult.AddRange(tpResult);
+        } else {
+            checkResult.AddRange(tpBetRecord.Select(record => new FinanceCheckResult(
+                FinanceCheckType.CompareTpDailySummaryAndTpBetRecordSum, record.CurrencyId, new List<string>{
+                    "TpDailySummary has no data"
+                })));
+        }
+
+        if (bettransList.Any() && tpDailyList.Any())
+        {
+            var financeResult = bettransList.Select(bettrans
+                => bettrans.CheckData(FinanceCheckType.CompareBettransAndTpDailySummary, tpDailyList.FirstOrDefault(tp => tp.CurrencyId == bettrans.CurrencyId)));
+            checkResult.AddRange(financeResult);
+        }
+
+        if (checkResult.Any())
+        {
+            var data = new
+            {
+                TpId,
+                tpBetRecord,
+                tpDailyList,
+                bettransList,
+            };
+            _logger.LogError($"[{checkOption.BeginTime:yyyy-MM-dd}]:{JsonConvert.SerializeObject(data)}");
+        }
+
+        return checkResult;
+    }
     private TpSpNames GetSpNames(int tpId) {
         if (!financeTpSpNames.TryGetValue(tpId, out var tpSpNames)) return null;
         return tpSpNames;

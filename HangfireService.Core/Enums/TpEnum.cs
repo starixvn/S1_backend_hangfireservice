@@ -17,13 +17,16 @@ namespace HangfireService.Core.Enums
         Joker = 9,
         SG = 10,
         KM = 11,
+        [Enabled]
         Allbet = 12,
         OneGaming = 13,
         [Enabled]
         PG = 14,
+        [Enabled]
         AESexy = 15,
         CQ9 = 16,
         CF = 17,
+        [Enabled]
         WE = 18,
         WM = 20,
         Kiss918 = 21,
@@ -65,13 +68,18 @@ namespace HangfireService.Core.Enums
         NTConnect = 62,
         GA = 63,
         WonCasino = 64,
+        [Enabled]
         SabaPlay = 66,
+        [Enabled]
         UuSlots = 67,
+        [Enabled]
         Live22 = 68,
+        [Enabled]
         FastSpin = 69,
         DragonGaming = 70,
         [Enabled]
         RNGKeno = 71,
+        [Enabled]
         Lottery = 72,
         [Enabled]
         TableGame = 73

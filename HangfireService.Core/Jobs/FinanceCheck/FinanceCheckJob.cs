@@ -9,6 +9,7 @@ using HangfireService.Core.Enums;
 using HangfireService.Core.Extensions;
 using HangfireService.Core.Helpers;
 using HangfireService.Core.Jobs.Interfaces;
+using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
 using HangfireService.Core.Models.Jobs;
 using HangfireService.Core.Models.Options;
@@ -49,12 +50,16 @@ namespace HangfireService.Core.Jobs
             {
                 _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
                 var checkOption = JsonConvert.DeserializeObject<FinanceCheckOption>(jobOption.Parameters);
-                var tpBetRecordList = _reportDBDataLayer.GetTpBetRecordCheckData(checkOption.BeginTime, checkOption.EndTime)
-                                .GroupBy(i => i.TpId).ToDictionary(i => i.Key, i => i.ToList());
+                var tpBetRecordList = _reportDBDataLayer
+                    .GetTpBetRecordCheckData(checkOption.BeginTime, checkOption.EndTime)
+                    .GroupBy(i => i.TpId).ToDictionary(i => i.Key, i => i.ToList());
+                var tpDailySummaryList = _reportDBDataLayer
+                    .GetTpDailySummaryCheckData(checkOption.BeginTime, checkOption.EndTime, SummaryType.TpBetRecord)
+                    .GroupBy(i => i.TpId).ToDictionary(i => i.Key, i => i.ToList());
 
                 var result = new StringBuilder();
                 foreach (var tpBetRecord in tpBetRecordList)
-                {
+                {   
                     if (!_tpHandler.TryGetValue(tpBetRecord.Key, out IFinanceTpHelper tpHelper))
                     {
                         var msg = $"TpId:{tpBetRecord.Key} NotImplemented finance check";
@@ -72,6 +77,12 @@ namespace HangfireService.Core.Jobs
                         _telegramBotHelper.SendMessage(msg);
                         result.AppendLine(msg);
                     }
+                }
+                foreach(var tpDailySummary in tpDailySummaryList) {
+                    if (tpBetRecordList.ContainsKey(tpDailySummary.Key)) continue;
+                    var msg = GetNoDataMessage(tpDailySummary.Key, checkOption);
+                    _telegramBotHelper.SendMessage(msg);
+                    result.AppendLine(msg);
                 }
 
                 return result.ToString();
@@ -117,7 +128,7 @@ namespace HangfireService.Core.Jobs
 
             if (!checkFilter.Any())
             {
-                result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} ({TpId.GetName<Tp>()}) account audit check is normal: {specialMsg}");
+                result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} ({TpId.GetName<Tp>()}) account audit check is normal. {specialMsg}");
                 return result.ToString();
             }
 
@@ -137,6 +148,10 @@ namespace HangfireService.Core.Jobs
                 }
             }
             return result.ToString();
+        }
+
+        private static string GetNoDataMessage(int TpId, FinanceCheckOption checkOption) {
+            return $"[{checkOption.BeginTime:yyyy-MM-dd}] TpId:{TpId} ({TpId.GetName<Tp>()}) Has Data in TpDailySummary but No data in TpBetRecord";
         }
         private class JobList : IInputDataList
         {
