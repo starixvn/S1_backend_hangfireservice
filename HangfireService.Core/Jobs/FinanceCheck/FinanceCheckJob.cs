@@ -56,8 +56,20 @@ namespace HangfireService.Core.Jobs
                 var tpDailySummaryList = _reportDBDataLayer
                     .GetTpDailySummaryCheckData(checkOption.BeginTime, checkOption.EndTime, SummaryType.TpBetRecord)
                     .GroupBy(i => i.TpId).ToDictionary(i => i.Key, i => i.ToList());
-
                 var result = new StringBuilder();
+
+                var additionalLogInfo = new Dictionary<string, object>() {
+                    { "Begin", checkOption.BeginTime },
+                    { "End", checkOption.EndTime },
+                    { "UnixBegin", checkOption.BeginTime.GetUnixTimeByDay() },
+                    { "UnixEnd",  checkOption.EndTime.GetUnixTimeByDay() - 1 },
+                };
+
+                using (_logger.BeginScope(additionalLogInfo))
+                {
+                    _logger.LogInformation($"Finance Check Job Datetime data");
+                }
+
                 foreach (var tpBetRecord in tpBetRecordList)
                 {   
                     if (!_tpHandler.TryGetValue(tpBetRecord.Key, out IFinanceTpHelper tpHelper))
