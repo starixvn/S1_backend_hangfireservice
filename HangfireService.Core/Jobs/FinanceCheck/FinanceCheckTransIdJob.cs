@@ -6,6 +6,7 @@ using Hangfire.Dashboard.Management.Support;
 using Hangfire.Server;
 using HangfireService.Core.DataLayers;
 using HangfireService.Core.Extensions;
+using HangfireService.Core.Helpers;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
@@ -25,6 +26,7 @@ namespace HangfireService.Core.Jobs
         private readonly MainDBDataLayer _mainDBDataLayer;
 
         private readonly Dictionary<int, IFinanceTpHelper> _tpHandler = new();
+        private readonly TelegramBotHelper _telegramBotHelper;
 
         private static List<JobOption> _jobList;
 
@@ -35,6 +37,7 @@ namespace HangfireService.Core.Jobs
 
             _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
             _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
+            _telegramBotHelper = provider.GetRequiredService<TelegramBotHelper>();
             foreach (var tp in provider.GetServices<IFinanceTpHelper>())
             {
                 // 詳細檢查TransId
@@ -57,32 +60,28 @@ namespace HangfireService.Core.Jobs
 
                 foreach (var item in _tpHandler.OrderBy(i => i.Key))
                 {
-                    var tpId = item.Key;
-                    var tpHelper = item.Value;
-                    var timeOptionId = tpHelper.TimeOptionId;
-                    var tpBetRecordList = _reportDBDataLayer.GetTpBetRecordCheckTransIdData(checkOption.BeginTime, checkOption.EndTime, tpId, timeOptionId);
-                    if (tpId == 36 || tpId == 37 || tpId == 38 || tpId == 59)
-                    {
-                        tpBetRecordList = tpBetRecordList.Where(x => x.TicketStatus != 6 || x.TicketStatus != 3);
+                    try {
+                        var tpId = item.Key;
+                        var tpHelper = item.Value;
+                        var timeOptionId = tpHelper.TimeOptionId;
+                        var tpBetRecordList = _reportDBDataLayer.GetTpBetRecordCheckTransIdData(checkOption.BeginTime, checkOption.EndTime, tpId, timeOptionId);
+                        var bettransList = await tpHelper.GetBettransCheckTransIdData(checkOption);
+                        var checkResult = tpHelper.CheckTransIdData(tpId, checkOption, tpBetRecordList.ToList(), bettransList.ToList());
+                        if (checkResult.Any())
+                        {
+                            // 寫入需重新確認的資料
+                            InsertFinanceCheckTransId(tpId, checkOption, checkResult);
+                            var msg = GetMessage(tpId, checkOption, checkResult);
+                            //_logger.LogError(msg);
+                            _telegramBotHelper.SendMessage(msg);
+                            result.AppendLine(msg);
+                            
+                        }
+                    } catch(Exception ex) {
+                        _logger.LogError(ex, ex.Message);
+                        continue;
                     }
-                    else if (tpId == 6)
-                    {
-                        tpBetRecordList = tpBetRecordList.Where(x => x.SettlementType != 0);
-                    }
-                    else if (tpId == 42)
-                    {
-                        tpBetRecordList = tpBetRecordList.Where(x => x.TicketStatus != 3);
-                    }
-                    var bettransList = await tpHelper.GetBettransCheckTransIdData(checkOption);
-                    var checkResult = tpHelper.CheckTransIdData(tpId, checkOption, tpBetRecordList.ToList(), bettransList.ToList());
-                    if (checkResult.Any())
-                    {
-                        // 寫入需重新確認的資料
-                        InsertFinanceCheckTransId(tpId, checkOption, checkResult);
-                        var msg = GetMessage(tpId, checkOption, checkResult);
-                        //_logger.LogError(msg);
-                        result.AppendLine(msg);
-                    }
+
                 }
 
                 return result.ToString();

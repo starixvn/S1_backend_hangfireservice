@@ -19,53 +19,68 @@ public class GenericSabaplusTpHelper : BaseTpHelper, IFinanceTpHelper
     private readonly static Dictionary<int, TpSpNames> financeTpSpNames = new()
     {
         [(int)Tp.PP] = new TpSpNames {
-            BettransSummaryGet = "Finance_Bettrans_PP_Summary_Get"
+            BettransSummaryGet = "Finance_Bettrans_PP_Summary_Get",
+            BettransCheckTransIdGet = "Finance_Bettrans_PP_Check_TransId_Get",
         },
         [(int)Tp.PG] = new TpSpNames {
+            BettransCheckTransIdGet = "Finance_BettransRng_PG_Check_TransId_Get",
             BettransSummaryGet = "Finance_BettransRng_PG_Summary_Get"
         },
         [(int)Tp.FaChai] = new TpSpNames {
-            BettransSummaryGet = "Finance_BettransRng_FaChai_Summary_Get"
+            BettransSummaryGet = "Finance_BettransRng_FaChai_Summary_Get",
+            BettransCheckTransIdGet = "Finance_BettransRng_FaChai_Check_TransId_Get",
         },
         [(int)Tp.JILI] = new TpSpNames {
-            BettransSummaryGet = "Finance_BettransRng_JILI_Summary_Get"
+            BettransSummaryGet = "Finance_BettransRng_JILI_Summary_Get",
+            BettransCheckTransIdGet = "Finance_BettransRng_JILI_Check_TransId_Get",            
         },
         [(int)Tp.RNGKeno] = new TpSpNames {
-            BettransSummaryGet = "Finance_BettransRng_Keno_Summary_Get"
+            BettransSummaryGet = "Finance_BettransRng_Keno_Summary_Get",
+            BettransCheckTransIdGet = "Finance_BettransRng_Keno_Check_TransId_Get",
         },
         [(int)Tp.TableGame] = new TpSpNames {
-            BettransSummaryGet = "Finance_BettransRng_TableGame_Summary_Get"
+            BettransSummaryGet = "Finance_BettransRng_TableGame_Summary_Get",
+            BettransCheckTransIdGet = "Finance_BettransRng_TableGame_Check_TransId_Get",
         },
         [(int)Tp.MaxGame] = new TpSpNames {
-            BettransSummaryGet = "Finance_BettransRng_MaxGame_Summary_Get"
+            BettransSummaryGet = "Finance_BettransRng_MaxGame_Summary_Get",
+            BettransCheckTransIdGet = "Finance_BettransRng_MaxGame_Check_TransId_Get",
         },
         [(int)Tp.SabaPlay] = new TpSpNames {
-            BettransSummaryGet = "Finance_BettransPK_SabaPlay_Summary_Get"
+            BettransSummaryGet = "Finance_BettransPK_SabaPlay_Summary_Get",
+            BettransCheckTransIdGet = "Finance_BettransPK_SabaPlay_Check_TransId_Get",
         },
         [(int)Tp.UuSlots] = new TpSpNames {
-            BettransSummaryGet = "Finance_BettransRng_UuSlots_Summary_Get"
+            BettransSummaryGet = "Finance_BettransRng_UuSlots_Summary_Get",
+            BettransCheckTransIdGet = "Finance_BettransRng_UuSlots_Check_TransId_Get",
         },
         [(int)Tp.Live22] = new TpSpNames {
-            BettransSummaryGet = "Finance_BettransRng_Live22_Summary_Get"
+            BettransSummaryGet = "Finance_BettransRng_Live22_Summary_Get",
+            BettransCheckTransIdGet = "Finance_BettransRng_Live22_Check_TransId_Get",
         },
         [(int)Tp.FastSpin] = new TpSpNames {
-            BettransSummaryGet = "Finance_BettransRng_FastSpin_Summary_Get"
+            BettransSummaryGet = "Finance_BettransRng_FastSpin_Summary_Get",
+            BettransCheckTransIdGet = "Finance_BettransRng_FastSpin_Check_TransId_Get",
         },
         [(int)Tp.Allbet] = new TpSpNames {
-            BettransSummaryGet = "Finance_BettransLC_AllBet_Summary_Get"
+            BettransSummaryGet = "Finance_BettransLC_AllBet_Summary_Get",
+            BettransCheckTransIdGet = "Finance_BettransLC_AllBet_Check_TransId_Get",
         },
         [(int)Tp.Lottery] = new TpSpNames {
-            BettransSummaryGet = "Finance_BettransLT_Lottery_Summary_Get"
+            BettransSummaryGet = "Finance_BettransLT_Lottery_Summary_Get",
+            BettransCheckTransIdGet = "Finance_BettransLT_Lottery_Check_TransId_Get",
         },
         [(int)Tp.WE] = new TpSpNames {
-            BettransSummaryGet = "Finance_BettransLC_WE_Summary_Get"
+            BettransSummaryGet = "Finance_BettransLC_WE_Summary_Get",
+            BettransCheckTransIdGet = "Finance_BettransLC_WE_Check_TransId_Get",
         },
         [(int)Tp.AESexy] = new TpSpNames {
-            BettransSummaryGet = "Finance_BettransLC_Sexy_Summary_Get"
+            BettransSummaryGet = "Finance_BettransLC_Sexy_Summary_Get",
+            BettransCheckTransIdGet = "Finance_BettransLC_Sexy_Check_TransId_Get",
         },
     };
 
-    public bool CheckTransId => false;
+    public bool CheckTransId => true;
     public bool BindCommonCurrency => false;
     public TimeOption TimeOptionId => TimeOption.SettledTime;
 
@@ -74,7 +89,6 @@ public class GenericSabaplusTpHelper : BaseTpHelper, IFinanceTpHelper
     private readonly PartitionService _partitionService;
     private readonly FincanceService _financeService;
     private readonly IEnumerable<TpCurrency> _tpCurrency;
-
     public GenericSabaplusTpHelper(IServiceProvider provider, int tpId) : base(provider)
     {
         _partitionService = provider.GetRequiredService<PartitionService>();
@@ -103,9 +117,9 @@ public class GenericSabaplusTpHelper : BaseTpHelper, IFinanceTpHelper
             );
         try {
             await Task.WhenAll(tasks);
-        } catch (Exception ex) {
+        } catch {
             _logger.LogError($"Error on calling SP {getBettransSumarySpName}");
-            throw ex;
+            throw;
         }
 
         var checkData = new List<BettransCheckData>();
@@ -114,7 +128,7 @@ public class GenericSabaplusTpHelper : BaseTpHelper, IFinanceTpHelper
             checkData.AddRange(data);
         }
         
-        var bettransCheckData = checkData
+        return checkData
             .GroupBy(item => item.CurrencyId)
             .Select(item => new BettransCheckData{
                 TpId = TpId,
@@ -127,8 +141,6 @@ public class GenericSabaplusTpHelper : BaseTpHelper, IFinanceTpHelper
                 ProgressiveBet = 0,
                 ProgressiveWin = 0
             });
-            
-        return bettransCheckData;
     }
 
     public async Task<IEnumerable<TpDailySummaryCheckData>> GetTpDailySummaryCheckData(FinanceCheckOption checkOption)
@@ -194,6 +206,53 @@ public class GenericSabaplusTpHelper : BaseTpHelper, IFinanceTpHelper
 
         return checkResult;
     }
+    
+    public async Task<IEnumerable<BettransCheckTransIdData>> GetBettransCheckTransIdData(FinanceCheckTransIdOption checkOption) {
+        var BeginTime = checkOption.BeginTime.GetUnixTime();
+        var EndTime = checkOption.EndTime.GetUnixTime() - 1;
+        var getBettransCheckTransIdSpName = GetSpNames(TpId)?.BettransCheckTransIdGet
+            ?? throw new NotImplementedException($"SP BettransCheckTransIdGet for tp {TpId} not implemented");
+        var tasks = new List<Task<IEnumerable<BettransCheckTransIdData>>>();
+        tasks.AddRange(
+            _partitionService
+            .QueryAsync<BettransCheckTransIdData>(
+                checkOption.BeginTime, 
+                checkOption.EndTime, 
+                getBettransCheckTransIdSpName,
+                new {
+                    _BeginTime = BeginTime,
+                    _EndTime = EndTime
+                }));
+        try {
+            await Task.WhenAll(tasks);
+        } catch {
+            _logger.LogError($"Error on calling SP {getBettransCheckTransIdSpName}");
+            throw;
+        }
+        
+        var bettrans = new List<BettransCheckTransIdData>();
+
+        foreach (var task in tasks) {
+            var data = task.Result;
+            bettrans.AddRange(data);
+        } 
+
+        return (from item in bettrans
+                    select new BettransCheckTransIdData
+                    {
+                        TpId = TpId,
+                        TransId = item.TransId,
+                        CurrencyId = item.CurrencyId,
+                        Stake = item.Stake,
+                        ValidBet = item.ValidBet,
+                        Payout = item.Payout,
+                        WinlostAmount = item.WinlostAmount,
+                        Revenue = 0,
+                        ProgressiveBet = 0,
+                        ProgressiveWin = 0,
+                    }).ToList();
+    }
+
     private TpSpNames GetSpNames(int tpId) {
         if (!financeTpSpNames.TryGetValue(tpId, out var tpSpNames)) return null;
         return tpSpNames;
@@ -202,4 +261,5 @@ public class GenericSabaplusTpHelper : BaseTpHelper, IFinanceTpHelper
 
 public class TpSpNames {
     public string BettransSummaryGet { get; set;}
+    public string BettransCheckTransIdGet { get; set; }
 }
