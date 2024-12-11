@@ -39,7 +39,7 @@ namespace HangfireService.Core.Jobs.SMS
         private readonly Dictionary<int, NxCloudSmsConfig> _nxCloudSmsConfig;
         private readonly Dictionary<int, SkyLineSmsConfig> _skyLineSmsConfig;
         private readonly Dictionary<int, SkyLineOtpConfig> _skyLineOtpConfig;
-        private readonly Dictionary<int, AwsSmsConfig> _awsSmsConfig;
+        //private readonly Dictionary<int, AwsSmsConfig> _awsSmsConfig;
 
         private static List<JobOption> _jobList;
 
@@ -54,7 +54,7 @@ namespace HangfireService.Core.Jobs.SMS
             _nxCloudSmsConfig = configBll.GetConfigValuesBySiteId<NxCloudSmsConfig>("HangfireNxCloud");
             _skyLineSmsConfig = configBll.GetConfigValuesBySiteId<SkyLineSmsConfig>("HangfireSkyLineSMS");
             _skyLineOtpConfig = configBll.GetConfigValuesBySiteId<SkyLineOtpConfig>("HangfireSkyLineOTP");
-            _awsSmsConfig = configBll.GetConfigValuesBySiteId<AwsSmsConfig>("HangfireAwsSms");
+            //_awsSmsConfig = configBll.GetConfigValuesBySiteId<AwsSmsConfig>("HangfireAwsSms");
 
             MyJobManager.GetJobGroups()?.TryGetValue("Check", out _jobList);
 
@@ -64,7 +64,7 @@ namespace HangfireService.Core.Jobs.SMS
             {
                 { "SkyLine", SkyLineCheckStatus},
                 { "NxCloud", NxCloudCheckStatus},
-                { "AWS", AwsCheckStatus}
+                //{ "AWS", AwsCheckStatus}
             };
             _defaultCheck = CheckStatusByPass;
         }
@@ -225,40 +225,41 @@ namespace HangfireService.Core.Jobs.SMS
             }
         }
 
-        private Task<OTPCheckResult> AwsCheckStatus(OTPCheck otpCheck)
-        {
-            try
-            {
-                var customer = _reportDbDataLayer.GetCustInfo(otpCheck.CustId);
-                var awsSmsConfig = _awsSmsConfig[customer.SiteId];
-                var startQueryRequest = new StartQueryRequest
-                {
-                    LogGroupNames = new List<string>
-                    {
-                        awsSmsConfig.Key1,
-                        awsSmsConfig.Key2
-                    },
-                    StartTime = otpCheck.CreateTimeToUnix - 120,
-                    EndTime = ((DateTimeOffset)DateTime.UtcNow.AddSeconds(-1)).ToUnixTimeSeconds(),
-                    QueryString = "fields @timestamp, @message" +
-                                  $" | filter @message like /{otpCheck.Request_id}/" +
-                                  " | sort @timestamp",
-                    Limit = 100
-                };
-                var queryId = _awsSnsHelper.GetCloudWatchLogsQueryId(startQueryRequest);
+        // TODO: disable AWSCheckStatus for phase 1
+        //private Task<OTPCheckResult> AwsCheckStatus(OTPCheck otpCheck)
+        //{
+        //    try
+        //    {
+        //        var customer = _reportDbDataLayer.GetCustInfo(otpCheck.CustId);
+        //        var awsSmsConfig = _awsSmsConfig[customer.SiteId];
+        //        var startQueryRequest = new StartQueryRequest
+        //        {
+        //            LogGroupNames = new List<string>
+        //            {
+        //                awsSmsConfig.Key1,
+        //                awsSmsConfig.Key2
+        //            },
+        //            StartTime = otpCheck.CreateTimeToUnix - 120,
+        //            EndTime = ((DateTimeOffset)DateTime.UtcNow.AddSeconds(-1)).ToUnixTimeSeconds(),
+        //            QueryString = "fields @timestamp, @message" +
+        //                          $" | filter @message like /{otpCheck.Request_id}/" +
+        //                          " | sort @timestamp",
+        //            Limit = 100
+        //        };
+        //        var queryId = _awsSnsHelper.GetCloudWatchLogsQueryId(startQueryRequest);
 
-                BackgroundJob.Schedule(
-                    () => AwsOtpResult(otpCheck, queryId, true, JsonConvert.SerializeObject(startQueryRequest)),
-                    TimeSpan.FromMinutes(1));
+        //        BackgroundJob.Schedule(
+        //            () => AwsOtpResult(otpCheck, queryId, true, JsonConvert.SerializeObject(startQueryRequest)),
+        //            TimeSpan.FromMinutes(1));
 
-                return Task.FromResult(otpCheck.GetResult(OTPStatus.SendToProvider));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-                return Task.FromResult(otpCheck.GetResult(OTPStatus.SendToProvider));
-            }
-        }
+        //        return Task.FromResult(otpCheck.GetResult(OTPStatus.SendToProvider));
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, ex.Message);
+        //        return Task.FromResult(otpCheck.GetResult(OTPStatus.SendToProvider));
+        //    }
+        //}
 
 
 
