@@ -15,10 +15,10 @@ namespace HangfireService.Core.Models.Enums
 
     public enum FinanceCheckTransIdType
     {
-        結算與交易資料檢查,
-        結算與交易單號檢查,
-        交易與結算單號檢查,
-        結算與交易金額檢查,
+        BettransAndTpBetRecordDataComparision,
+        TpBetRecordBettransTransId,
+        BettransAndTpBetRecordTransIdComparision,
+        BettransTpBetRecordComparision,
     }
 
     public enum TicketStatusExcludeOption

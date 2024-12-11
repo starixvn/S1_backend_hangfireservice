@@ -129,7 +129,6 @@ namespace HangfireService.Core.ThirdParty.Interfaces
             var err = new List<string>();
             var res = new List<string>();
 
-            // 資料檢查
             if (!bettransList.Any())
             {
                 err.Add($"bettransList no data.");
@@ -142,25 +141,22 @@ namespace HangfireService.Core.ThirdParty.Interfaces
 
             if (!bettransList.Any() && !tpBetRecord.Any())
             {
-                // 無資料無須檢查
-                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.結算與交易金額檢查, TpId, res.Count, res));
+                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.BettransTpBetRecordComparision, TpId, res.Count, res));
                 return checkResult;
             }
             else if (bettransList.Any() && !tpBetRecord.Any())
             {
-                // 列出未寫入tpbetrecord的單號
                 bettransOfTransIds = bettransList.Select(x => x.TransId).ToList();
-                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.交易與結算單號檢查, TpId, bettransOfTransIds.Count, bettransOfTransIds));
+                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.BettransAndTpBetRecordTransIdComparision, TpId, bettransOfTransIds.Count, bettransOfTransIds));
                 return checkResult;
             }
 
             if (err.Any())
             {
-                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.結算與交易資料檢查, TpId, err.Count, err));
+                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.BettransAndTpBetRecordDataComparision, TpId, err.Count, err));
                 return checkResult;
             }
 
-            // 單號檢查
             bettransOfTransIds = bettransList.Select(x => x.TransId).ToList();
             var tpBetRecordOfTransIds = tpBetRecord.Select(x => x.TransId).ToList();
 
@@ -170,19 +166,23 @@ namespace HangfireService.Core.ThirdParty.Interfaces
             {
                 err.Clear();
                 err.Add("transid bettrans not in tpbetrecord.");
-                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.交易與結算單號檢查, TpId, checkBetTransId.Count, checkBetTransId, JsonConvert.SerializeObject(err)));
+                checkResult.Add(new FinanceCheckTransIdResult(
+                    FinanceCheckTransIdType.BettransAndTpBetRecordTransIdComparision, 
+                    TpId, 
+                    checkBetTransId.Count, 
+                    checkBetTransId, 
+                    JsonConvert.SerializeObject(err)));
             }
 
             if (checkTpBetTransId.Any())
             {
                 err.Clear();
                 err.Add("transid tpbetrecord not in bettrans.");
-                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.結算與交易單號檢查, TpId, checkTpBetTransId.Count, checkTpBetTransId, JsonConvert.SerializeObject(err)));
+                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.TpBetRecordBettransTransId, TpId, checkTpBetTransId.Count, checkTpBetTransId, JsonConvert.SerializeObject(err)));
             }
 
-            // 金額檢查
             var tpResult = bettransList.Select(bettrans
-                => bettrans.CheckTransIdData(tpId, FinanceCheckTransIdType.結算與交易金額檢查, tpBetRecord.FirstOrDefault(tpBetRecord => tpBetRecord.TransId == bettrans.TransId)));
+                => bettrans.CheckTransIdData(tpId, FinanceCheckTransIdType.BettransTpBetRecordComparision, tpBetRecord.FirstOrDefault(tpBetRecord => tpBetRecord.TransId == bettrans.TransId)));
             var tpData = tpResult.Where(item => item != null).ToList();
 
             if (tpData.Any())
@@ -191,10 +191,9 @@ namespace HangfireService.Core.ThirdParty.Interfaces
                 {
                     JsonConvert.SerializeObject(tpData)
                 };
-                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.結算與交易金額檢查, TpId, tpData.Count, errList, JsonConvert.SerializeObject(tpData)));
+                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.BettransTpBetRecordComparision, TpId, tpData.Count, errList, JsonConvert.SerializeObject(tpData)));
             }
 
-            // 原資料
             if (checkResult.Any())
             {
                 var data = new
@@ -207,10 +206,11 @@ namespace HangfireService.Core.ThirdParty.Interfaces
             }
             else
             {
-                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.結算與交易金額檢查, TpId, res.Count, res));
+                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.BettransTpBetRecordComparision, TpId, res.Count, res));
             }
 
             return checkResult;
         }
     }
+
 }

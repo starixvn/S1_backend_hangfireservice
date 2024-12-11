@@ -5,6 +5,7 @@ using Hangfire.Dashboard.Management.Metadata;
 using Hangfire.Dashboard.Management.Support;
 using Hangfire.Server;
 using HangfireService.Core.DataLayers;
+using HangfireService.Core.Enums;
 using HangfireService.Core.Extensions;
 using HangfireService.Core.Helpers;
 using HangfireService.Core.Jobs.Interfaces;
@@ -123,31 +124,31 @@ namespace HangfireService.Core.Jobs
 
             if (!checkFilter.Any())
             {
-                result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd HH:00:00}] TpId:{TpId} The account number check is normal");
+                result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd HH:00:00}] TpId:{TpId} ({TpId.GetName<Tp>()}) The account number check is normal");
                 _logger.LogInformation(result.ToString());
                 return result.ToString();
             }
 
-            result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd HH:00:00}] TpId:{TpId} The account number check is abnormal");
+            result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd HH:00:00}] TpId:{TpId} ({TpId.GetName<Tp>()}) The account number check is abnormal");
             foreach (var check in checkResults)
             {
-                result.AppendLine($"\u3000\u3000{check.FinanceCheckTransIdType}");
-
-                if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.結算與交易資料檢查)
+                if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.BettransAndTpBetRecordDataComparision)
                 {
                     foreach (var error in check.ErrorList)
                     {
-                        result.AppendLine($"\u3000\u3000\u3000 - {error}");
-                        _logger.LogError($"\r\n\u3000\u3000\u3000 - {error}");
+                        result.AppendLine($"- {error}");
+                        _logger.LogError($"{Environment.NewLine} - {error}");
                     }
                 }
-                else if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.結算與交易金額檢查)
+                else if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.BettransTpBetRecordComparision)
                 {
-                    _logger.LogError($"{check.FinanceCheckTransIdType}-Abnormal data TpId:{TpId},Abnormal count: {check.Count}\r\n{check.ErrorData}");
+                    var err = $"{check.FinanceCheckTransIdType}-Abnormal count: {check.Count}{Environment.NewLine}{check.ErrorData}";
+                    result.AppendLine(err);
                 }
                 else
                 {
-                    _logger.LogError($"{check.FinanceCheckTransIdType}-Abnormal data TpId:{TpId},Abnormal entries: {check.Count}\r\n{JsonConvert.SerializeObject(check.ErrorList)}");
+                    var err = $"{check.FinanceCheckTransIdType}-Abnormal data TpId:{TpId},Abnormal entries: {check.Count}{Environment.NewLine}{JsonConvert.SerializeObject(check.ErrorList)}";
+                    result.AppendLine(err);
                 }
             }
             return result.ToString();
@@ -174,7 +175,7 @@ namespace HangfireService.Core.Jobs
                     ErrorData = "[]"
                 };
 
-                if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.結算與交易資料檢查)
+                if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.BettransAndTpBetRecordDataComparision)
                 {
                     foreach (var error in check.ErrorList)
                     {
@@ -182,7 +183,7 @@ namespace HangfireService.Core.Jobs
                         _mainDBDataLayer.InsertFinanceCheckTransId(financeCheckTransIdData);
                     }
                 }
-                else if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.結算與交易金額檢查)
+                else if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.BettransTpBetRecordComparision)
                 {
                     foreach (var error in check.ErrorList)
                     {
@@ -195,7 +196,7 @@ namespace HangfireService.Core.Jobs
                         }
                     }
                 }
-                else if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.結算與交易單號檢查 || check.FinanceCheckTransIdType == FinanceCheckTransIdType.交易與結算單號檢查)
+                else if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.TpBetRecordBettransTransId || check.FinanceCheckTransIdType == FinanceCheckTransIdType.BettransAndTpBetRecordTransIdComparision)
                 {
                     foreach (var error in check.ErrorList)
                     {

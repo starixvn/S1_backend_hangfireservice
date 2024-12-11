@@ -149,10 +149,10 @@ public class GenericSabaplusTpHelper : BaseTpHelper, IFinanceTpHelper
             .GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
         foreach (var tpDaily in tpDailyList) {
                 var rate = _tpCurrency.FirstOrDefault(c => c.CurrencyId == tpDaily.CurrencyId)?.ExchangeRate ?? 1;
-                tpDaily.Stake = tpDaily.Stake  * rate;
-                tpDaily.ValidBet = tpDaily.ValidBet * rate;
+                tpDaily.Stake *= rate;
+                tpDaily.ValidBet *= rate;
                 tpDaily.Payout *= rate;
-                tpDaily.WinlostAmount = tpDaily.WinlostAmount * rate;
+                tpDaily.WinlostAmount *= rate;
         }
         return await _financeService.GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
     }

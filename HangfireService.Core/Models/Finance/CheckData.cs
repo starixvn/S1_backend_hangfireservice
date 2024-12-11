@@ -206,12 +206,12 @@ namespace HangfireService.Core.Models.Finance
                 var errorDetail = new ErrorDetail
                 {
                     TransId = checkTransId,
-                    Stake = $"差額:{stakeDiff:f4}",
-                    ValidBet = $"差額:{validBetDiff:f4}",
-                    WinlostAmount = $"差額:{winlostAmountDiff:f4}",
-                    Revenue = $"差額:{revenueDiff:f4}",
-                    ProgressiveBet = $"差額:{progressiveBetDiff:f4}",
-                    ProgressiveWin = $"差額:{progressiveWinDiff:f4}",
+                    Stake = stakeDiff,
+                    ValidBet = validBetDiff,
+                    WinlostAmount = winlostAmountDiff,
+                    Revenue = revenueDiff,
+                    ProgressiveBet = progressiveBetDiff,
+                    ProgressiveWin = progressiveWinDiff,
                 };
 
                 return errorDetail;

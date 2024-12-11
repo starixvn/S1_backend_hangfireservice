@@ -60,16 +60,17 @@ namespace HangfireService.Core.Models.Finance
     {
         public string TransId { get; set; }
 
-        public string Stake { get; set; }
+        public decimal Stake { get; set; }
 
-        public string ValidBet { get; set; }
+        public decimal ValidBet { get; set; }
 
-        public string WinlostAmount { get; set; }
+        public decimal WinlostAmount { get; set; }
 
-        public string Revenue { get; set; }
+        public decimal Revenue { get; set; }
 
-        public string ProgressiveBet { get; set; }
+        public decimal ProgressiveBet { get; set; }
 
-        public string ProgressiveWin { get; set; }
+        public decimal ProgressiveWin { get; set; }
+
     }
 }
