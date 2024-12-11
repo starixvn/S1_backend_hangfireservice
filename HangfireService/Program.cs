@@ -1,4 +1,5 @@
 using Hangfire;
+using Hangfire.Dashboard.BasicAuthorization;
 using HangfireService.Core.Jobs;
 using HangfireService.Extensions;
 using HangfireService.Extensions.ActionFilters;
@@ -82,8 +83,23 @@ app.UseHangfireDashboard(pathMatch: "", options: new DashboardOptions()
 {
     DashboardTitle = "AILab",
     AppPath = null,
-    Authorization = new[] { new LocalAuthorizationFilter() }
+    Authorization = new[] { new BasicAuthAuthorizationFilter(new BasicAuthAuthorizationFilterOptions
+        {
+            RequireSsl = false,
+            SslRedirect = false,
+            LoginCaseSensitive = true,
+            Users = new []
+            {
+                new BasicAuthAuthorizationUser
+                {
+                    Login = builder.Configuration.GetValue<string>("HangFireAuth:Username"),
+                    PasswordClear =  builder.Configuration.GetValue<string>("HangFireAuth:Password"),
+                }
+            }
+
+        }) }
 });
+
 
 MyJobManager.AddRecurringJob(app.Services);
 
