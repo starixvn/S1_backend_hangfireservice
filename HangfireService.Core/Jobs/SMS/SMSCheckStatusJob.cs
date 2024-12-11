@@ -101,7 +101,12 @@ namespace HangfireService.Core.Jobs.SMS
             try
             {
                 // SkyLine發送SMS走舊的domain發送，舊的domain無法正常檢查，先改成Pass
-                if (string.IsNullOrWhiteSpace(otpCheck.OTPNum))
+                // TODO: S1 - Currently it can check status well, comment this below lines.
+                //if (string.IsNullOrWhiteSpace(otpCheck.OTPNum))
+                //{
+                //    return otpCheck.GetResult(OTPStatus.SendToCustomer);
+                //}
+                if (string.IsNullOrWhiteSpace(otpCheck.Request_id))
                 {
                     return otpCheck.GetResult(OTPStatus.SendToCustomer);
                 }
@@ -350,9 +355,12 @@ namespace HangfireService.Core.Jobs.SMS
         {
             var customer = _reportDbDataLayer.GetCustInfo(otpCheck.CustId);
 
-            return string.IsNullOrWhiteSpace(otpCheck.OTPNum)
-                ? _skyLineSmsConfig[customer.SiteId]
-                : _skyLineOtpConfig[customer.SiteId];
+            //return string.IsNullOrWhiteSpace(otpCheck.OTPNum)
+            //    ? _skyLineSmsConfig[customer.SiteId]
+            //    : _skyLineOtpConfig[customer.SiteId];
+
+            //TODO: S1 - Currently, only SkyLineOTPConfig is being used.
+            return _skyLineOtpConfig[customer.SiteId];
         }
 
         private SmsWithOtpBaseConfig GetNxCloudOption(OTPCheck otpCheck)
