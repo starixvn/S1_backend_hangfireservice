@@ -24,6 +24,8 @@ public class AllArchiveJob : BaseJob, IScheduledJob
 
     private readonly ReportDBDataLayer _reportDBDataLayer;
 
+    private readonly TelegramBotHelper _telegramBotHelper;
+
     private readonly ICacheHelper _redisHelper;
 
     public AllArchiveJob(IServiceProvider provider) : base(provider)
@@ -32,6 +34,7 @@ public class AllArchiveJob : BaseJob, IScheduledJob
         _mainDBDataLayer = provider.GetRequiredService<MainDBDataLayer>();
         _reportDBDataLayer = provider.GetRequiredService<ReportDBDataLayer>();
         _redisHelper = provider.GetRequiredService<ICacheHelper>();
+        _telegramBotHelper = provider.GetRequiredService<TelegramBotHelper>();
     }
 
     [DisplayName("{0}")]
@@ -105,6 +108,7 @@ public class AllArchiveJob : BaseJob, IScheduledJob
         string EndJob(string message)
         {
             _logger.LogInformation(message);
+            _telegramBotHelper.SendMessage($"JobName:AllArchiveJob - Message: { message }");
             return message;
         }
     }
