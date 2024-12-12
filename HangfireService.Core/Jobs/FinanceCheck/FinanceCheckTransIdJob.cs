@@ -132,7 +132,7 @@ namespace HangfireService.Core.Jobs
             result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd HH:00:00}] TpId:{TpId} ({TpId.GetName<Tp>()}) The account number check is abnormal");
             foreach (var check in checkResults)
             {
-                if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.BettransAndTpBetRecordDataComparision)
+                if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.CompareBettransAndTpBetRecordDataAbsence)
                 {
                     foreach (var error in check.ErrorList)
                     {
@@ -140,14 +140,14 @@ namespace HangfireService.Core.Jobs
                         _logger.LogError($"{Environment.NewLine} - {error}");
                     }
                 }
-                else if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.BettransTpBetRecordComparision)
+                else if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.CompareBettransListAndTpBetRecordList)
                 {
-                    var err = $"{check.FinanceCheckTransIdType}-Abnormal count: {check.Count}{Environment.NewLine}{check.ErrorData}";
+                    var err = $"{check.FinanceCheckTransIdType.GetDescription()}, Abnormal count: {check.Count}{Environment.NewLine}{check.ErrorData}";
                     result.AppendLine(err);
                 }
                 else
                 {
-                    var err = $"{check.FinanceCheckTransIdType}-Abnormal data TpId:{TpId},Abnormal entries: {check.Count}{Environment.NewLine}{JsonConvert.SerializeObject(check.ErrorList)}";
+                    var err = $"{check.FinanceCheckTransIdType.GetDescription()},Abnormal entries count {check.Count}, TransIds: {Environment.NewLine}{FormatFinanceCheckTransIdErrorList(check.ErrorList)}";
                     result.AppendLine(err);
                 }
             }
@@ -175,7 +175,7 @@ namespace HangfireService.Core.Jobs
                     ErrorData = "[]"
                 };
 
-                if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.BettransAndTpBetRecordDataComparision)
+                if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.CompareBettransAndTpBetRecordDataAbsence)
                 {
                     foreach (var error in check.ErrorList)
                     {
@@ -183,7 +183,7 @@ namespace HangfireService.Core.Jobs
                         _mainDBDataLayer.InsertFinanceCheckTransId(financeCheckTransIdData);
                     }
                 }
-                else if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.BettransTpBetRecordComparision)
+                else if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.CompareBettransListAndTpBetRecordList)
                 {
                     foreach (var error in check.ErrorList)
                     {
@@ -196,7 +196,7 @@ namespace HangfireService.Core.Jobs
                         }
                     }
                 }
-                else if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.TpBetRecordBettransTransId || check.FinanceCheckTransIdType == FinanceCheckTransIdType.BettransAndTpBetRecordTransIdComparision)
+                else if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.CompareTransIdTpBetRecordAndBettrans || check.FinanceCheckTransIdType == FinanceCheckTransIdType.CompareEachTransIdBettransAndTpBetRecord)
                 {
                     foreach (var error in check.ErrorList)
                     {
@@ -215,6 +215,13 @@ namespace HangfireService.Core.Jobs
             return true;
         }
 
+        private string FormatFinanceCheckTransIdErrorList(List<string> errorlist) {
+            var result = new StringBuilder();
+            foreach(var error in errorlist) {
+                result.AppendLine($"- {error}");
+            }
+            return result.ToString();
+        }
         private class JobList : IInputDataList
         {
             public Dictionary<string, string> GetData()

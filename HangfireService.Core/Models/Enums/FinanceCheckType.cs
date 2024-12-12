@@ -15,10 +15,14 @@ namespace HangfireService.Core.Models.Enums
 
     public enum FinanceCheckTransIdType
     {
-        BettransAndTpBetRecordDataComparision,
-        TpBetRecordBettransTransId,
-        BettransAndTpBetRecordTransIdComparision,
-        BettransTpBetRecordComparision,
+        [Description("Compare missing data in TpBetRecord or Bettrans")]
+        CompareBettransAndTpBetRecordDataAbsence,
+        [Description("Compare each trans id of tpbetrecord to each of bettrans")]
+        CompareTransIdTpBetRecordAndBettrans,
+        [Description("Compare each trans id of bettrans to each of tpbetrecord")]
+        CompareEachTransIdBettransAndTpBetRecord,
+        [Description("Compare between list of bettrans and list of tpbetrecord")]
+        CompareBettransListAndTpBetRecordList,
     }
 
     public enum TicketStatusExcludeOption

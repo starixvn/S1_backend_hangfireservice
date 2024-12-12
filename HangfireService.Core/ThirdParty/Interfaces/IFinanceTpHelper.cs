@@ -1,4 +1,5 @@
-﻿using HangfireService.Core.Models.Enums;
+﻿using System.Text;
+using HangfireService.Core.Models.Enums;
 using HangfireService.Core.Models.Finance;
 using HangfireService.Core.Models.Options;
 
@@ -141,19 +142,19 @@ namespace HangfireService.Core.ThirdParty.Interfaces
 
             if (!bettransList.Any() && !tpBetRecord.Any())
             {
-                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.BettransTpBetRecordComparision, TpId, res.Count, res));
+                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.CompareBettransListAndTpBetRecordList, TpId, res.Count, res));
                 return checkResult;
             }
             else if (bettransList.Any() && !tpBetRecord.Any())
             {
                 bettransOfTransIds = bettransList.Select(x => x.TransId).ToList();
-                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.BettransAndTpBetRecordTransIdComparision, TpId, bettransOfTransIds.Count, bettransOfTransIds));
+                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.CompareEachTransIdBettransAndTpBetRecord, TpId, bettransOfTransIds.Count, bettransOfTransIds));
                 return checkResult;
             }
 
             if (err.Any())
             {
-                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.BettransAndTpBetRecordDataComparision, TpId, err.Count, err));
+                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.CompareBettransAndTpBetRecordDataAbsence, TpId, err.Count, err));
                 return checkResult;
             }
 
@@ -167,7 +168,7 @@ namespace HangfireService.Core.ThirdParty.Interfaces
                 err.Clear();
                 err.Add("transid bettrans not in tpbetrecord.");
                 checkResult.Add(new FinanceCheckTransIdResult(
-                    FinanceCheckTransIdType.BettransAndTpBetRecordTransIdComparision, 
+                    FinanceCheckTransIdType.CompareEachTransIdBettransAndTpBetRecord, 
                     TpId, 
                     checkBetTransId.Count, 
                     checkBetTransId, 
@@ -178,11 +179,11 @@ namespace HangfireService.Core.ThirdParty.Interfaces
             {
                 err.Clear();
                 err.Add("transid tpbetrecord not in bettrans.");
-                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.TpBetRecordBettransTransId, TpId, checkTpBetTransId.Count, checkTpBetTransId, JsonConvert.SerializeObject(err)));
+                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.CompareTransIdTpBetRecordAndBettrans, TpId, checkTpBetTransId.Count, checkTpBetTransId, JsonConvert.SerializeObject(err)));
             }
 
             var tpResult = bettransList.Select(bettrans
-                => bettrans.CheckTransIdData(tpId, FinanceCheckTransIdType.BettransTpBetRecordComparision, tpBetRecord.FirstOrDefault(tpBetRecord => tpBetRecord.TransId == bettrans.TransId)));
+                => bettrans.CheckTransIdData(tpId, FinanceCheckTransIdType.CompareBettransListAndTpBetRecordList, tpBetRecord.FirstOrDefault(tpBetRecord => tpBetRecord.TransId == bettrans.TransId)));
             var tpData = tpResult.Where(item => item != null).ToList();
 
             if (tpData.Any())
@@ -191,7 +192,7 @@ namespace HangfireService.Core.ThirdParty.Interfaces
                 {
                     JsonConvert.SerializeObject(tpData)
                 };
-                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.BettransTpBetRecordComparision, TpId, tpData.Count, errList, JsonConvert.SerializeObject(tpData)));
+                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.CompareBettransListAndTpBetRecordList, TpId, tpData.Count, errList, FormatErrorData(tpData)));
             }
 
             if (checkResult.Any())
@@ -206,11 +207,18 @@ namespace HangfireService.Core.ThirdParty.Interfaces
             }
             else
             {
-                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.BettransTpBetRecordComparision, TpId, res.Count, res));
+                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.CompareBettransListAndTpBetRecordList, TpId, res.Count, res));
             }
 
             return checkResult;
         }
-    }
+        private static string FormatErrorData(List<ErrorDetail> errorDetails) {
+            var result = new StringBuilder();
+            foreach (var erorrDetail in errorDetails) {
+                result.AppendLine(erorrDetail.GetDiffMessage());
+            }
+            return result.ToString();
+        }
 
+    }
 }

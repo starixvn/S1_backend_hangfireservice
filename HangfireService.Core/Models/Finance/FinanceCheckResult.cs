@@ -1,4 +1,5 @@
-﻿using HangfireService.Core.Models.Enums;
+﻿using System.Text;
+using HangfireService.Core.Models.Enums;
 
 namespace HangfireService.Core.Models.Finance
 {
@@ -72,5 +73,25 @@ namespace HangfireService.Core.Models.Finance
 
         public decimal ProgressiveWin { get; set; }
 
+        public string GetDiffMessage() {
+            var msg = new StringBuilder();
+            msg.AppendLine($"- Trans Id : {TransId}:");
+            
+            if (IsDiffNoticable(Stake)) {
+                msg.AppendLine($" Stake Diff: {Stake:f4}");
+            }
+            if (IsDiffNoticable(ValidBet)) {
+                msg.AppendLine($" ValidBet Diff: {ValidBet:f4}");
+            }
+            if (IsDiffNoticable(WinlostAmount)) {
+                msg.AppendLine($" WinLostAmount Diff: {WinlostAmount:f4}");
+            }
+
+            return msg.ToString();
+        }
+
+        private static bool IsDiffNoticable(decimal diff) {
+            return diff != 0 && Math.Abs(diff) > 0.01m;
+        }
     }
 }

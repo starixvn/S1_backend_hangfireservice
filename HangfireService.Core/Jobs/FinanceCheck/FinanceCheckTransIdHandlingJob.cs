@@ -89,10 +89,10 @@ namespace HangfireService.Core.Jobs
 
                     var timeOptionId = TimeOption.TransId;
                     var tpIds = handlingList.Select(i => i.TpId).ToList();
-                    var bettransOfTransIds = handlingList.Where(i => i.FinanceCheckTransIdType == (int)FinanceCheckTransIdType.TpBetRecordBettransTransId).Select(x => x.TransId).ToList();
-                    var tpBetRecordOfTransIds = handlingList.Where(i => i.FinanceCheckTransIdType == (int)FinanceCheckTransIdType.BettransAndTpBetRecordTransIdComparision).Select(x => x.TransId).ToList();
-                    var checkTransIdExist = handlingList.Where(i => i.FinanceCheckTransIdType == (int)FinanceCheckTransIdType.TpBetRecordBettransTransId || i.FinanceCheckTransIdType == (int)FinanceCheckTransIdType.BettransAndTpBetRecordTransIdComparision);
-                    var checkAmtMatch = handlingList.Where(i => i.FinanceCheckTransIdType == (int)FinanceCheckTransIdType.BettransTpBetRecordComparision).GroupBy(x => x.TpId);
+                    var bettransOfTransIds = handlingList.Where(i => i.FinanceCheckTransIdType == (int)FinanceCheckTransIdType.CompareTransIdTpBetRecordAndBettrans).Select(x => x.TransId).ToList();
+                    var tpBetRecordOfTransIds = handlingList.Where(i => i.FinanceCheckTransIdType == (int)FinanceCheckTransIdType.CompareEachTransIdBettransAndTpBetRecord).Select(x => x.TransId).ToList();
+                    var checkTransIdExist = handlingList.Where(i => i.FinanceCheckTransIdType == (int)FinanceCheckTransIdType.CompareTransIdTpBetRecordAndBettrans || i.FinanceCheckTransIdType == (int)FinanceCheckTransIdType.CompareEachTransIdBettransAndTpBetRecord);
+                    var checkAmtMatch = handlingList.Where(i => i.FinanceCheckTransIdType == (int)FinanceCheckTransIdType.CompareBettransListAndTpBetRecordList).GroupBy(x => x.TpId);
 
                     // 依FinanceCheckTransIdType處理情況
                     foreach (var item in checkTransIdExist)
@@ -108,7 +108,7 @@ namespace HangfireService.Core.Jobs
 
                         switch (type)
                         {
-                            case (int)FinanceCheckTransIdType.TpBetRecordBettransTransId:
+                            case (int)FinanceCheckTransIdType.CompareTransIdTpBetRecordAndBettrans:
                                 // 檢查單號是否有存在bettrans
                                 if (bettransOfTransIds.Any() && bettransOfTransIds.Contains(item.TransId))
                                 {
@@ -124,7 +124,7 @@ namespace HangfireService.Core.Jobs
                                 // 不存在等待重新檢查
                                 UpdateFinanceCheckTransIdCount(item.SQ);
                                 break;
-                            case (int)FinanceCheckTransIdType.BettransAndTpBetRecordTransIdComparision:
+                            case (int)FinanceCheckTransIdType.CompareEachTransIdBettransAndTpBetRecord:
                                 // 檢查單號是否有存在tpbetrecord
                                 if (tpBetRecordOfTransIds.Any() && tpBetRecordOfTransIds.Contains(item.TransId))
                                 {
@@ -180,7 +180,7 @@ namespace HangfireService.Core.Jobs
 
                         // 金額檢查(只回傳不符合的資料)
                         var tpResult = bettransList.Select(bettrans
-                            => bettrans.CheckTransIdData(tpId, FinanceCheckTransIdType.BettransTpBetRecordComparision, tpBetRecord.FirstOrDefault(tpBetRecord => tpBetRecord.TransId == bettrans.TransId)));
+                            => bettrans.CheckTransIdData(tpId, FinanceCheckTransIdType.CompareBettransListAndTpBetRecordList, tpBetRecord.FirstOrDefault(tpBetRecord => tpBetRecord.TransId == bettrans.TransId)));
                         var tpData = tpResult.Where(item => item != null).ToList();
                         foreach (var d in AmountOfTransIds)
                         {
