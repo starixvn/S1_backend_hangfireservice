@@ -124,12 +124,12 @@ namespace HangfireService.Core.Jobs
 
             if (!checkFilter.Any())
             {
-                result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd HH:00:00} - {checkOption.EndTime:yyyy-MM-dd HH:mm:ss}] TpId:{TpId} ({TpId.GetName<Tp>()}) The account number check is normal");
+                result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd HH:00:00} - {checkOption.EndTime:yyyy-MM-dd HH:mm:ss}] TpId:{TpId} ({TpId.GetName<Tp>()}) Bet Cross Check By Trans Id is normal");
                 _logger.LogInformation(result.ToString());
                 return result.ToString();
             }
 
-            result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd HH:00:00} - {checkOption.EndTime:yyyy-MM-dd HH:mm:ss}] TpId:{TpId} ({TpId.GetName<Tp>()}) The account number check is abnormal");
+            result.AppendLine($"[{checkOption.BeginTime:yyyy-MM-dd HH:00:00} - {checkOption.EndTime:yyyy-MM-dd HH:mm:ss}] TpId:{TpId} ({TpId.GetName<Tp>()}) Bet Cross Check By Trans Id is abnormal");
             foreach (var check in checkResults)
             {
                 if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.CompareBettransAndTpBetRecordDataAbsence)
