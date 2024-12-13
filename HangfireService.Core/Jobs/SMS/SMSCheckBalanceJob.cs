@@ -224,7 +224,7 @@ namespace HangfireService.Core.Jobs.SMS
         private async Task<bool> SendTelegramMessage(SmsWithOtpBaseConfig smsOption, object balance) 
         {
             var msg = MakeAlertMessage(smsOption, balance?.ToString());
-            _telegramBotHelper.SendMessage(msg);
+            _telegramBotHelper.SendMessage(msg, true);
             return true;
         }
 

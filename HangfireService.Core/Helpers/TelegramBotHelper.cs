@@ -1,7 +1,7 @@
 ﻿using System.Text;
 
 using HangfireService.Core.Models.Options;
-
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 using Newtonsoft.Json;
@@ -13,17 +13,22 @@ namespace HangfireService.Core.Helpers
         protected readonly ILogger<TelegramBotHelper> _logger;
         protected readonly HttpHelper _httpHelper;
         private readonly TelegramConfig _telegramConfig;
+        private readonly TelegramConfig _telegramClientConfig;
 
         public TelegramBotHelper(IServiceProvider provider)
         {
+            var configuration = provider.GetRequiredService<IConfiguration>();
             _logger = provider.GetRequiredService<ILogger<TelegramBotHelper>>();
             _httpHelper = provider.GetRequiredService<HttpHelper>();
             _telegramConfig = provider.GetRequiredService<ConfigBLL>().GetConfigValue<TelegramConfig>("HangfireTelegram");
+            _telegramClientConfig = configuration.GetSection("HangfireTelegramClient").Get<TelegramConfig>();
         }
 
-        public void SendMessage(string message)
+        public void SendMessage(string message, bool toClient = false)
         {
-            if (!_telegramConfig.Enable)
+            var config = toClient ? _telegramClientConfig : _telegramConfig;
+
+            if (!config.Enable)
             {
                 return;
             }
@@ -31,10 +36,10 @@ namespace HangfireService.Core.Helpers
             // telegrm not allow more than 30 messages per second, not be able to send more than 20 messages per minute to the same group
             Thread.Sleep(6000);
 
-            var url = $"{_telegramConfig.Url}/bot{_telegramConfig.Token}/sendMessage";
+            var url = $"{config.Url}/bot{config.Token}/sendMessage";
             var param = new
             {
-                chat_id = _telegramConfig.ChatId,
+                chat_id = config.ChatId,
                 text = message
             };
 
