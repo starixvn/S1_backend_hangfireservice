@@ -26,7 +26,6 @@ namespace HangfireService.Core.Jobs.SMS
         protected readonly HttpHelper _httpHelper;
         private readonly SecureHelper _secureHelper;
 
-        //private readonly string _letsTalkGroupName;
         private readonly string _commonServiceHost;
         private static List<JobOption> _jobList;
 
@@ -48,7 +47,6 @@ namespace HangfireService.Core.Jobs.SMS
             _skyLineOtpConfig = configBll.GetRawConfigValues<SkyLineOtpConfig>("HangfireSkyLineOTP");
 
             // 共用同一組設定
-            //_letsTalkGroupName = configBll.GetConfigValue<LetsTalkConfig>("HangfireLetsTalk").SnsGroupName;
             _commonServiceHost = configBll.GetServiceHostConfig().CommonService;
 
             _telegramBotHelper = provider.GetRequiredService<TelegramBotHelper>();
@@ -181,17 +179,24 @@ namespace HangfireService.Core.Jobs.SMS
         {
             var account = smsConfig.Key1;
             var passWord = smsConfig.Key2;
+
             var urlGetBalance = smsConfig.GetBalanceUrl;
-            var dateTime = DateTime.UtcNow.AddHours(8).ToString("yyyyMMddHHmmss");
-            var sign = _secureHelper.ToMD5($"{account}{passWord}{dateTime}");
-            var url = $"{urlGetBalance}?account={account}&sign={sign}&datetime={dateTime}";
+            var timestamp = new DateTimeOffset(DateTime.Now).ToOffset(new TimeSpan(8, 0, 0)).ToUnixTimeSeconds();
+            var sign = _secureHelper.ToMD5($"{smsConfig.ApiKey}{smsConfig.ApiSecret}{timestamp}");
+
+            var headerParams = new Dictionary<string, string>
+            {
+                { "Sign", sign },
+                { "Timestamp", timestamp.ToString() },
+                { "Api-Key", smsConfig.ApiKey },
+            };
 
             try
             {
-                using var result = await _httpHelper.HttpPost1Async(url, null, "", "application/json");
+                using var result = await _httpHelper.HttpGetAsync(urlGetBalance, headerParams, "application/json");
                 if (result.StatusCode != HttpStatusCode.OK)
                 {
-                    _logger.LogError($"httpResponse error URL : {url}  StatusCode: {result.StatusCode}");
+                    _logger.LogError($"httpResponse error URL : {urlGetBalance}  StatusCode: {result.StatusCode}");
                     return false;
                 }
 
@@ -199,7 +204,7 @@ namespace HangfireService.Core.Jobs.SMS
                 var resultResp = JsonConvert.DeserializeObject<SKYLineSMSResult>(contentResult);
                 if (resultResp.status != 0)
                 {
-                    _logger.LogError($"httpResponse error URL : {url}  resultResp: {contentResult}");
+                    _logger.LogError($"httpResponse error URL : {urlGetBalance}  resultResp: {contentResult}");
                     return false;
                 }
 
