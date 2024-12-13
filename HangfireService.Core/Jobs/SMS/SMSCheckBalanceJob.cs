@@ -26,13 +26,15 @@ namespace HangfireService.Core.Jobs.SMS
         protected readonly HttpHelper _httpHelper;
         private readonly SecureHelper _secureHelper;
 
-        private readonly string _letsTalkGroupName;
+        //private readonly string _letsTalkGroupName;
         private readonly string _commonServiceHost;
         private static List<JobOption> _jobList;
 
         private readonly IEnumerable<NxCloudSmsConfig> _nxCloudSmsConfig;
         private readonly IEnumerable<SkyLineSmsConfig> _skyLineSmsConfig;
         private readonly IEnumerable<SkyLineOtpConfig> _skyLineOtpConfig;
+
+        private readonly TelegramBotHelper _telegramBotHelper;
 
         public SMSCheckBalanceJob(IServiceProvider provider) : base(provider)
         {
@@ -46,8 +48,10 @@ namespace HangfireService.Core.Jobs.SMS
             _skyLineOtpConfig = configBll.GetRawConfigValues<SkyLineOtpConfig>("HangfireSkyLineOTP");
 
             // 共用同一組設定
-            _letsTalkGroupName = configBll.GetConfigValue<LetsTalkConfig>("HangfireLetsTalk").SnsGroupName;
+            //_letsTalkGroupName = configBll.GetConfigValue<LetsTalkConfig>("HangfireLetsTalk").SnsGroupName;
             _commonServiceHost = configBll.GetServiceHostConfig().CommonService;
+
+            _telegramBotHelper = provider.GetRequiredService<TelegramBotHelper>();
 
             MyJobManager.GetJobGroups()?.TryGetValue("Check", out _jobList);
         }
@@ -57,11 +61,12 @@ namespace HangfireService.Core.Jobs.SMS
         {
             _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} running......");
 
-            var skyLineSmsCheckBalanceTask = SkyLineSmsCheckBalance();
+            //var skyLineSmsCheckBalanceTask = SkyLineSmsCheckBalance();
             var skyLineOtpCheckBalanceTask = SkyLineOtpCheckBalance();
             var nxCloudCheckBalanceTask = NxCloudCheckBalance();
 
-            await Task.WhenAll(skyLineSmsCheckBalanceTask,
+            await Task.WhenAll(
+                //skyLineSmsCheckBalanceTask,
                 skyLineOtpCheckBalanceTask,
                 nxCloudCheckBalanceTask);
 
@@ -159,7 +164,7 @@ namespace HangfireService.Core.Jobs.SMS
 
                 if ((int)Convert.ToDecimal(balance) < nxCloudSmsConfig.MiniMumLimit)
                 {
-                    await SandLesTalkMessage(nxCloudSmsConfig, balance);
+                    await SendTelegramMessage(nxCloudSmsConfig, balance);
                     return true;
                 }
 
@@ -199,7 +204,7 @@ namespace HangfireService.Core.Jobs.SMS
                 }
 
                 _logger.LogError($"TPName : {smsConfig.SmsTpName} AccountName : {smsConfig.AccountName} balance : {resultResp.balance} MinimumLimit : {smsConfig.MiniMumLimit}");
-                if ((int)Convert.ToDecimal(resultResp.balance) < smsConfig.MiniMumLimit) await SandLesTalkMessage(smsConfig, resultResp.balance);
+                if ((int)Convert.ToDecimal(resultResp.balance) < smsConfig.MiniMumLimit) await SendTelegramMessage(smsConfig, resultResp.balance);
                 return true;
             }
             catch (Exception ex)
@@ -209,28 +214,12 @@ namespace HangfireService.Core.Jobs.SMS
             return false;
         }
 
-        #region Send Notfication To LestTask
+        #region Send Notfication To Telegram
 
-        private async Task<bool> SandLesTalkMessage(SmsWithOtpBaseConfig smsOption, object balance)
+        private async Task<bool> SendTelegramMessage(SmsWithOtpBaseConfig smsOption, object balance) 
         {
-            try
-            {
-                var postData = new
-                {
-                    GroupName = _letsTalkGroupName,
-                    Message = MakeAlertMessage(smsOption, balance?.ToString())
-                };
-
-                var parameters = JsonConvert.SerializeObject(postData);
-
-                var httpResponse = await _httpHelper.HttpPost1Async($"{_commonServiceHost}LetsTalk/SendMessage",
-                    null, parameters, "application/json");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-                return false;
-            }
+            var msg = MakeAlertMessage(smsOption, balance?.ToString());
+            _telegramBotHelper.SendMessage(msg);
             return true;
         }
 
