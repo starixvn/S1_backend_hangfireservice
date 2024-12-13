@@ -142,12 +142,12 @@ namespace HangfireService.Core.Jobs
                 }
                 else if (check.FinanceCheckTransIdType == FinanceCheckTransIdType.CompareBettransListAndTpBetRecordList)
                 {
-                    var err = $"{check.FinanceCheckTransIdType.GetDescription()}, Abnormal count: {check.Count}{Environment.NewLine}{check.ErrorData}";
+                    var err = $"{check.FinanceCheckTransIdType.GetDescription()}{Environment.NewLine}Abnormal count: {check.Count}{Environment.NewLine}{check.ErrorData}";
                     result.AppendLine(err);
                 }
                 else
                 {
-                    var err = $"{check.FinanceCheckTransIdType.GetDescription()},Abnormal entries count {check.Count}, TransIds: {Environment.NewLine}{FormatFinanceCheckTransIdErrorList(check.ErrorList)}";
+                    var err = $"{check.FinanceCheckTransIdType.GetDescription()}{Environment.NewLine}Abnormal entries count {check.Count}{Environment.NewLine}Trans Ids: {Environment.NewLine}{FormatFinanceCheckTransIdErrorList(check.ErrorList)}";
                     result.AppendLine(err);
                 }
             }
@@ -179,7 +179,7 @@ namespace HangfireService.Core.Jobs
                 {
                     foreach (var error in check.ErrorList)
                     {
-                        financeCheckTransIdData.ErrorData = error;
+                        financeCheckTransIdData.ErrorData = JsonConvert.SerializeObject(error);
                         _mainDBDataLayer.InsertFinanceCheckTransId(financeCheckTransIdData);
                     }
                 }

@@ -154,7 +154,11 @@ namespace HangfireService.Core.ThirdParty.Interfaces
 
             if (err.Any())
             {
-                checkResult.Add(new FinanceCheckTransIdResult(FinanceCheckTransIdType.CompareBettransAndTpBetRecordDataAbsence, TpId, err.Count, err));
+                checkResult.Add(new FinanceCheckTransIdResult(
+                    FinanceCheckTransIdType.CompareBettransAndTpBetRecordDataAbsence, 
+                    TpId, 
+                    err.Count, 
+                    err));
                 return checkResult;
             }
 
