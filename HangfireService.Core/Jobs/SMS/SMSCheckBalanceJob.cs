@@ -61,12 +61,13 @@ namespace HangfireService.Core.Jobs.SMS
 
             //var skyLineSmsCheckBalanceTask = SkyLineSmsCheckBalance();
             var skyLineOtpCheckBalanceTask = SkyLineOtpCheckBalance();
-            var nxCloudCheckBalanceTask = NxCloudCheckBalance();
+            //var nxCloudCheckBalanceTask = NxCloudCheckBalance();
 
             await Task.WhenAll(
                 //skyLineSmsCheckBalanceTask,
-                skyLineOtpCheckBalanceTask,
-                nxCloudCheckBalanceTask);
+                skyLineOtpCheckBalanceTask
+                //nxCloudCheckBalanceTask
+                );
 
             _logger.LogInformation($"{DateTime.Now:HH:mm:ss} || {jobName} End......");
 
