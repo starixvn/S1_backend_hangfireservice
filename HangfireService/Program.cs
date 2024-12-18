@@ -101,7 +101,16 @@ app.UseHangfireDashboard(pathMatch: "", options: new DashboardOptions()
 });
 
 
-MyJobManager.AddRecurringJob(app.Services);
+var isGettingJobsFromAppSettings = builder.Configuration.GetSection("IsGettingJobsFromAppSettings").Get<bool>();
+
+if (isGettingJobsFromAppSettings)
+{
+    var jobNames = builder.Configuration.GetSection("JobNames").Get<List<string>>();
+    MyJobManager.SetJobNames(jobNames);
+}
+
+
+MyJobManager.AddRecurringJob(app.Services, builder.Configuration);
 
 var minWorkers = Environment.ProcessorCount * 8;
 var minIOCPs = Environment.ProcessorCount * 8;

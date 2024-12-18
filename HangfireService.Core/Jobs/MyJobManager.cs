@@ -4,6 +4,7 @@ using Hangfire.Dashboard.Management.Pages;
 using HangfireService.Core.Jobs.Interfaces;
 using HangfireService.Core.Models.Jobs;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
 namespace HangfireService.Core.Jobs;
@@ -11,6 +12,7 @@ namespace HangfireService.Core.Jobs;
 public static class MyJobManager
 {
     private static IReadOnlyDictionary<string, List<JobOption>> _jobGroups;
+    private static HashSet<string> _jobNames = new();
 
     public static void SettingJob(Dictionary<string, List<JobOption>> jobGroups)
     {
@@ -22,10 +24,16 @@ public static class MyJobManager
         return _jobGroups;
     }
 
-    public static void AddRecurringJob(IServiceProvider provider)
+    public static void SetJobNames(IEnumerable<string> jobNames)
+    {
+        _jobNames = new HashSet<string>(jobNames ?? Enumerable.Empty<string>());
+    }
+
+    public static void AddRecurringJob(IServiceProvider provider, IConfiguration configuration)
     {
         var webHostEnvironment = provider.GetRequiredService<IWebHostEnvironment>();
         var jobManager = new RecurringJobManager();
+        var isGettingJobsFromAppSettings = configuration.GetValue<bool>("IsGettingJobsFromAppSettings");
 
         foreach (var jobGroup in _jobGroups)
         {
@@ -33,6 +41,11 @@ public static class MyJobManager
             var mins = 0;
             foreach (var option in jobGroup.Value)
             {
+                if (isGettingJobsFromAppSettings && !_jobNames.Contains(option.JobName))
+                {
+                    continue;
+                }
+
                 if (option.Enable)
                 {
                     var job = provider.GetServices<IScheduledJob>()
