@@ -33,10 +33,9 @@ namespace HangfireService.Core.ThirdParty
             _fincanceService = provider.GetRequiredService<FincanceService>();
         }
 
-        // TODO: FinanceTPHelperTests
         public async Task<IEnumerable<BettransCheckData>> GetBettransCheckData(FinanceCheckOption checkOption)
         {
-            // TODO: KY 為轉帳遊戲無Bettrans 改取Wager資料 (跟 V8 一致?)
+            // KY 為單一錢包，已有 Bettrans，但先跟 V8 一致，取 Wager 資料
             var BeginTime = checkOption.BeginTime.GetUnixTimeByDay();
             var EndTime = checkOption.EndTime.GetUnixTimeByDay() - 1;
             var bettrans = await _wagerClient.QueryAsync<BettransCheckData>("Finance_TpWagerPK_KY_Summary_Get", new { _BeginTime = BeginTime, _EndTime = EndTime });
@@ -54,7 +53,6 @@ namespace HangfireService.Core.ThirdParty
             return bettrans;
         }
 
-        // TODO: FinanceTPHelperTests
         public async Task<IEnumerable<TpDailySummaryCheckData>> GetTpDailySummaryCheckData(FinanceCheckOption checkOption)
         {
             var tpDailyList = await _fincanceService.GetTpDailySummary((int)SummaryType.TpBetRecord, TpId, checkOption.BeginTime, checkOption.EndTime);
