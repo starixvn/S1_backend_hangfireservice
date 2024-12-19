@@ -209,7 +209,6 @@ namespace HangfireService.Core.Jobs.SMS
                     return false;
                 }
 
-                _logger.LogError($"TPName : {smsConfig.SmsTpName} AccountName : {smsConfig.AccountName} balance : {resultResp.balance} MinimumLimit : {smsConfig.MiniMumLimit}");
                 if ((int)Convert.ToDecimal(resultResp.balance) < smsConfig.MiniMumLimit) await SendTelegramMessage(smsConfig, resultResp.balance);
                 return true;
             }
