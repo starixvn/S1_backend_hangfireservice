@@ -192,17 +192,17 @@ public class GenericSabaplusTpHelper : BaseTpHelper, IFinanceTpHelper
             checkResult.AddRange(financeResult);
         }
 
-        if (checkResult.Any())
-        {
-            var data = new
-            {
-                TpId,
-                tpBetRecord,
-                tpDailyList,
-                bettransList,
-            };
-            _logger.LogError($"[{checkOption.BeginTime:yyyy-MM-dd}]:{JsonConvert.SerializeObject(data)}");
-        }
+        // if (checkResult.Any())
+        // {
+        //     var data = new
+        //     {
+        //         TpId,
+        //         tpBetRecord,
+        //         tpDailyList,
+        //         bettransList,
+        //     };
+        //     _logger.LogError($"[{checkOption.BeginTime:yyyy-MM-dd}]:{JsonConvert.SerializeObject(data)}");
+        // }
 
         return checkResult;
     }
