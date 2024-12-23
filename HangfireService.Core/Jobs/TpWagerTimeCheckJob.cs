@@ -60,7 +60,6 @@ namespace HangfireService.Core.Jobs
 
                 foreach (var data in allData)
                 {
-                    var tpName = tpListData.First(i => i.TpId == data.TpId).TpName;
                     var delay = now.Subtract(data.StartTime.AddSeconds(1));
                     int delayHour = (int)delay.TotalHours;
                     int delayDay = (int)delay.TotalDays;
@@ -169,7 +168,11 @@ namespace HangfireService.Core.Jobs
                             }
                             break;
                         default:
-                            _logger.LogWarning($"Game: {tpName}, Type currently unsupported: {data.Type}");
+                            var tpName = tpListData.FirstOrDefault(i => i.TpId == data.TpId)?.TpName;
+                            if (tpName is not null)
+                            {
+                                _logger.LogWarning("Game: {TpName}, Type currently unsupported: {Type}", tpName, data.Type);
+                            }
                             break;
                     }
                 }
@@ -178,13 +181,17 @@ namespace HangfireService.Core.Jobs
                     var result = checkList.GroupBy(g => g.TpId).Select(s => new
                     {
                         TpId = s.Key,
-                        TpName = tpListData.First(i => i.TpId == s.Key).TpName,
+                        TpName=tpListData.FirstOrDefault(i => i.TpId == s.Key)?.TpName,
                         Detail = JsonConvert.SerializeObject(s),
                     });
 
                     var msgRow = "Exceptional data: ";
                     foreach (var i in result)
                     {
+                        if (i.TpName is null)
+                        {
+                            _logger.LogWarning("Not found {TpName}, detail information: {Information}", "TpName", i.Detail);
+                        }
                         msgRow += $"\r\ngame: {i.TpName}, information: {i.Detail}";
                     }
                     subMsg += $"{msgRow}\r\nPlease prioritize checking Type 1 data. If the game is under maintenance, please ignore it. For detailed information, refer to the Hangfire Log.";
