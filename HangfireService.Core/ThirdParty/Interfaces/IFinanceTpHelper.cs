@@ -64,6 +64,17 @@ namespace HangfireService.Core.ThirdParty.Interfaces
                 checkResult.AddRange(financeResult);
             }
 
+            if (TpId == 5)
+            {
+                var data = new
+                {
+                    TpId,
+                    tpBetRecord,
+                    tpDailyList,
+                    bettransList,
+                };
+                _logger.LogInformation("{DailySummary}: {Data}", "DailySummary", JsonConvert.SerializeObject(data));
+            }
             if (checkResult.Any())
             {
                 var data = new
@@ -73,7 +84,7 @@ namespace HangfireService.Core.ThirdParty.Interfaces
                     tpDailyList,
                     bettransList,
                 };
-                _logger.LogError($"[{checkOption.BeginTime:yyyy-MM-dd}]:{JsonConvert.SerializeObject(data)}");
+                _logger.LogError("{DailySummary} for {TpId} check {BeginTime}-{EndTime}: {Data}","DaiLySummary", TpId,checkOption.BeginTime, checkOption.EndTime,JsonConvert.SerializeObject(data));
             }
 
             return checkResult;
