@@ -64,17 +64,6 @@ namespace HangfireService.Core.ThirdParty.Interfaces
                 checkResult.AddRange(financeResult);
             }
 
-            if (TpId == 5)
-            {
-                var data = new
-                {
-                    TpId,
-                    tpBetRecord,
-                    tpDailyList,
-                    bettransList,
-                };
-                _logger.LogInformation("{DailySummary}: {Data}", "DailySummary", JsonConvert.SerializeObject(data));
-            }
             if (checkResult.Any())
             {
                 var data = new

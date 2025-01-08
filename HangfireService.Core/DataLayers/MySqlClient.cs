@@ -57,7 +57,8 @@ namespace HangfireService.Core.DataLayers
                     // 拿不到Status或延遲太久都換下一個連線
                     if (dbSlaveStatus == null || dbSlaveStatus.Seconds_Behind_Master > 180)
                     {
-                        _logger.LogWarning($"{ReplaceDBString(backupConn)} | DelayTime = {dbSlaveStatus?.Seconds_Behind_Master}");
+                        // COMMENT BECAUSE LOG TOO MANY TIMES
+                        //_logger.LogWarning($"{ReplaceDBString(backupConn)} | DelayTime = {dbSlaveStatus?.Seconds_Behind_Master}");
                         continue;
                     }
 

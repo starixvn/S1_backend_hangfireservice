@@ -89,6 +89,19 @@ namespace HangfireService.Core.Jobs
                         _telegramBotHelper.SendMessage(msg);
                         result.AppendLine(msg);
                     }
+
+                    if (tpHelper.TpId == 5)
+                    {
+                        var data = new
+                        {
+                            tpHelper.TpId,
+                            tpBetRecord,
+                            tpDailyList,
+                            bettransList,
+                        };
+                        _logger.LogError($"DailySummary: {JsonConvert.SerializeObject(data)}");
+                    }
+
                 }
                 foreach(var tpDailySummary in tpDailySummaryList) {
                     if (tpBetRecordList.ContainsKey(tpDailySummary.Key)) continue;
