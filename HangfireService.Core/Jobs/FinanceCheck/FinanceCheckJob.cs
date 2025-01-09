@@ -99,7 +99,7 @@ namespace HangfireService.Core.Jobs
                             tpDailyList,
                             bettransList,
                         };
-                        _logger.LogError($"DailySummary: {JsonConvert.SerializeObject(data)}");
+                        _logger.LogInformation($"DailySummary: {JsonConvert.SerializeObject(data)}");
                     }
 
                 }

@@ -34,8 +34,8 @@ public class PPTpHelper : BaseTpHelper, IFinanceTpHelper
             _partitionService
             .QueryAsync<BettransCheckData>(
                 checkOption.BeginTime, 
-                checkOption.EndTime, 
-                "Finance_BettransRng_PP_Summary_Get",
+                checkOption.EndTime,
+                "Finance_Bettrans_PP_Summary_Get",
                 new {
                     _BeginTime = beginTime,
                     _EndTime = endTime
