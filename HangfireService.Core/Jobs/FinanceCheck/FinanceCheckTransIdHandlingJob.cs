@@ -152,7 +152,7 @@ namespace HangfireService.Core.Jobs
                         var AmountOfTransIds = group.Select(i => i.TransId).ToList();
                         if (!AmountOfTransIds.Any())
                         {
-                            _logger.LogWarning("[結算與交易金額檢查] - 無資料處理");
+                            _logger.LogWarning("[Settlement and Transaction Amount Check] - No data processing.");
                             continue;
                         }
 
@@ -166,7 +166,7 @@ namespace HangfireService.Core.Jobs
                         var tpBetRecord = _reportDBDataLayer.GetTpBetRecordCheckTransIdData(checkOption.BeginTime, checkOption.EndTime, tpId, timeOptionId, checkOption.TransIds);
                         if (tpBetRecord == null || !tpBetRecord.Any())
                         {
-                            _logger.LogError("[結算與交易金額檢查] - tpbetrecord金額空資料");
+                            _logger.LogError("[Settlement and Transaction Amount Check] - tpbetrecord amount is empty data.");
                             continue;
                         }
 
@@ -174,7 +174,7 @@ namespace HangfireService.Core.Jobs
                         var bettransList = await tpHelper.GetBettransCheckTransIdData(checkOption);
                         if (bettransList == null || !bettransList.Any())
                         {
-                            _logger.LogError("[結算與交易金額檢查] - bettrans金額空資料");
+                            _logger.LogError("[Settlement and Transaction Amount Check] - bettrans amount is empty data.");
                             continue;
                         }
 
