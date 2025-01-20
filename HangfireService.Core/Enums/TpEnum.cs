@@ -53,6 +53,7 @@ namespace HangfireService.Core.Enums
         Yeebet = 46,
         BG = 47,
         TFG = 48,
+        [Enabled]
         Nextspin = 50,
         PlayTech = 51,
         IM = 52,
